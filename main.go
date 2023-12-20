@@ -1,9 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"os"
 
+	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwoo-builder/pkg/config"
+	"github.com/zwoo-hq/zwoo-builder/pkg/helper"
+	"github.com/zwoo-hq/zwoo-builder/pkg/ui"
 )
 
 type (
@@ -13,27 +16,60 @@ type (
 )
 
 func main() {
-	c, err := config.Load("./zwoo.config.json")
-	fmt.Println(err)
-	// fmt.Println(c)
-	profiles, _ := c.GetProfiles()
-	for _, v := range profiles {
-		fmt.Print("Profile: ")
-		fmt.Print(v.Name())
-		fmt.Println(v)
+	path, err := helper.FindFile("zwoo.config.json")
+	if err != nil {
+		ui.HandleError(err)
+	}
+	ui.Logger.Debugf("loading config file: %s\n", path)
+
+	_, err = config.Load(path)
+	if err != nil {
+		ui.HandleError(err)
 	}
 
-	fragments, _ := c.GetFragments()
-	for _, v := range fragments {
-		fmt.Print("Fragment: ")
-		fmt.Print(v.Name())
-		fmt.Println(v)
+	app := &cli.App{
+		Name:  "%BINARYNAME%",
+		Usage: "the official cli for building and developing zwoo",
+		Commands: []*cli.Command{
+			{
+				Name:  config.ModeRun,
+				Usage: "run a profile",
+				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+			{
+				Name:  config.ModeWatch,
+				Usage: "run a profile with live reload enabled",
+				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+			{
+				Name:  config.ModeBuild,
+				Usage: "build a profile",
+				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+			{
+				Name:  "exec",
+				Usage: "execute a fragment",
+				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+			{
+				Name:  "launch",
+				Usage: "launch a compound",
+				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+		},
 	}
 
-	compounds, _ := c.GetCompounds()
-	for _, v := range compounds {
-		fmt.Print("Compound: ")
-		fmt.Print(v.Name())
-		fmt.Println(v)
+	if err := app.Run(os.Args); err != nil {
+		ui.HandleError(err)
 	}
 }
