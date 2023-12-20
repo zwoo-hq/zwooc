@@ -7,16 +7,21 @@ const (
 )
 
 const (
+	AdapterVite   = "vite"
+	AdapterDotnet = "dotnet"
+)
+
+const (
 	KeyDefault  = "$default"
 	KeyAdapter  = "$adapter"
-	KeyFragment = "$fragment"
-	KeyCompound = "$compound"
+	KeyFragment = "$fragments"
+	KeyCompound = "$compounds"
 	KeyPre      = "$pre"
 	KeyPost     = "$post"
 )
 
 type (
-	Fragment map[string]string
+	FragmentOptions map[string]string
 
 	HookOptions struct {
 		Fragments []string `json:"fragments"`
@@ -29,7 +34,7 @@ type (
 		IncludeFragments []string `json:"includeFragments"`
 	}
 
-	BaseProfile struct {
+	ProfileOptions struct {
 		Args map[string]string `json:"args"`
 		Env  []string          `json:"env"`
 	}
@@ -42,7 +47,7 @@ type (
 		Project string `json:"project"`
 	}
 
-	Compound struct {
+	CompoundOptions struct {
 		Profiles map[string]string `json:"profiles"`
 	}
 )
@@ -50,10 +55,15 @@ type (
 func IsReservedKey(key string) bool {
 	switch key {
 	case KeyDefault:
+		return true
 	case KeyAdapter:
+		return true
 	case KeyFragment:
+		return true
 	case KeyCompound:
+		return true
 	case KeyPre:
+		return true
 	case KeyPost:
 		return true
 	}

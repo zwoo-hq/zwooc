@@ -61,16 +61,13 @@
     "$default": {
       "build": {
         "alias": "prod",
-        "pre": {
+        "$pre": {
           "fragments": ["typecheck", "icon", "cards", "wasm"]
         }
       },
       "watch": {
         "alias": "dev"
       }
-    },
-    "$commands": {
-      "lint": {}
     }
   },
   "backend": {

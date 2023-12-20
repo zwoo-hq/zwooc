@@ -55,8 +55,12 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 "watch": "",
                 "build": ""
             },
-            "fragment2": {
+            "fragment3": {
                 "build:profile1": "" // run when its an dependency of profile1 in build mode
+            },
+            "fragment4": {
+                "$pre": "", // fragments can have pre & post hooks
+                "$post": ""
             }
         },
         "profile1": {
@@ -74,11 +78,11 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 ],
                 "alias": "profile1", // use profile 1 as base (and apply these configs)
                 "skipFragments": true, // ignore all depended fragments
-                "pre": {
+                "$pre": {
                     "fragments": [], // list of fragments to run before
                     "command": "" // command to run before
                 },
-                "post": {
+                "$post": {
                     "fragments": [], // list of fragments to run after
                     "command": "" // command to run after
                 }
@@ -105,7 +109,7 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 "profile1": "watch", // profile 1 should be started inw watch mode
                 "profile2": "build" // profile 1 should be started inw watch mode
             },
-            // ... all other base options (pre, post, skipFragments, includeFragments, alias)
+            // ... all other base options ($pre, $post, skipFragments, includeFragments, alias)
         }
     }
 }
