@@ -1,4 +1,4 @@
-module github.com/zwoo-hq/zwoo-builder
+module github.com/zwoo-hq/zwooc
 
 go 1.20
 

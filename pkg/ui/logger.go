@@ -15,7 +15,7 @@ func init() {
 		ReportCaller:    false,
 		ReportTimestamp: false,
 		TimeFormat:      time.Kitchen,
-		Prefix:          "%BINARYNAME%",
+		Prefix:          "zwooc",
 		Level:           log.DebugLevel,
 	})
 	Logger.SetStyles(&log.Styles{
@@ -56,5 +56,5 @@ func init() {
 
 func HandleError(err error) {
 	Logger.Error(err.Error())
-	Logger.Fatal("exiting %BINARYNAME%")
+	Logger.Fatal("exiting zwooc")
 }

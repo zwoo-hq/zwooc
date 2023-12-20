@@ -58,6 +58,24 @@
         "skipFragments": true
       }
     },
+    "test": {
+      "run": {
+        "mode": "foo",
+        "project": "bar",
+        "args": {
+          "mode": "test"
+        },
+        "env": ["VUE_APP_IS_TAURI=true"],
+        "alias": "prod",
+        "$pre": {
+          "fragments": ["typecheck", "icon", "cards", "wasm"]
+        },
+        "$post": {
+          "command": "test"
+        }
+      },
+      "watch": true
+    },
     "$default": {
       "build": {
         "alias": "prod",

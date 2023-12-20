@@ -7,8 +7,6 @@ Although you can theoretically use this with any project, this build system is b
 - `dotnet`
 - `vite`
 
-TODO:
-- decide ion %BINARYNAME%
 
 ## Concepts
 

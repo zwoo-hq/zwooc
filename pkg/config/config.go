@@ -69,3 +69,15 @@ func IsReservedKey(key string) bool {
 	}
 	return false
 }
+
+func IsValidRunMode(key string) bool {
+	switch key {
+	case ModeRun:
+		return true
+	case ModeBuild:
+		return true
+	case ModeWatch:
+		return true
+	}
+	return false
+}
