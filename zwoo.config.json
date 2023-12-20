@@ -1,0 +1,96 @@
+{
+  "frontend": {
+    "$adapter": "vite",
+    "$fragments": {
+      "icons": {
+        "build": "node ./src/modules/zwoo-icons/generate-icons.js"
+      },
+      "cards": {
+        "build": "node ./scripts/buildCardAssets.js"
+      },
+      "typecheck": {
+        "build": "vue-tsc --noEmit && echo \"\""
+      },
+      "wasm": {
+        "build": "dotnet publish -c Release -p:RunAOTCompilation=true ../backend/ZwooWasmAdapter/ZwooWasmAdapter.csproj",
+        "build:dev": "dotnet publish ../backend/ZwooWasmAdapter/ZwooWasmAdapter.csproj",
+        "watch": "dotnet watch publish --project ../backend/ZwooWasmAdapter/ZwooWasmAdapter.csproj"
+      }
+    },
+    "dev": {
+      "build": true,
+      "watch": {
+        "includeFragments": ["wasm"]
+      }
+    },
+    "prod": {
+      "build": true,
+      "run": true
+    },
+    "dev-instance": {
+      "build": true
+    },
+    "tauri": {
+      "build": {
+        "args": {
+          "outDir": "dist-tmp"
+        },
+        "alias": "prod",
+        "env": ["VUE_APP_IS_TAURI=true"]
+      }
+    },
+    "preview": {
+      "run": true,
+      "watch": true,
+      "build": {
+        "args": {
+          "outDir": "dist-preview"
+        }
+      }
+    },
+    "dev-proxy": {
+      "watch": true
+    },
+    "analyze": {
+      "build": {
+        "env": ["ANALYZE=true"],
+        "alias": "prod",
+        "skipFragments": true
+      }
+    },
+    "$default": {
+      "build": {
+        "alias": "prod",
+        "pre": {
+          "fragments": ["typecheck", "icon", "cards", "wasm"]
+        }
+      },
+      "watch": {
+        "alias": "dev"
+      }
+    },
+    "$commands": {
+      "lint": {}
+    }
+  },
+  "backend": {
+    "$adapter": "dotnet",
+    "api": {
+      "project": "Zwoo.Backend"
+    },
+    "local": {
+      "project": "Zwoo.Backend.LocalServer"
+    },
+    "ziad": {
+      "project": "Zwoo..."
+    }
+  },
+  "$compounds": {
+    "full": {
+      "watch": {
+        "frontend": "dev",
+        "backend": "dev"
+      }
+    }
+  }
+}
