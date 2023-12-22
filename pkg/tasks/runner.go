@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"errors"
+	"maps"
 	"sync"
 	"sync/atomic"
 )
@@ -18,8 +19,8 @@ type RunnerStatus = map[string]int
 
 type TaskRunner struct {
 	tasks          []Task
-	Status         RunnerStatus
-	Updates        chan RunnerStatus
+	status         RunnerStatus
+	updates        chan RunnerStatus
 	cancel         chan bool
 	cancelComplete chan error
 	RunParallel    bool
@@ -34,9 +35,9 @@ func NewRunner(tasks []Task, parallel bool) *TaskRunner {
 
 	return &TaskRunner{
 		tasks:          tasks,
-		Status:         status,
+		status:         status,
 		RunParallel:    parallel,
-		Updates:        make(chan RunnerStatus, len(tasks)*5),
+		updates:        make(chan RunnerStatus, len(tasks)*5),
 		cancel:         make(chan bool),
 		cancelComplete: make(chan error),
 	}
@@ -63,16 +64,20 @@ func (tr *TaskRunner) Run() error {
 	return tr.runSequential()
 }
 
-func (tr *TaskRunner) updateTaskStatus(task Task, status int) {
-	newMap := make(RunnerStatus)
+func (tr *TaskRunner) Status() RunnerStatus {
+	tr.mutex.RLock()
+	defer tr.mutex.RUnlock()
+	return maps.Clone(tr.status)
+}
 
+func (tr *TaskRunner) Updates() <-chan RunnerStatus {
+	return tr.updates
+}
+
+func (tr *TaskRunner) updateTaskStatus(task Task, status int) {
 	tr.mutex.Lock()
-	tr.Status[task.Name()] = status
-	// copy map
-	for k, v := range tr.Status {
-		newMap[k] = v
-	}
-	tr.Updates <- newMap
+	tr.status[task.Name()] = status
+	tr.updates <- maps.Clone(tr.status)
 	tr.mutex.Unlock()
 }
 
@@ -86,7 +91,7 @@ func (tr *TaskRunner) runSequential() error {
 		if wasCanceled.Load() {
 			tr.cancelComplete <- err
 		}
-		close(tr.Updates)
+		close(tr.updates)
 		close(tr.cancelComplete)
 	}()
 
@@ -140,7 +145,7 @@ func (tr *TaskRunner) runParallel() error {
 				tr.cancelComplete <- nil
 			}
 		}
-		close(tr.Updates)
+		close(tr.updates)
 		close(tr.cancelComplete)
 		for _, cancel := range forwardCancel {
 			close(cancel)
