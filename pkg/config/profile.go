@@ -23,16 +23,17 @@ func (p Profile) Name() string {
 	return p.name
 }
 
-func (p Profile) GetConfig(mode string) (RunConfig, error) {
+func (p Profile) GetConfig(mode string) (ResolvedProfile, error) {
 	if !IsValidRunMode(mode) {
-		return RunConfig{}, fmt.Errorf("invalid run mode: %s", mode)
+		return ResolvedProfile{}, fmt.Errorf("invalid run mode: %s", mode)
 	}
 
 	if options, ok := p.raw[mode]; ok {
-		config := RunConfig{
+		config := ResolvedProfile{
 			Name:      p.name,
 			Adapter:   p.adapter,
 			Directory: p.directory,
+			Mode:      mode,
 		}
 
 		if optionsMap, ok := options.(map[string]interface{}); ok {
@@ -42,5 +43,5 @@ func (p Profile) GetConfig(mode string) (RunConfig, error) {
 		return config, nil
 	}
 
-	return RunConfig{}, fmt.Errorf("profile %s does not contain a definition for mode %s", p.name, mode)
+	return ResolvedProfile{}, fmt.Errorf("profile %s does not contain a definition for mode %s", p.name, mode)
 }

@@ -2,9 +2,10 @@ package tasks
 
 import (
 	"errors"
-	"maps"
 	"sync"
 	"sync/atomic"
+
+	"golang.org/x/exp/maps"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 type RunnerStatus = map[string]int
 
 type TaskRunner struct {
+	name           string
 	tasks          []Task
 	status         RunnerStatus
 	updates        chan RunnerStatus
@@ -27,13 +29,14 @@ type TaskRunner struct {
 	mutex          sync.RWMutex
 }
 
-func NewRunner(tasks []Task, parallel bool) *TaskRunner {
+func NewRunner(name string, tasks []Task, parallel bool) *TaskRunner {
 	status := make(RunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
 	}
 
 	return &TaskRunner{
+		name:           name,
 		tasks:          tasks,
 		status:         status,
 		RunParallel:    parallel,
@@ -43,12 +46,16 @@ func NewRunner(tasks []Task, parallel bool) *TaskRunner {
 	}
 }
 
-func NewParallelRunner(tasks []Task) *TaskRunner {
-	return NewRunner(tasks, true)
+func NewParallelRunner(name string, tasks []Task) *TaskRunner {
+	return NewRunner(name, tasks, true)
 }
 
-func NewSequentialRunner(tasks []Task) *TaskRunner {
-	return NewRunner(tasks, false)
+func NewSequentialRunner(name string, tasks []Task) *TaskRunner {
+	return NewRunner(name, tasks, false)
+}
+
+func (tr *TaskRunner) Name() string {
+	return tr.name
 }
 
 func (tr *TaskRunner) Cancel() error {

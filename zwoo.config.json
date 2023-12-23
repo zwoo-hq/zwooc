@@ -59,7 +59,7 @@
       }
     },
     "test": {
-      "run": {
+      "build": {
         "mode": "foo",
         "project": "bar",
         "args": {
@@ -68,7 +68,7 @@
         "env": ["VUE_APP_IS_TAURI=true"],
         "alias": "prod",
         "$pre": {
-          "fragments": ["typecheck", "icon", "cards", "wasm"]
+          "fragments": ["typecheck", "icons", "cards", "wasm"]
         },
         "$post": {
           "command": "test"

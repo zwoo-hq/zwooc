@@ -19,6 +19,13 @@ func NewCommandTask(name string, cmd *exec.Cmd) Task {
 	}
 }
 
+func NewBasicCommandTask(name string, cmd string, dir string) Task {
+	return commandTask{
+		name: name,
+		cmd:  helper.NewCommand(cmd, dir),
+	}
+}
+
 func (ct commandTask) Name() string {
 	return ct.name
 }

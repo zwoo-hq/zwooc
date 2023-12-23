@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/urfave/cli/v2"
@@ -76,31 +77,11 @@ func main() {
 
 func execProfile(config config.Config, runMode string, c *cli.Context) error {
 
-	profiles, err := config.GetProfiles()
+	taskList, err := config.ResolveProfile(c.Args().First(), runMode)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	for _, profile := range profiles {
-		if profile.Name() != c.Args().First() {
-			continue
-		}
-
-		runConfig, err := profile.GetConfig(runMode)
-		if err != nil {
-			ui.HandleError(err)
-		}
-
-		ui.Logger.Debugf("running profile: %s", profile.Name())
-		ui.Logger.Debugf("profile options: %v", runConfig.Options)
-		ui.Logger.Debugf("profile options: %v", runConfig.GetBaseOptions())
-		ui.Logger.Debugf("profile options: %v", runConfig.GetProfileOptions())
-		ui.Logger.Debugf("profile options: %v", runConfig.GetViteOptions())
-		ui.Logger.Debugf("profile options: %v", runConfig.GetDotNetOptions())
-		ui.Logger.Debugf("profile options: %v", runConfig.GetPreHooks())
-		ui.Logger.Debugf("profile options: %v", runConfig.GetPostHooks())
-	}
-
-	ui.Logger.Error("no profile found with name: " + c.Args().First())
+	fmt.Println(taskList)
 	return nil
 }

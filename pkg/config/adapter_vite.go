@@ -1,14 +1,14 @@
-package vite
+package config
 
 import (
 	"os"
 	"os/exec"
 	"path/filepath"
 
-	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func BuildCommand(c config.RunConfig) *exec.Cmd {
+func CreateViteTask(c ResolvedProfile) tasks.Task {
 	cmd := exec.Command("yarn")
 	profileOptions := c.GetProfileOptions()
 
@@ -23,5 +23,5 @@ func BuildCommand(c config.RunConfig) *exec.Cmd {
 		cmd.Dir = filepath.Join(wd, c.Directory)
 	}
 
-	return cmd
+	return tasks.NewCommandTask(c.Name, cmd)
 }

@@ -30,7 +30,7 @@ func MapToStruct[T any](data map[string]interface{}, target T) T {
 			// convert slice
 			if field.Kind() == reflect.Slice {
 				sliceLen := len(valueType)
-				slice := reflect.MakeSlice(field.Type(), sliceLen, sliceLen)
+				slice := reflect.MakeSlice(field.Type(), 0, sliceLen)
 				for i := 0; i < sliceLen; i++ {
 					slice = reflect.Append(slice, reflect.ValueOf(valueType[i]))
 				}
