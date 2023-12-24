@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -124,15 +123,6 @@ func execProfile(config config.Config, runMode string, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	fmt.Println(taskList)
-	for _, step := range taskList.Steps {
-		fmt.Println(step.Name)
-		runner := tasks.NewRunner(step.Name, step.Tasks, step.RunParallel)
-		if err := runner.Run(); err != nil {
-			ui.HandleError(err)
-		}
-		fmt.Println("done")
-	}
-
+	ui.RunStatic(taskList)
 	return nil
 }

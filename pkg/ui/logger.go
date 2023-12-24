@@ -24,32 +24,27 @@ func init() {
 				SetString("DEBUG").
 				Padding(0, 1, 0, 1).
 				Bold(true).
-				Background(lipgloss.Color("252")).
-				Foreground(lipgloss.Color("0")),
+				Foreground(lipgloss.Color("252")),
 			log.InfoLevel: lipgloss.NewStyle().
 				SetString("INFO").
 				Padding(0, 1, 0, 2).
 				Bold(true).
-				Background(lipgloss.Color("081")).
-				Foreground(lipgloss.Color("0")),
+				Foreground(lipgloss.Color("081")),
 			log.WarnLevel: lipgloss.NewStyle().
 				SetString("WARN").
 				Padding(0, 1, 0, 2).
 				Bold(true).
-				Background(lipgloss.Color("220")).
-				Foreground(lipgloss.Color("0")),
+				Foreground(lipgloss.Color("220")),
 			log.ErrorLevel: lipgloss.NewStyle().
 				SetString("ERROR").
 				Padding(0, 1, 0, 1).
 				Bold(true).
-				Background(lipgloss.Color("196")).
-				Foreground(lipgloss.Color("0")),
+				Foreground(lipgloss.Color("196")),
 			log.FatalLevel: lipgloss.NewStyle().
 				SetString("FATAL").
 				Padding(0, 1, 0, 1).
 				Bold(true).
-				Background(lipgloss.Color("134")).
-				Foreground(lipgloss.Color("0")),
+				Foreground(lipgloss.Color("134")),
 		},
 	})
 }

@@ -180,7 +180,7 @@ func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
 }
 
 func (c Config) resolveHook(hookType string, profile ResolvedProfile, hook HookOptions) ([]tasks.Task, error) {
-	baseName := helper.BuildName(profile.Name, profile.Mode, hookType)
+	baseName := hookType
 	taskList := []tasks.Task{}
 	if hook.Command != "" {
 		taskList = append(taskList, tasks.NewBasicCommandTask(baseName, hook.Command, profile.Directory))
