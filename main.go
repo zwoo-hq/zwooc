@@ -57,6 +57,8 @@ func main() {
 		},
 	})
 
+	ui.PrintSuccess("test", 2*time.Second)
+
 	return
 	path, err := helper.FindFile("zwoo.config.json")
 	if err != nil {

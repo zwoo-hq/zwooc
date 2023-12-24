@@ -3,53 +3,11 @@ package ui
 import (
 	"fmt"
 	"sort"
-	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/log"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
-)
-
-var (
-	pendingSpinner = spinner.Spinner{
-		Frames: []string{
-			"▰▱▱▱▱",
-			"▱▰▱▱▱",
-			"▱▱▰▱▱",
-			"▱▱▱▰▱",
-			"▱▱▱▱▰",
-			"▱▱▱▰▱",
-			"▱▱▰▱▱",
-			"▱▰▱▱▱",
-			"▰▱▱▱▱",
-		},
-		FPS: time.Second / 6,
-	}
-
-	runningSpinner = spinner.Spinner{
-		Frames: []string{
-			"▱▱▱▱▱",
-			"▰▱▱▱▱",
-			"▰▰▱▱▱",
-			"▰▰▰▱▱",
-			"▰▰▰▰▰",
-			"▱▰▰▰▰",
-			"▱▱▰▰▰",
-			"▱▱▱▰▰",
-			"▱▱▱▱▰",
-			"▱▱▱▱▱",
-		},
-		FPS: time.Second / 8,
-	}
-
-	pendingStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
-	runningStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("75"))
-	successStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Padding(0, 2).SetString("✓")
-	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("124")).Padding(0, 2).SetString("✗")
-	canceledStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("246")).Padding(0, 2).SetString("-")
 )
 
 type taskStatus struct {
@@ -70,26 +28,18 @@ type updateMsg tasks.RunnerStatus
 type stageFinishedMsg int
 type errorMsg struct{ error }
 
-func CreateFullScreenView(tasks config.TaskList) {
-	if len(tasks.Steps) == 0 {
-		log.Fatal("no steps found")
-	}
-
+func CreateFullScreenView(tasks config.TaskList) error {
 	model := model{
 		tasks:        tasks,
 		currentIndex: 0,
 	}
+
 	p := tea.NewProgram(&model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		log.Info("cant run")
-		log.Fatal(err)
+		return err
 	}
 
-	for u := range model.currentRunner.Updates() {
-		model.currentState = u
-	}
-
-	fmt.Println(model.View())
+	return nil
 }
 
 func (m *model) Init() tea.Cmd {
@@ -165,13 +115,13 @@ func (m *model) View() (s string) {
 
 	for _, task := range m.tasksState {
 		if task.hasSpinner() {
-			s += fmt.Sprintf(" - %s %s: %s\n", task.spinner.View(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", task.spinner.View(), task.name, convertState(task.status))
 		} else if task.status == tasks.StatusDone {
-			s += fmt.Sprintf(" - %s %s: %s\n", successStyle.Render(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", successStyle.Render(), task.name, convertState(task.status))
 		} else if task.status == tasks.StatusError {
-			s += fmt.Sprintf(" - %s %s: %s\n", errorStyle.Render(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", errorStyle.Render(), task.name, convertState(task.status))
 		} else if task.status == tasks.StatusCanceled {
-			s += fmt.Sprintf(" - %s %s: %s\n", canceledStyle.Render(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", canceledStyle.Render(), task.name, convertState(task.status))
 		}
 	}
 	return
