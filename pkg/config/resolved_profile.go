@@ -47,7 +47,7 @@ func (r ResolvedProfile) GetPostHooks() HookOptions {
 
 func (r ResolvedProfile) GetTask() (tasks.Task, error) {
 	switch r.Adapter {
-	case AdapterVite:
+	case AdapterViteYarn:
 		return CreateViteTask(r), nil
 	case AdapterDotnet:
 		return tasks.Empty(), nil

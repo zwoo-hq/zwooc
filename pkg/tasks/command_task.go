@@ -44,8 +44,9 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 		err := ct.cmd.Wait()
 		if err != nil {
 			errChan <- err
-			close(errChan)
 		}
+		close(errChan)
+		wg.Done()
 	}()
 
 	select {
@@ -56,7 +57,6 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 		}
 	case <-helper.WaitFor(&wg):
 		// task finished
-		close(errChan)
 		for err := range errChan {
 			// there is at most one error
 			return err

@@ -8,15 +8,6 @@ type Fragment struct {
 	raw       map[string]interface{}
 }
 
-func newFragment(name, directory string, data map[string]interface{}) Fragment {
-	f := Fragment{
-		name:      name,
-		directory: directory,
-		raw:       data,
-	}
-	return f
-}
-
 func (f Fragment) Name() string {
 	return f.name
 }

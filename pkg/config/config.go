@@ -7,8 +7,8 @@ const (
 )
 
 const (
-	AdapterVite   = "vite"
-	AdapterDotnet = "dotnet"
+	AdapterViteYarn = "vite-yarn"
+	AdapterDotnet   = "dotnet"
 )
 
 const (

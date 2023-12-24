@@ -4,13 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 type Config struct {
-	raw map[string]interface{}
+	baseDir string
+	raw     map[string]interface{}
 }
 
 func Load(path string) (Config, error) {
@@ -26,7 +28,8 @@ func Load(path string) (Config, error) {
 	}
 
 	return Config{
-		raw: data,
+		baseDir: filepath.Dir(path),
+		raw:     data,
 	}, nil
 }
 
@@ -45,7 +48,12 @@ func (c Config) GetProfiles() ([]Profile, error) {
 
 			for profileKey, profileValue := range project {
 				if !IsReservedKey(profileKey) {
-					newProfile := newProfile(profileKey, projectAdapter, projectKey, profileValue.(map[string]interface{}))
+					newProfile := Profile{
+						name:      profileKey,
+						adapter:   projectAdapter,
+						directory: filepath.Join(c.baseDir, projectKey),
+						raw:       profileValue.(map[string]interface{}),
+					}
 					profiles = append(profiles, newProfile)
 				}
 			}
@@ -63,7 +71,11 @@ func (c Config) GetFragments() ([]Fragment, error) {
 			project := projectValue.(map[string]interface{})
 			if fragmentDefinitions, ok := project[KeyFragment]; ok {
 				for fragmentKey, fragmentValue := range fragmentDefinitions.(map[string]interface{}) {
-					newFragment := newFragment(fragmentKey, projectKey, fragmentValue.(map[string]interface{}))
+					newFragment := Fragment{
+						name:      fragmentKey,
+						directory: filepath.Join(c.baseDir, projectKey),
+						raw:       fragmentValue.(map[string]interface{}),
+					}
 					fragments = append(fragments, newFragment)
 				}
 			}
@@ -72,7 +84,11 @@ func (c Config) GetFragments() ([]Fragment, error) {
 
 	if fragmentDefinitions, ok := c.raw[KeyFragment]; ok {
 		for fragmentKey, fragmentValue := range fragmentDefinitions.(map[string]interface{}) {
-			newFragment := newFragment(fragmentKey, "", fragmentValue.(map[string]interface{}))
+			newFragment := Fragment{
+				name:      fragmentKey,
+				directory: c.baseDir,
+				raw:       fragmentValue.(map[string]interface{}),
+			}
 			fragments = append(fragments, newFragment)
 		}
 	}
@@ -114,24 +130,29 @@ func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
 		return TaskList{}, err
 	}
 
+	steps := []ExecutionStep{}
+	if len(preStage) > 0 {
+		steps = append(steps, ExecutionStep{
+			Tasks:       preStage,
+			Name:        helper.BuildName(name, KeyPre),
+			RunParallel: true,
+		})
+	}
+	steps = append(steps, ExecutionStep{
+		Tasks: []tasks.Task{mainTask},
+		Name:  name,
+	})
+	if len(postStage) > 0 {
+		steps = append(steps, ExecutionStep{
+			Tasks:       postStage,
+			Name:        helper.BuildName(name, KeyPost),
+			RunParallel: true,
+		})
+	}
+
 	return TaskList{
-		Name: name,
-		Steps: []ExecutionStep{
-			ExecutionStep{
-				Tasks:       preStage,
-				Name:        helper.BuildName(name, KeyPre),
-				RunParallel: true,
-			},
-			ExecutionStep{
-				Tasks: []tasks.Task{mainTask},
-				Name:  name,
-			},
-			ExecutionStep{
-				Tasks:       postStage,
-				Name:        helper.BuildName(name, KeyPost),
-				RunParallel: true,
-			},
-		},
+		Name:  name,
+		Steps: steps,
 	}, nil
 }
 

@@ -30,36 +30,35 @@ func sleepTask(name string, dur time.Duration) tasks.Task {
 }
 
 func main() {
-	ui.CreateFullScreenView(config.TaskList{
-		Name: "test",
-		Steps: []config.ExecutionStep{
-			{
-				Name:        "pre",
-				RunParallel: false,
-				Tasks: []tasks.Task{
-					sleepTask("task 1", 2),
-					sleepTask("task 2", 3),
-					sleepTask("task 3", 4),
-				},
-			},
-			{
-				Name: "main",
-				Tasks: []tasks.Task{
-					sleepTask("dotnet build", 7),
-				},
-			},
-			{
-				Name: "post",
-				Tasks: []tasks.Task{
-					sleepTask("cleanup", 4),
-				},
-			},
-		},
-	})
+	// ui.CreateFullScreenView(config.TaskList{
+	// 	Name: "test",
+	// 	Steps: []config.ExecutionStep{
+	// 		{
+	// 			Name:        "pre",
+	// 			RunParallel: false,
+	// 			Tasks: []tasks.Task{
+	// 				sleepTask("task 1", 2),
+	// 				sleepTask("task 2", 3),
+	// 				sleepTask("task 3", 4),
+	// 			},
+	// 		},
+	// 		{
+	// 			Name: "main",
+	// 			Tasks: []tasks.Task{
+	// 				sleepTask("dotnet build", 7),
+	// 			},
+	// 		},
+	// 		{
+	// 			Name: "post",
+	// 			Tasks: []tasks.Task{
+	// 				sleepTask("cleanup", 4),
+	// 			},
+	// 		},
+	// 	},
+	// })
 
-	ui.PrintSuccess("test", 2*time.Second)
+	// ui.PrintSuccess("test", 2*time.Second)
 
-	return
 	path, err := helper.FindFile("zwoo.config.json")
 	if err != nil {
 		ui.HandleError(err)
@@ -126,5 +125,14 @@ func execProfile(config config.Config, runMode string, c *cli.Context) error {
 	}
 
 	fmt.Println(taskList)
+	for _, step := range taskList.Steps {
+		fmt.Println(step.Name)
+		runner := tasks.NewRunner(step.Name, step.Tasks, step.RunParallel)
+		if err := runner.Run(); err != nil {
+			ui.HandleError(err)
+		}
+		fmt.Println("done")
+	}
+
 	return nil
 }
