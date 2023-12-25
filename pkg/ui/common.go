@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -47,14 +48,9 @@ var (
 	canceledStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
 )
 
-func PrintSuccess(name string, dur time.Duration) {
-	fmt.Printf(" %s successfully ran %s in %s\n", successStyle.Render("✓"), name, dur)
-}
-
-func PrintError(name string) {
-	fmt.Printf(" %s failed running %s\n", errorStyle.Render("✗"), name)
-}
-
-func PrintCancel(name string) {
-	fmt.Printf(" %s %s was canceled\n", canceledStyle.Render("-"), name)
+func HandleError(err error) {
+	fmt.Println(errorStyle.Render("zwooc encountered an error"))
+	fmt.Println(err)
+	fmt.Println(runningStyle.Render("exiting zwooc"))
+	os.Exit(1)
 }

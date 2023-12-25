@@ -188,7 +188,6 @@ func (c Config) resolveHook(hookType string, profile ResolvedProfile, hook HookO
 
 	for _, fragment := range hook.Fragments {
 		fragmentConfig, err := c.resolveFragment(fragment, profile.Mode, profile.Name)
-		fmt.Println(fragmentConfig)
 		if err != nil {
 			return []tasks.Task{}, err
 		}

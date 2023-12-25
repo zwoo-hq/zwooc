@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -28,17 +29,20 @@ type updateMsg tasks.RunnerStatus
 type stageFinishedMsg int
 type errorMsg struct{ error }
 
-func CreateFullScreenView(tasks config.TaskList) error {
+func newInteractiveRunner(tasks config.TaskList) error {
 	model := model{
 		tasks:        tasks,
 		currentIndex: 0,
 	}
 
+	execStart := time.Now()
 	p := tea.NewProgram(&model, tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		return err
 	}
 
+	execEnd := time.Now()
+	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), tasks.Name, execEnd.Sub(execStart))
 	return nil
 }
 
@@ -84,7 +88,7 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.initStage(stage + 1)
 		return m, m.startStage
 	case errorMsg:
-		Logger.Error(msg.error)
+		HandleError(msg.error)
 		return m, tea.Quit
 	}
 
@@ -117,11 +121,11 @@ func (m *model) View() (s string) {
 		if task.hasSpinner() {
 			s += fmt.Sprintf(" %s %s: %s\n", task.spinner.View(), task.name, convertState(task.status))
 		} else if task.status == tasks.StatusDone {
-			s += fmt.Sprintf(" %s %s: %s\n", successStyle.Render(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", successStyle.Padding(0, 2).Render("✓"), task.name, convertState(task.status))
 		} else if task.status == tasks.StatusError {
-			s += fmt.Sprintf(" %s %s: %s\n", errorStyle.Render(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", errorStyle.Padding(0, 2).Render("✗"), task.name, convertState(task.status))
 		} else if task.status == tasks.StatusCanceled {
-			s += fmt.Sprintf(" %s %s: %s\n", canceledStyle.Render(), task.name, convertState(task.status))
+			s += fmt.Sprintf(" %s %s: %s\n", canceledStyle.Padding(0, 2).Render("-"), task.name, convertState(task.status))
 		}
 	}
 	return

@@ -20,7 +20,7 @@ type staticView struct {
 }
 
 // RunStatic runs a config.TaskList with a static ui suited for non TTY environments
-func RunStatic(taskList config.TaskList) error {
+func newStaticRunner(taskList config.TaskList) {
 	model := &staticView{
 		tasks: taskList,
 	}
@@ -52,8 +52,7 @@ func RunStatic(taskList config.TaskList) error {
 	}
 
 	execEnd := time.Now()
-	PrintSuccess(taskList.Name, execEnd.Sub(execStart))
-	return nil
+	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), taskList.Name, execEnd.Sub(execStart))
 }
 
 func (m *staticView) ReceiveUpdates(c <-chan tasks.RunnerStatus, prefix string) {

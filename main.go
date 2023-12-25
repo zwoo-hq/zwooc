@@ -2,12 +2,10 @@ package main
 
 import (
 	"os"
-	"time"
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
-	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
@@ -17,16 +15,16 @@ type (
 	}
 )
 
-func sleepTask(name string, dur time.Duration) tasks.Task {
-	return tasks.NewTask(name, func(cancel <-chan bool) error {
-		select {
-		case <-cancel:
-			return nil
-		case <-time.After(dur * time.Second):
-			return nil
-		}
-	})
-}
+// func sleepTask(name string, dur time.Duration) tasks.Task {
+// 	return tasks.NewTask(name, func(cancel <-chan bool, out io.Writer) error {
+// 		select {
+// 		case <-cancel:
+// 			return nil
+// 		case <-time.After(dur * time.Second):
+// 			return nil
+// 		}
+// 	})
+// }
 
 func main() {
 	// ui.CreateFullScreenView(config.TaskList{
@@ -62,7 +60,6 @@ func main() {
 	if err != nil {
 		ui.HandleError(err)
 	}
-	ui.Logger.Debugf("loading config file: %s", path)
 
 	conf, err := config.Load(path)
 	if err != nil {
@@ -123,6 +120,6 @@ func execProfile(config config.Config, runMode string, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	ui.RunStatic(taskList)
+	ui.NewRunner(taskList, ui.ViewOptions{})
 	return nil
 }

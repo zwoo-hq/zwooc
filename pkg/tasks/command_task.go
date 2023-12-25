@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"bytes"
 	"os/exec"
 	"sync"
 
@@ -8,26 +9,43 @@ import (
 )
 
 type commandTask struct {
-	name string
-	cmd  *exec.Cmd
+	name       string
+	cmd        *exec.Cmd
+	outWrapper *bytes.Buffer
 }
 
 func NewCommandTask(name string, cmd *exec.Cmd) Task {
+	buf := &bytes.Buffer{}
+	cmd.Stdout = buf
+	cmd.Stderr = buf
 	return commandTask{
-		name: name,
-		cmd:  cmd,
+		name:       name,
+		cmd:        cmd,
+		outWrapper: buf,
 	}
 }
 
-func NewBasicCommandTask(name string, cmd string, dir string) Task {
+func NewBasicCommandTask(name string, command string, dir string) Task {
+	buf := &bytes.Buffer{}
+	cmd := exec.Command("sh", "-c", command)
+	if dir != "" {
+		cmd.Dir = dir
+	}
+	cmd.Stdout = buf
+	cmd.Stderr = buf
 	return commandTask{
-		name: name,
-		cmd:  helper.NewCommand(cmd, dir),
+		name:       name,
+		cmd:        cmd,
+		outWrapper: buf,
 	}
 }
 
 func (ct commandTask) Name() string {
 	return ct.name
+}
+
+func (ct commandTask) Out() bytes.Buffer {
+	return *ct.outWrapper
 }
 
 func (ct commandTask) Run(cancel <-chan bool) error {
