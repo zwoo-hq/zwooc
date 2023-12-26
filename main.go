@@ -15,47 +15,7 @@ type (
 	}
 )
 
-// func sleepTask(name string, dur time.Duration) tasks.Task {
-// 	return tasks.NewTask(name, func(cancel <-chan bool, out io.Writer) error {
-// 		select {
-// 		case <-cancel:
-// 			return nil
-// 		case <-time.After(dur * time.Second):
-// 			return nil
-// 		}
-// 	})
-// }
-
 func main() {
-	// ui.CreateFullScreenView(config.TaskList{
-	// 	Name: "test",
-	// 	Steps: []config.ExecutionStep{
-	// 		{
-	// 			Name:        "pre",
-	// 			RunParallel: false,
-	// 			Tasks: []tasks.Task{
-	// 				sleepTask("task 1", 2),
-	// 				sleepTask("task 2", 3),
-	// 				sleepTask("task 3", 4),
-	// 			},
-	// 		},
-	// 		{
-	// 			Name: "main",
-	// 			Tasks: []tasks.Task{
-	// 				sleepTask("dotnet build", 7),
-	// 			},
-	// 		},
-	// 		{
-	// 			Name: "post",
-	// 			Tasks: []tasks.Task{
-	// 				sleepTask("cleanup", 4),
-	// 			},
-	// 		},
-	// 	},
-	// })
-
-	// ui.PrintSuccess("test", 2*time.Second)
-
 	path, err := helper.FindFile("zwoo.config.json")
 	if err != nil {
 		ui.HandleError(err)
@@ -69,6 +29,19 @@ func main() {
 	app := &cli.App{
 		Name:  "zwooc",
 		Usage: "the official cli for building and developing zwoo",
+		Flags: []cli.Flag{
+			&cli.BoolFlag{
+				Name:  "no-tty",
+				Usage: "force disable tty features",
+				Value: false,
+			},
+			&cli.BoolFlag{
+				Name:    "quite",
+				Aliases: []string{"q"},
+				Usage:   "disable all console output",
+				Value:   false,
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:  config.ModeRun,
@@ -114,12 +87,16 @@ func main() {
 }
 
 func execProfile(config config.Config, runMode string, c *cli.Context) error {
+	viewOptions := ui.ViewOptions{
+		DisableTUI: c.Bool("no-tty"),
+		QuiteMode:  c.Bool("quite"),
+	}
 
 	taskList, err := config.ResolveProfile(c.Args().First(), runMode)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	ui.NewRunner(taskList, ui.ViewOptions{})
+	ui.NewRunner(taskList, viewOptions)
 	return nil
 }

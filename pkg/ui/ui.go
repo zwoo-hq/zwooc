@@ -1,12 +1,23 @@
 package ui
 
-import "github.com/zwoo-hq/zwooc/pkg/config"
+import (
+	"github.com/zwoo-hq/zwooc/pkg/config"
+)
 
 func NewRunner(tasks config.TaskList, options ViewOptions) {
-	newStaticRunner(tasks)
-	return
+	if options.QuiteMode {
+		newQuiteRunner(tasks)
+		return
+	}
+
+	if options.DisableTUI {
+		newStaticRunner(tasks)
+		return
+	}
+
 	// try interactive view
 	if err := newInteractiveRunner(tasks); err != nil {
 		// fall back to static view
+		newStaticRunner(tasks)
 	}
 }

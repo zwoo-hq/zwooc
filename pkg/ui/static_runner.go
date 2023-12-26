@@ -48,10 +48,8 @@ func newStaticRunner(taskList config.TaskList) {
 			HandleError(err)
 		}
 
-		// wait some time to make sure all updates are in
 		end := time.Now()
 		model.wg.Wait()
-
 		fmt.Printf("╰─── %s %s successfully ran %s\n", successStyle.Render("✓"), step.Name, end.Sub(start))
 	}
 

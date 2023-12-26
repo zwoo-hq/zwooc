@@ -1,3 +1,6 @@
 package ui
 
-type ViewOptions struct{}
+type ViewOptions struct {
+	DisableTUI bool
+	QuiteMode  bool
+}
