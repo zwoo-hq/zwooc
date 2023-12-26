@@ -33,6 +33,10 @@ func newStaticRunner(taskList config.TaskList) {
 		start := time.Now()
 		fmt.Printf("╭─── running step %s (%d/%d)\n", lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true).Render(step.Name), i+1, len(taskList.Steps))
 
+		for _, t := range step.Tasks {
+			t.Pipe(os.Stdout)
+		}
+
 		model.currentRunner = tasks.NewRunner(step.Name, step.Tasks, step.RunParallel)
 		model.currentState = tasks.RunnerStatus{}
 		model.wg = &sync.WaitGroup{}

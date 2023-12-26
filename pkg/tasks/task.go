@@ -1,9 +1,11 @@
 package tasks
 
-import "bytes"
+import (
+	"io"
+)
 
 type Task interface {
 	Name() string
 	Run(cancel <-chan bool) error
-	Out() bytes.Buffer
+	Pipe(destination io.Writer)
 }

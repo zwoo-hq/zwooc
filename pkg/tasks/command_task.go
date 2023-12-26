@@ -1,7 +1,7 @@
 package tasks
 
 import (
-	"bytes"
+	"io"
 	"os/exec"
 	"sync"
 
@@ -9,34 +9,34 @@ import (
 )
 
 type commandTask struct {
-	name       string
-	cmd        *exec.Cmd
-	outWrapper *bytes.Buffer
+	name   string
+	cmd    *exec.Cmd
+	writer *multiWriter
 }
 
 func NewCommandTask(name string, cmd *exec.Cmd) Task {
-	buf := &bytes.Buffer{}
-	cmd.Stdout = buf
-	cmd.Stderr = buf
+	writer := newMultiWriter()
+	cmd.Stdout = writer
+	cmd.Stderr = writer
 	return commandTask{
-		name:       name,
-		cmd:        cmd,
-		outWrapper: buf,
+		name:   name,
+		cmd:    cmd,
+		writer: writer,
 	}
 }
 
 func NewBasicCommandTask(name string, command string, dir string) Task {
-	buf := &bytes.Buffer{}
+	writer := newMultiWriter()
 	cmd := exec.Command("sh", "-c", command)
 	if dir != "" {
 		cmd.Dir = dir
 	}
-	cmd.Stdout = buf
-	cmd.Stderr = buf
+	cmd.Stdout = writer
+	cmd.Stderr = writer
 	return commandTask{
-		name:       name,
-		cmd:        cmd,
-		outWrapper: buf,
+		name:   name,
+		cmd:    cmd,
+		writer: writer,
 	}
 }
 
@@ -44,8 +44,8 @@ func (ct commandTask) Name() string {
 	return ct.name
 }
 
-func (ct commandTask) Out() bytes.Buffer {
-	return *ct.outWrapper
+func (ct commandTask) Pipe(destination io.Writer) {
+	ct.writer.Pipe(destination)
 }
 
 func (ct commandTask) Run(cancel <-chan bool) error {
