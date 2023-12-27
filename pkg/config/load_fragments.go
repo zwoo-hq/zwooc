@@ -26,7 +26,7 @@ func (c Config) ResolvedFragment(key string, extraArgs []string) (tasks.Task, er
 		return tasks.Empty(), err
 	}
 
-	return fragment.GetTask(extraArgs)
+	return fragment.GetTask(extraArgs), nil
 }
 
 func (c Config) resolveFragment(key, mode, profile string) (ResolvedFragment, error) {

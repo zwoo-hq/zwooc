@@ -52,6 +52,13 @@ type (
 	}
 )
 
+type (
+	Hookable interface {
+		GetPreHooks() ResolvedHook
+		GetPostHooks() ResolvedHook
+	}
+)
+
 func IsReservedKey(key string) bool {
 	switch key {
 	case KeyAdapter:

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -13,20 +14,34 @@ type ResolvedFragment struct {
 	Options    map[string]interface{}
 }
 
-// func (r ResolvedFragment) GetPreHooks() HookOptions {
-// 	if options, ok := r.Options[KeyPre]; ok {
-// 		return helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
-// 	}
-// 	return HookOptions{}
-// }
+var _ Hookable = (*ResolvedFragment)(nil)
 
-// func (r ResolvedFragment) GetPostHooks() HookOptions {
-// 	if options, ok := r.Options[KeyPost]; ok {
-// 		return helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
-// 	}
-// 	return HookOptions{}
-// }
+func (r ResolvedFragment) GetPreHooks() ResolvedHook {
+	if options, ok := r.Options[KeyPre]; ok {
+		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
+		return options.ResolveWithFragment(r, KeyPre)
+	}
+	return ResolvedHook{}
+}
 
-func (r ResolvedFragment) GetTask(extraArgs []string) (tasks.Task, error) {
-	return tasks.NewBasicCommandTask(r.Name, r.Command, r.Directory, extraArgs), nil
+func (r ResolvedFragment) GetPostHooks() ResolvedHook {
+	if options, ok := r.Options[KeyPost]; ok {
+		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
+		return options.ResolveWithFragment(r, KeyPost)
+	}
+	return ResolvedHook{}
+}
+
+func (r ResolvedFragment) GetTask(extraArgs []string) tasks.Task {
+	if r.Command == "" {
+		return tasks.Empty()
+	}
+	return tasks.NewBasicCommandTask(r.Name, r.Command, r.Directory, extraArgs)
+}
+
+func (r ResolvedFragment) GetTaskWithBaseName(baseName string, extraArgs []string) tasks.Task {
+	if r.Command == "" {
+		return tasks.Empty()
+	}
+	return tasks.NewBasicCommandTask(helper.BuildName(baseName, r.Name), r.Command, r.Directory, extraArgs)
 }
