@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ type staticView struct {
 	tasks         config.TaskList
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
+	wasCanceled   bool
 	wg            *sync.WaitGroup
 }
 
@@ -30,27 +32,48 @@ func newStaticRunner(taskList config.TaskList) {
 	execStart := time.Now()
 
 	for i, step := range taskList.Steps {
-		start := time.Now()
-		fmt.Printf("╭─── running step %s (%d/%d)\n", lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true).Render(step.Name), i+1, len(taskList.Steps))
-
+		// capture the output of each step
+		outputs := map[string]*tasks.CommandCapturer{}
 		for _, t := range step.Tasks {
-			t.Pipe(os.Stdout)
+			cap := tasks.NewCapturer()
+			outputs[t.Name()] = cap
+			t.Pipe(cap)
 		}
 
+		// setup new runner
 		model.currentRunner = tasks.NewRunner(step.Name, step.Tasks, step.RunParallel)
 		model.currentState = tasks.RunnerStatus{}
 		model.wg = &sync.WaitGroup{}
 		model.wg.Add(1)
 		go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")
 
-		if err := model.currentRunner.Run(); err != nil {
+		start := time.Now()
+		fmt.Printf("╭─── running step %s (%d/%d)\n", lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true).Render(step.Name), i+1, len(taskList.Steps))
+		err := model.currentRunner.Run()
+		end := time.Now()
+		// wait until everything is completed
+		model.wg.Wait()
+
+		if err != nil {
+			// handle runner error
 			fmt.Printf("╰─── %s %s failed\n", errorStyle.Render("✗"), step.Name)
-			HandleError(err)
+			for key, status := range model.currentRunner.Status() {
+				if status == tasks.StatusError {
+					fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), key)
+					fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), err)
+					fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
+					fmt.Println(canceledStyle.Render(strings.TrimSpace(outputs[key].String())))
+				}
+			}
+			return
 		}
 
-		end := time.Now()
-		model.wg.Wait()
+		if model.wasCanceled {
+			fmt.Printf("╰─── %s %s was canceled - stopping execution\n", canceledStyle.Render("-"), step.Name)
+			return
+		}
 		fmt.Printf("╰─── %s %s successfully ran %s\n", successStyle.Render("✓"), step.Name, end.Sub(start))
+
 	}
 
 	execEnd := time.Now()
@@ -87,6 +110,7 @@ func (m *staticView) setupInterruptHandler() {
 		for range c {
 			if m.currentRunner != nil {
 				m.currentRunner.Cancel()
+				m.wasCanceled = true
 				break
 			}
 		}

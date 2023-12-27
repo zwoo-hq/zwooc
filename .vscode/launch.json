@@ -6,7 +6,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "main.go",
-      "args": ["exec", "print:build"]
+      "args": ["build", "dev"]
     }
   ]
 }

@@ -25,7 +25,7 @@
   },
   "$fragments": {
     "print2": {
-      "build": "echo $PWD && sleep 3"
+      "build": "echo $PWD && exit 2 && sleep 3"
     }
   }
 }

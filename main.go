@@ -32,7 +32,7 @@ func createProfileCommand(mode, usage string, conf config.Config) *cli.Command {
 		ArgsUsage: "[profile]",
 		Flags:     createGlobalFlags(),
 		Action: func(c *cli.Context) error {
-			return execProfile(conf, config.ModeRun, c)
+			return execProfile(conf, mode, c)
 		},
 	}
 }
