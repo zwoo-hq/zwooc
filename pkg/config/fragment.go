@@ -13,8 +13,8 @@ func (f Fragment) Name() string {
 }
 
 func (f Fragment) GetConfig(mode string, callingProfile string) (ResolvedFragment, error) {
-	if !IsValidRunMode(mode) {
-		return ResolvedFragment{}, fmt.Errorf("invalid run mode: %s", mode)
+	if !IsValidRunMode(mode) && mode != "" {
+		return ResolvedFragment{}, fmt.Errorf("invalid run mode: '%s'", mode)
 	}
 
 	precedenceIndexes := []string{
@@ -36,5 +36,5 @@ func (f Fragment) GetConfig(mode string, callingProfile string) (ResolvedFragmen
 		}
 	}
 
-	return ResolvedFragment{}, fmt.Errorf("fragment %s does not contain a definition for mode %s", f.name, mode)
+	return ResolvedFragment{}, fmt.Errorf("fragment '%s' does not contain a definition for mode '%s'", f.name, mode)
 }

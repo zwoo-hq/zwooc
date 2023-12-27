@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
@@ -169,7 +170,7 @@ func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
 		return p.Name() == key
 	})
 	if !found {
-		return ResolvedProfile{}, fmt.Errorf("profile %s not found", key)
+		return ResolvedProfile{}, fmt.Errorf("profile '%s' not found", key)
 	}
 
 	config, err := target.GetConfig(mode)
@@ -196,6 +197,27 @@ func (c Config) resolveHook(hookType string, profile ResolvedProfile, hook HookO
 	return taskList, nil
 }
 
+func (c Config) ResolvedFragment(key string) (tasks.Task, error) {
+	parts := strings.Split(key, ":")
+	mode := ""
+	profile := ""
+
+	if len(parts) >= 2 {
+		key = parts[0]
+		mode = parts[1]
+	}
+	if len(parts) >= 3 {
+		key = parts[2]
+	}
+
+	fragment, err := c.resolveFragment(key, mode, profile)
+	if err != nil {
+		return tasks.Empty(), err
+	}
+
+	return tasks.NewBasicCommandTask(fragment.Name, fragment.Command, fragment.Directory), nil
+}
+
 func (c Config) resolveFragment(key, mode, profile string) (ResolvedFragment, error) {
 	fragments, err := c.GetFragments()
 	if err != nil {
@@ -206,7 +228,7 @@ func (c Config) resolveFragment(key, mode, profile string) (ResolvedFragment, er
 		return f.Name() == key
 	})
 	if !found {
-		return ResolvedFragment{}, fmt.Errorf("fragment %s not found", key)
+		return ResolvedFragment{}, fmt.Errorf("fragment '%s' not found", key)
 	}
 
 	return target.GetConfig(mode, profile)

@@ -3,7 +3,7 @@
     "$adapter": "vite-yarn",
     "$fragments": {
       "print": {
-        "build": "echo $PWD && sleep 7"
+        "build": "echo $PWD && exit 1 && sleep 7"
       }
     },
     "dev": {

@@ -30,5 +30,5 @@ func FindFile(filename string) (string, error) {
 		currentDir = parentDir
 	}
 
-	return "", fmt.Errorf("file not found: %s", filename)
+	return "", fmt.Errorf("file not found: '%s'", filename)
 }

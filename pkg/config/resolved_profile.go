@@ -52,5 +52,5 @@ func (r ResolvedProfile) GetTask() (tasks.Task, error) {
 	case AdapterDotnet:
 		return tasks.Empty(), nil
 	}
-	return tasks.Empty(), fmt.Errorf("unknown adapter: %s", r.Adapter)
+	return tasks.Empty(), fmt.Errorf("unknown adapter: '%s'", r.Adapter)
 }
