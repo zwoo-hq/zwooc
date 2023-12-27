@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"sort"
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
@@ -9,37 +10,111 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
+var (
+	CategoryStatic      = "Static mode (non TTY):"
+	CategoryInteractive = "Interactive mode:"
+	CategoryGeneral     = "General:"
+	CategoryFragments   = "Fragments:"
+)
+
 func createGlobalFlags() []cli.Flag {
 	return []cli.Flag{
+		// global
 		&cli.BoolFlag{
-			Name:    "no-tty",
-			Aliases: []string{"s"},
-			Usage:   "force disable tty features",
-			Value:   false,
+			Name:     "quite",
+			Aliases:  []string{"q"},
+			Usage:    "disable all console output",
+			Value:    false,
+			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
-			Name:    "quite",
-			Aliases: []string{"q"},
-			Usage:   "disable all console output",
-			Value:   false,
+			Name:     "no-prefix",
+			Aliases:  []string{"p"},
+			Usage:    "disable prefixing output of tasks with the task name",
+			Value:    false,
+			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
-			Name:    "inline-output",
-			Aliases: []string{"o"},
-			Usage:   "inline output of tasks (in static mode)",
-			Value:   false,
+			// TODO: implement
+			Name:     "serial",
+			Aliases:  []string{"s"},
+			Usage:    "run tasks in serial instead of parallel",
+			Value:    false,
+			Category: CategoryGeneral,
+		},
+		&cli.IntFlag{
+			// TODO: implement
+			Name:     "max-concurrency",
+			Aliases:  []string{"c"},
+			Usage:    "limit the max amount of parallel tasks",
+			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
-			Name:    "combine-output",
-			Aliases: []string{"c"},
-			Usage:   "combine output of tasks (in interactive mode)",
-			Value:   false,
+			// TODO: implement
+			Name:     "loose",
+			Aliases:  []string{"l"},
+			Usage:    "ignores errors in tasks and continues",
+			Value:    false,
+			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
-			Name:    "no-prefix",
-			Aliases: []string{"p"},
-			Usage:   "disable prefixing output of tasks with the task name",
-			Value:   false,
+			// TODO: implement
+			Name:     "skip-hooks",
+			Aliases:  []string{"n"},
+			Usage:    "ignore all $pre and $post hooks",
+			Value:    false,
+			Category: CategoryGeneral,
+		},
+
+		// Static mode
+		&cli.BoolFlag{
+			Name:     "no-tty",
+			Aliases:  []string{"t"},
+			Usage:    "force disable tty features",
+			Value:    false,
+			Category: CategoryStatic,
+		},
+		&cli.BoolFlag{
+			Name:     "inline-output",
+			Aliases:  []string{"o"},
+			Usage:    "inline output of tasks in static mode",
+			Value:    false,
+			Category: CategoryStatic,
+		},
+
+		// Interactive mode
+		&cli.BoolFlag{
+			// TODO: implement
+			Name: "no-output",
+			// Aliases:  []string{"o"},
+			Usage:    "disable command output capturing in interactive mode",
+			Value:    false,
+			Category: CategoryInteractive,
+		},
+		&cli.BoolFlag{
+			// TODO: implement
+			Name: "combine-output",
+			// Aliases:  []string{"c"},
+			Usage:    "combine output of tasks in interactive mode",
+			Value:    false,
+			Category: CategoryInteractive,
+		},
+		&cli.BoolFlag{
+			// TODO: implement
+			Name:     "no-fullscreen",
+			Aliases:  []string{"i"},
+			Usage:    "inlines the interactive view ",
+			Value:    false,
+			Category: CategoryInteractive,
+		},
+
+		// Fragments
+		&cli.StringSliceFlag{
+			// TODO: implement
+			Name:     "exclude",
+			Aliases:  []string{"e"},
+			Usage:    "excludes certain fragments from being executed",
+			Category: CategoryFragments,
 		},
 	}
 }
@@ -116,6 +191,7 @@ func main() {
 		Name:                   "zwooc",
 		Usage:                  "the official cli for building and developing zwoo",
 		Flags:                  createGlobalFlags(),
+		Suggest:                true,
 		UseShortOptionHandling: true,
 		Commands: []*cli.Command{
 			createProfileCommand(config.ModeRun, "run a profile", conf),
@@ -131,6 +207,9 @@ func main() {
 			},
 		},
 	}
+
+	sort.Sort(cli.FlagsByName(app.Flags))
+	sort.Sort(cli.CommandsByName(app.Commands))
 
 	if err := app.Run(os.Args); err != nil {
 		ui.HandleError(err)
