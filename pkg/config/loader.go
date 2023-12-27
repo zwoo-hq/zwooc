@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/zwoo-hq/zwooc/pkg/helper"
-	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 type Config struct {
-	baseDir string
-	raw     map[string]interface{}
+	baseDir   string
+	raw       map[string]interface{}
+	profiles  []Profile
+	fragments []Fragment
+	compounds []Compound
 }
 
 func Load(path string) (Config, error) {
@@ -27,13 +27,29 @@ func Load(path string) (Config, error) {
 		return Config{}, err
 	}
 
-	return Config{
+	c := Config{
 		baseDir: filepath.Dir(path),
 		raw:     data,
-	}, nil
+	}
+	c.profiles, err = c.loadProfiles()
+	if err != nil {
+		return Config{}, err
+	}
+
+	c.fragments, err = c.loadFragments()
+	if err != nil {
+		return Config{}, err
+	}
+
+	c.compounds, err = c.loadCompounds()
+	return c, err
 }
 
-func (c Config) GetProfiles() ([]Profile, error) {
+func (c Config) GetProfiles() []Profile {
+	return c.profiles
+}
+
+func (c Config) loadProfiles() ([]Profile, error) {
 	profiles := []Profile{}
 
 	for projectKey, projectValue := range c.raw {
@@ -63,7 +79,11 @@ func (c Config) GetProfiles() ([]Profile, error) {
 	return profiles, nil
 }
 
-func (c Config) GetFragments() ([]Fragment, error) {
+func (c Config) GetFragments() []Fragment {
+	return c.fragments
+}
+
+func (c Config) loadFragments() ([]Fragment, error) {
 	fragments := []Fragment{}
 
 	for projectKey, projectValue := range c.raw {
@@ -96,7 +116,11 @@ func (c Config) GetFragments() ([]Fragment, error) {
 	return fragments, nil
 }
 
-func (c Config) GetCompounds() ([]Compound, error) {
+func (c Config) GetCompounds() []Compound {
+	return c.compounds
+}
+
+func (c Config) loadCompounds() ([]Compound, error) {
 	compounds := []Compound{}
 
 	if compoundDefinitions, ok := c.raw[KeyCompound]; ok {
@@ -106,92 +130,4 @@ func (c Config) GetCompounds() ([]Compound, error) {
 		}
 	}
 	return compounds, nil
-}
-
-func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
-	config, err := c.resolveRunConfig(key, mode)
-	if err != nil {
-		return TaskList{}, err
-	}
-
-	name := helper.BuildName(key, mode)
-	preStage, err := c.resolveHook(KeyPre, config, config.GetPreHooks())
-	if err != nil {
-		return TaskList{}, err
-	}
-
-	postStage, err := c.resolveHook(KeyPost, config, config.GetPostHooks())
-	if err != nil {
-		return TaskList{}, err
-	}
-
-	mainTask, err := config.GetTask()
-	if err != nil {
-		return TaskList{}, err
-	}
-
-	steps := []ExecutionStep{}
-	if len(preStage) > 0 {
-		steps = append(steps, ExecutionStep{
-			Tasks:       preStage,
-			Name:        helper.BuildName(name, KeyPre),
-			RunParallel: true,
-		})
-	}
-	steps = append(steps, ExecutionStep{
-		Tasks: []tasks.Task{mainTask},
-		Name:  name,
-	})
-	if len(postStage) > 0 {
-		steps = append(steps, ExecutionStep{
-			Tasks:       postStage,
-			Name:        helper.BuildName(name, KeyPost),
-			RunParallel: true,
-		})
-	}
-
-	return TaskList{
-		Name:  name,
-		Steps: steps,
-	}, nil
-}
-
-func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
-	if key == "" {
-		key = KeyDefault
-	}
-
-	profiles, err := c.GetProfiles()
-	if err != nil {
-		return ResolvedProfile{}, err
-	}
-	target, found := helper.FindBy(profiles, func(p Profile) bool {
-		return p.Name() == key
-	})
-	if !found {
-		return ResolvedProfile{}, fmt.Errorf("profile '%s' not found", key)
-	}
-
-	config, err := target.GetConfig(mode)
-	if err != nil {
-		return ResolvedProfile{}, err
-	}
-	return config, nil
-}
-
-func (c Config) resolveHook(hookType string, profile ResolvedProfile, hook HookOptions) ([]tasks.Task, error) {
-	baseName := hookType
-	taskList := []tasks.Task{}
-	if hook.Command != "" {
-		taskList = append(taskList, tasks.NewBasicCommandTask(baseName, hook.Command, profile.Directory, []string{}))
-	}
-
-	for _, fragment := range hook.Fragments {
-		fragmentConfig, err := c.resolveFragment(fragment, profile.Mode, profile.Name)
-		if err != nil {
-			return []tasks.Task{}, err
-		}
-		taskList = append(taskList, tasks.NewBasicCommandTask(helper.BuildName(baseName, fragment), fragmentConfig.Command, fragmentConfig.Directory, []string{}))
-	}
-	return taskList, nil
 }

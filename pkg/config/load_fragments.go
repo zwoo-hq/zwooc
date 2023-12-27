@@ -30,12 +30,7 @@ func (c Config) ResolvedFragment(key string, extraArgs []string) (tasks.Task, er
 }
 
 func (c Config) resolveFragment(key, mode, profile string) (ResolvedFragment, error) {
-	fragments, err := c.GetFragments()
-	if err != nil {
-		return ResolvedFragment{}, err
-	}
-
-	target, found := helper.FindBy(fragments, func(f Fragment) bool {
+	target, found := helper.FindBy(c.fragments, func(f Fragment) bool {
 		return f.Name() == key
 	})
 	if !found {
