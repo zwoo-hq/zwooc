@@ -3,6 +3,7 @@ package tasks
 import (
 	"io"
 	"os/exec"
+	"strings"
 	"sync"
 
 	"github.com/zwoo-hq/zwooc/pkg/helper"
@@ -25,9 +26,10 @@ func NewCommandTask(name string, cmd *exec.Cmd) Task {
 	}
 }
 
-func NewBasicCommandTask(name string, command string, dir string) Task {
+func NewBasicCommandTask(name string, command string, dir string, args []string) Task {
 	writer := newMultiWriter()
-	cmd := exec.Command("sh", "-c", command)
+	fullCommand := strings.Join(append([]string{command}, args...), " ")
+	cmd := exec.Command("sh", "-c", fullCommand)
 	if dir != "" {
 		cmd.Dir = dir
 	}

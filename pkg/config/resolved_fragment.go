@@ -27,6 +27,6 @@ type ResolvedFragment struct {
 // 	return HookOptions{}
 // }
 
-func (r ResolvedFragment) GetTask() (tasks.Task, error) {
-	return tasks.NewBasicCommandTask(r.Name, r.Command, r.Directory), nil
+func (r ResolvedFragment) GetTask(extraArgs []string) (tasks.Task, error) {
+	return tasks.NewBasicCommandTask(r.Name, r.Command, r.Directory, extraArgs), nil
 }

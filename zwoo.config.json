@@ -26,6 +26,9 @@
   "$fragments": {
     "print2": {
       "build": "echo $PWD && sleep 3"
+    },
+    "print3": {
+      "$default": "git status"
     }
   }
 }

@@ -167,7 +167,9 @@ func execFragment(config config.Config, c *cli.Context) error {
 		QuiteMode:  c.Bool("quite"),
 	}
 
-	task, err := config.ResolvedFragment(c.Args().First())
+	args := c.Args().Tail()
+	fragmentKey := c.Args().First()
+	task, err := config.ResolvedFragment(fragmentKey, args)
 	if err != nil {
 		ui.HandleError(err)
 	}
