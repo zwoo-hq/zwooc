@@ -142,15 +142,18 @@ func (tr *TaskRunner) runParallel() error {
 	forwardCancel := []chan bool{}
 	done := make(chan bool, 1)
 	errs := []error{}
+	errMu := sync.Mutex{}
 	wg := sync.WaitGroup{}
 
 	defer func() {
 		if wasCanceled.Load() {
+			errMu.Lock()
 			if len(errs) > 0 {
 				tr.cancelComplete <- errors.Join(errs...)
 			} else {
 				tr.cancelComplete <- nil
 			}
+			errMu.Unlock()
 		}
 		close(tr.updates)
 		close(tr.cancelComplete)
@@ -182,7 +185,9 @@ func (tr *TaskRunner) runParallel() error {
 		go func(task Task, cancel <-chan bool) {
 			tr.updateTaskStatus(task, StatusRunning)
 			if err := task.Run(cancel); err != nil {
+				errMu.Lock()
 				errs = append(errs, err)
+				errMu.Unlock()
 				tr.updateTaskStatus(task, StatusError)
 			} else if wasCanceled.Load() {
 				tr.updateTaskStatus(task, StatusCanceled)
