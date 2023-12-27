@@ -23,7 +23,7 @@ type staticView struct {
 }
 
 // RunStatic runs a config.TaskList with a static ui suited for non TTY environments
-func newStaticRunner(taskList config.TaskList) {
+func newStaticRunner(taskList config.TaskList, opts ViewOptions) {
 	model := &staticView{
 		tasks: taskList,
 	}
@@ -39,6 +39,13 @@ func newStaticRunner(taskList config.TaskList) {
 			cap := tasks.NewCapturer()
 			outputs[t.Name()] = cap
 			t.Pipe(cap)
+			if opts.InlineOutput {
+				if opts.DisablePrefix {
+					t.Pipe(tasks.NewPrefixer("│  ", os.Stdout))
+				} else {
+					t.Pipe(tasks.NewPrefixer("│  "+t.Name()+" ", os.Stdout))
+				}
+			}
 		}
 
 		// setup new runner

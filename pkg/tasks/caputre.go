@@ -11,7 +11,7 @@ type CommandCapturer struct {
 	mu   sync.RWMutex
 }
 
-var _ io.Writer = &CommandCapturer{}
+var _ io.Writer = (*CommandCapturer)(nil)
 
 func NewCapturer() *CommandCapturer {
 	return &CommandCapturer{}

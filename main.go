@@ -12,14 +12,33 @@ import (
 func createGlobalFlags() []cli.Flag {
 	return []cli.Flag{
 		&cli.BoolFlag{
-			Name:  "no-tty",
-			Usage: "force disable tty features",
-			Value: false,
+			Name:    "no-tty",
+			Aliases: []string{"s"},
+			Usage:   "force disable tty features",
+			Value:   false,
 		},
 		&cli.BoolFlag{
 			Name:    "quite",
 			Aliases: []string{"q"},
 			Usage:   "disable all console output",
+			Value:   false,
+		},
+		&cli.BoolFlag{
+			Name:    "inline-output",
+			Aliases: []string{"o"},
+			Usage:   "inline output of tasks (in static mode)",
+			Value:   false,
+		},
+		&cli.BoolFlag{
+			Name:    "combine-output",
+			Aliases: []string{"c"},
+			Usage:   "combine output of tasks (in interactive mode)",
+			Value:   false,
+		},
+		&cli.BoolFlag{
+			Name:    "no-prefix",
+			Aliases: []string{"p"},
+			Usage:   "disable prefixing output of tasks with the task name",
 			Value:   false,
 		},
 	}
@@ -39,8 +58,11 @@ func createProfileCommand(mode, usage string, conf config.Config) *cli.Command {
 
 func execProfile(config config.Config, runMode string, c *cli.Context) error {
 	viewOptions := ui.ViewOptions{
-		DisableTUI: c.Bool("no-tty"),
-		QuiteMode:  c.Bool("quite"),
+		DisableTUI:    c.Bool("no-tty"),
+		QuiteMode:     c.Bool("quite"),
+		InlineOutput:  c.Bool("inline-output"),
+		CombineOutput: c.Bool("combine-output"),
+		DisablePrefix: c.Bool("no-prefix"),
 	}
 
 	taskList, err := config.ResolveProfile(c.Args().First(), runMode)
@@ -91,9 +113,10 @@ func main() {
 	}
 
 	app := &cli.App{
-		Name:  "zwooc",
-		Usage: "the official cli for building and developing zwoo",
-		Flags: createGlobalFlags(),
+		Name:                   "zwooc",
+		Usage:                  "the official cli for building and developing zwoo",
+		Flags:                  createGlobalFlags(),
+		UseShortOptionHandling: true,
 		Commands: []*cli.Command{
 			createProfileCommand(config.ModeRun, "run a profile", conf),
 			createProfileCommand(config.ModeWatch, "run a profile with live reload enabled", conf),

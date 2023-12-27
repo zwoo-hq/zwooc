@@ -11,13 +11,13 @@ func NewRunner(tasks config.TaskList, options ViewOptions) {
 	}
 
 	if options.DisableTUI {
-		newStaticRunner(tasks)
+		newStaticRunner(tasks, options)
 		return
 	}
 
 	// try interactive view
 	if err := newInteractiveRunner(tasks); err != nil {
 		// fall back to static view
-		newStaticRunner(tasks)
+		newStaticRunner(tasks, options)
 	}
 }
