@@ -3,17 +3,21 @@
     "$adapter": "vite-yarn",
     "$fragments": {
       "print": {
-        "build": "echo $PWD && sleep 7"
+        "build": "echo $PWD && exit 1 && sleep 7"
       }
     },
     "dev": {
       "build": {
-        "$pre": {},
+        "$pre": {
+          "fragments": ["print", "print2"]
+        },
         "env": ["VITE_APP_TEST=build1"],
         "args": {
           "outDir": "dist"
         },
-        "$post": {}
+        "$post": {
+          "command": "sleep 5"
+        }
       },
       "run": true,
       "watch": true
