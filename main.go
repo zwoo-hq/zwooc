@@ -35,7 +35,6 @@ func createGlobalFlags() []cli.Flag {
 			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
-			// TODO: implement
 			Name:     "serial",
 			Aliases:  []string{"s"},
 			Usage:    "run tasks in serial instead of parallel",
@@ -140,6 +139,10 @@ func execProfile(config config.Config, runMode string, c *cli.Context) error {
 		MaxConcurrency: c.Int("max-concurrency"),
 	}
 
+	if c.Bool("serial") {
+		viewOptions.MaxConcurrency = 1
+	}
+
 	taskList, err := config.ResolveProfile(c.Args().First(), runMode)
 	if err != nil {
 		ui.HandleError(err)
@@ -166,6 +169,10 @@ func execFragment(config config.Config, c *cli.Context) error {
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
 		MaxConcurrency: c.Int("max-concurrency"),
+	}
+
+	if c.Bool("serial") {
+		viewOptions.MaxConcurrency = 1
 	}
 
 	args := c.Args().Tail()
