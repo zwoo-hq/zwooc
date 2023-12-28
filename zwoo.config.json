@@ -8,16 +8,12 @@
     },
     "dev": {
       "build": {
-        "$pre": {
-          "fragments": ["print", "print2"]
-        },
+        "$pre": {},
         "env": ["VITE_APP_TEST=build1"],
         "args": {
           "outDir": "dist"
         },
-        "$post": {
-          "command": "sleep 5"
-        }
+        "$post": {}
       },
       "run": true,
       "watch": true
