@@ -23,16 +23,18 @@ type model struct {
 	tasksState    []taskStatus
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
+	opts          ViewOptions
 }
 
 type updateMsg tasks.RunnerStatus
 type stageFinishedMsg int
 type errorMsg struct{ error }
 
-func newInteractiveRunner(tasks config.TaskList) error {
+func newInteractiveRunner(tasks config.TaskList, opts ViewOptions) error {
 	model := model{
 		tasks:        tasks,
 		currentIndex: 0,
+		opts:         opts,
 	}
 
 	execStart := time.Now()
@@ -97,7 +99,7 @@ func (m *model) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *model) initStage(stage int) {
 	m.currentIndex = stage
-	m.currentRunner = tasks.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.tasks.Steps[stage].RunParallel)
+	m.currentRunner = tasks.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.tasks.Steps[stage].RunParallel, m.opts.MaxConcurrency)
 	m.tasksState = []taskStatus{}
 }
 

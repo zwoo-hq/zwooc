@@ -17,7 +17,7 @@ type quiteView struct {
 }
 
 // RunStatic runs a config.TaskList with a static ui suited for non TTY environments
-func newQuiteRunner(taskList config.TaskList) {
+func newQuiteRunner(taskList config.TaskList, opts ViewOptions) {
 	model := &quiteView{
 		tasks: taskList,
 	}
@@ -26,7 +26,7 @@ func newQuiteRunner(taskList config.TaskList) {
 	execStart := time.Now()
 
 	for _, step := range taskList.Steps {
-		model.currentRunner = tasks.NewRunner(step.Name, step.Tasks, step.RunParallel)
+		model.currentRunner = tasks.NewRunner(step.Name, step.Tasks, step.RunParallel, opts.MaxConcurrency)
 		model.currentState = tasks.RunnerStatus{}
 		if err := model.currentRunner.Run(); err != nil {
 			HandleError(err)

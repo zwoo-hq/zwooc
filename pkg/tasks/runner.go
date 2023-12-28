@@ -27,12 +27,18 @@ type TaskRunner struct {
 	cancelComplete chan error
 	RunParallel    bool
 	mutex          sync.RWMutex
+	maxConcurrency int
 }
 
-func NewRunner(name string, tasks []Task, parallel bool) *TaskRunner {
+func NewRunner(name string, tasks []Task, parallel bool, maxConcurrency int) *TaskRunner {
 	status := make(RunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
+	}
+
+	ticketAmount := maxConcurrency
+	if ticketAmount < 1 {
+		ticketAmount = len(tasks)
 	}
 
 	return &TaskRunner{
@@ -43,15 +49,16 @@ func NewRunner(name string, tasks []Task, parallel bool) *TaskRunner {
 		updates:        make(chan RunnerStatus, len(tasks)*5),
 		cancel:         make(chan bool),
 		cancelComplete: make(chan error),
+		maxConcurrency: ticketAmount,
 	}
 }
 
-func NewParallelRunner(name string, tasks []Task) *TaskRunner {
-	return NewRunner(name, tasks, true)
+func NewParallelRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
+	return NewRunner(name, tasks, true, maxConcurrency)
 }
 
-func NewSequentialRunner(name string, tasks []Task) *TaskRunner {
-	return NewRunner(name, tasks, false)
+func NewSequentialRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
+	return NewRunner(name, tasks, false, maxConcurrency)
 }
 
 func (tr *TaskRunner) Name() string {
@@ -140,10 +147,16 @@ func (tr *TaskRunner) runSequential() error {
 func (tr *TaskRunner) runParallel() error {
 	wasCanceled := atomic.Bool{}
 	forwardCancel := []chan bool{}
+	tickets := make(chan int, tr.maxConcurrency)
 	done := make(chan bool, 1)
 	errs := []error{}
 	errMu := sync.Mutex{}
 	wg := sync.WaitGroup{}
+
+	// allocate tickets for limiting concurrency
+	for i := 0; i < tr.maxConcurrency; i++ {
+		tickets <- i
+	}
 
 	defer func() {
 		if wasCanceled.Load() {
@@ -157,6 +170,7 @@ func (tr *TaskRunner) runParallel() error {
 		}
 		close(tr.updates)
 		close(tr.cancelComplete)
+		close(tickets)
 		for _, cancel := range forwardCancel {
 			close(cancel)
 		}
@@ -183,6 +197,8 @@ func (tr *TaskRunner) runParallel() error {
 		forwardCancel = append(forwardCancel, taskCancel)
 
 		go func(task Task, cancel <-chan bool) {
+			// acquire a ticket to run the task
+			ticket := <-tickets
 			tr.updateTaskStatus(task, StatusRunning)
 			if err := task.Run(cancel); err != nil {
 				errMu.Lock()
@@ -193,8 +209,9 @@ func (tr *TaskRunner) runParallel() error {
 				tr.updateTaskStatus(task, StatusCanceled)
 			} else {
 				tr.updateTaskStatus(task, StatusDone)
-
 			}
+			// release the ticket to be used by another channel
+			tickets <- ticket
 			wg.Done()
 		}(task, taskCancel)
 	}

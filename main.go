@@ -43,7 +43,6 @@ func createGlobalFlags() []cli.Flag {
 			Category: CategoryGeneral,
 		},
 		&cli.IntFlag{
-			// TODO: implement
 			Name:     "max-concurrency",
 			Aliases:  []string{"c"},
 			Usage:    "limit the max amount of parallel tasks",
@@ -133,11 +132,12 @@ func createProfileCommand(mode, usage string, conf config.Config) *cli.Command {
 
 func execProfile(config config.Config, runMode string, c *cli.Context) error {
 	viewOptions := ui.ViewOptions{
-		DisableTUI:    c.Bool("no-tty"),
-		QuiteMode:     c.Bool("quite"),
-		InlineOutput:  c.Bool("inline-output"),
-		CombineOutput: c.Bool("combine-output"),
-		DisablePrefix: c.Bool("no-prefix"),
+		DisableTUI:     c.Bool("no-tty"),
+		QuiteMode:      c.Bool("quite"),
+		InlineOutput:   c.Bool("inline-output"),
+		CombineOutput:  c.Bool("combine-output"),
+		DisablePrefix:  c.Bool("no-prefix"),
+		MaxConcurrency: c.Int("max-concurrency"),
 	}
 
 	taskList, err := config.ResolveProfile(c.Args().First(), runMode)
@@ -163,8 +163,9 @@ func createFragmentCommand(conf config.Config) *cli.Command {
 
 func execFragment(config config.Config, c *cli.Context) error {
 	viewOptions := ui.ViewOptions{
-		DisableTUI: c.Bool("no-tty"),
-		QuiteMode:  c.Bool("quite"),
+		DisableTUI:     c.Bool("no-tty"),
+		QuiteMode:      c.Bool("quite"),
+		MaxConcurrency: c.Int("max-concurrency"),
 	}
 
 	args := c.Args().Tail()
