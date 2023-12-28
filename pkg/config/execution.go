@@ -24,16 +24,16 @@ func (t *TaskList) InsertAfter(other TaskList) {
 
 func (t *TaskList) RemoveEmptyStagesAndTasks() {
 	steps := []ExecutionStep{}
-	// remove empty steps
 	for _, step := range t.Steps {
-		if len(step.Tasks) > 0 {
-			// remove empty tasks
-			for i := 0; i < len(step.Tasks); i++ {
-				if tasks.IsEmptyTask(step.Tasks[i]) {
-					step.Tasks = append(step.Tasks[:i], step.Tasks[i+1:]...)
-					i--
-				}
+		// remove empty tasks
+		for i := 0; i < len(step.Tasks); i++ {
+			if tasks.IsEmptyTask(step.Tasks[i]) {
+				step.Tasks = append(step.Tasks[:i], step.Tasks[i+1:]...)
+				i--
 			}
+		}
+		// remove empty steps
+		if len(step.Tasks) > 0 {
 			steps = append(steps, step)
 		}
 	}
