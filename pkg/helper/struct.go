@@ -65,5 +65,36 @@ func FindJsonField(value reflect.Value, key string) reflect.Value {
 	}
 
 	return reflect.Value{}
+}
 
+func MergeDeep(a map[string]interface{}, b map[string]interface{}) map[string]interface{} {
+	for key, value := range b {
+		switch value.(type) {
+		case map[string]interface{}:
+			if _, ok := a[key]; !ok {
+				// a does not have this key
+				a[key] = value
+			} else if _, ok := a[key].(map[string]interface{}); ok {
+				// a has this key and is is and map too
+				a[key] = MergeDeep(a[key].(map[string]interface{}), value.(map[string]interface{}))
+			} else {
+				// a has this key but is not a map - replace this value
+				a[key] = value
+			}
+		case []interface{}:
+			if _, ok := a[key]; !ok {
+				// a does not have this key
+				a[key] = value
+			} else if _, ok := a[key].([]interface{}); ok {
+				// a has this key and is is and slice too
+				a[key] = append(a[key].([]interface{}), value.([]interface{})...)
+			} else {
+				// a has this key but is not a slice - replace this value
+				a[key] = value
+			}
+		default:
+			a[key] = value
+		}
+	}
+	return a
 }

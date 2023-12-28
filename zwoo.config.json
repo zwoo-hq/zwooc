@@ -21,6 +21,19 @@
       },
       "run": true,
       "watch": true
+    },
+    "dev2": {
+      "build": {
+        "alias": "dev",
+        "args": {
+          "outDir": "dist2"
+        }
+      }
+    },
+    "$default": {
+      "build": {
+        "alias": "dev"
+      }
     }
   },
   "$fragments": {

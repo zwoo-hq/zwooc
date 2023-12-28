@@ -8,7 +8,3 @@ func FindBy[T any](slice []T, predicate func(T) bool) (*T, bool) {
 	}
 	return nil, false
 }
-
-func Unshift[T any](slice []T, item T) []T {
-	return append([]T{item}, slice...)
-}
