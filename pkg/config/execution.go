@@ -1,6 +1,9 @@
 package config
 
-import "github.com/zwoo-hq/zwooc/pkg/tasks"
+import (
+	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
+)
 
 type TaskList struct {
 	Name  string
@@ -40,16 +43,37 @@ func (t *TaskList) RemoveEmptyStagesAndTasks() {
 	t.Steps = steps
 }
 
-type ExecutionStep struct {
-	Name        string
-	Tasks       []tasks.Task
-	RunParallel bool
+func (t *TaskList) IsEmpty() bool {
+	return len(t.Steps) == 0
 }
 
-func NewExecutionStep(name string, tasks []tasks.Task, runParallel bool) ExecutionStep {
+func (t *TaskList) Split() (pre TaskList, main ExecutionStep, post TaskList) {
+	pre = NewTaskList(helper.BuildName(t.Name, KeyPre), []ExecutionStep{})
+	post = NewTaskList(helper.BuildName(t.Name, KeyPost), []ExecutionStep{})
+	wasMain := false
+	for _, step := range t.Steps {
+		if step.IsLongRunning {
+			main = step
+			wasMain = true
+		} else if wasMain {
+			post.Steps = append(post.Steps, step)
+		} else {
+			pre.Steps = append(pre.Steps, step)
+		}
+	}
+	return pre, main, post
+}
+
+type ExecutionStep struct {
+	Name          string
+	Tasks         []tasks.Task
+	IsLongRunning bool
+}
+
+func NewExecutionStep(name string, tasks []tasks.Task, isLongRunning bool) ExecutionStep {
 	return ExecutionStep{
-		Name:        name,
-		Tasks:       tasks,
-		RunParallel: runParallel,
+		Name:          name,
+		Tasks:         tasks,
+		IsLongRunning: isLongRunning,
 	}
 }

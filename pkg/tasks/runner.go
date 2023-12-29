@@ -25,12 +25,11 @@ type TaskRunner struct {
 	updates        chan RunnerStatus
 	cancel         chan bool
 	cancelComplete chan error
-	RunParallel    bool
 	mutex          sync.RWMutex
 	maxConcurrency int
 }
 
-func NewRunner(name string, tasks []Task, parallel bool, maxConcurrency int) *TaskRunner {
+func NewRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
 	status := make(RunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
@@ -45,7 +44,6 @@ func NewRunner(name string, tasks []Task, parallel bool, maxConcurrency int) *Ta
 		name:           name,
 		tasks:          tasks,
 		status:         status,
-		RunParallel:    parallel,
 		updates:        make(chan RunnerStatus, len(tasks)*5),
 		cancel:         make(chan bool),
 		cancelComplete: make(chan error),
@@ -54,11 +52,11 @@ func NewRunner(name string, tasks []Task, parallel bool, maxConcurrency int) *Ta
 }
 
 func NewParallelRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
-	return NewRunner(name, tasks, true, maxConcurrency)
+	return NewRunner(name, tasks, maxConcurrency)
 }
 
-func NewSequentialRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
-	return NewRunner(name, tasks, false, maxConcurrency)
+func NewSequentialRunner(name string, tasks []Task) *TaskRunner {
+	return NewRunner(name, tasks, 1)
 }
 
 func (tr *TaskRunner) Name() string {
@@ -72,10 +70,10 @@ func (tr *TaskRunner) Cancel() error {
 }
 
 func (tr *TaskRunner) Run() error {
-	if tr.RunParallel {
-		return tr.runParallel()
+	if tr.maxConcurrency == 1 {
+		return tr.runSequential()
 	}
-	return tr.runSequential()
+	return tr.runParallel()
 }
 
 func (tr *TaskRunner) Status() RunnerStatus {

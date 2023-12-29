@@ -24,6 +24,11 @@ func (r *CommandPrefixer) Write(p []byte) (n int, err error) {
 	// split bytes into lines
 	lines := bytes.Split(p, []byte("\n"))
 	for i, line := range lines {
+		// trim certain escape sequences
+		// TODO: create blacklist based on supported tools
+		line = bytes.TrimPrefix(line, []byte("\x1b[2K"))
+		line = bytes.TrimPrefix(line, []byte("\x1b[1G"))
+
 		if len(line) == 0 {
 			continue
 		}

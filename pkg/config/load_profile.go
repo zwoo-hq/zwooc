@@ -55,8 +55,9 @@ func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
 	}
 	list := NewTaskList(name, []ExecutionStep{
 		{
-			Name:  name,
-			Tasks: []tasks.Task{mainTask},
+			Name:          name,
+			Tasks:         []tasks.Task{mainTask},
+			IsLongRunning: mode == ModeWatch || mode == ModeRun,
 		},
 	})
 
@@ -93,9 +94,8 @@ func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile st
 
 	return NewTaskList("", []ExecutionStep{
 		{
-			Name:        helper.BuildName(hook.Base, hook.Kind),
-			Tasks:       taskList,
-			RunParallel: true,
+			Name:  helper.BuildName(hook.Base, hook.Kind),
+			Tasks: taskList,
 		},
 	}), nil
 }

@@ -135,7 +135,7 @@ func (m *StatusModel) initStage(stage int) {
 
 	m.currentIndex = stage
 	m.tasksState = t
-	m.currentRunner = tasks.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.tasks.Steps[stage].RunParallel, m.opts.MaxConcurrency)
+	m.currentRunner = tasks.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.opts.MaxConcurrency)
 }
 
 func (m *StatusModel) startStage() tea.Msg {

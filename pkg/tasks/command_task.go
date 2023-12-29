@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -33,6 +34,7 @@ func NewBasicCommandTask(name string, command string, dir string, args []string)
 	if dir != "" {
 		cmd.Dir = dir
 	}
+	cmd.Stdin = os.Stdin
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 	return commandTask{
@@ -55,6 +57,9 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 	if err := ct.cmd.Start(); err != nil {
 		return err
 	}
+	// if err != nil {
+	// 	return err
+	// }
 
 	errChan := make(chan error, 1)
 	wg := sync.WaitGroup{}
