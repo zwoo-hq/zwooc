@@ -54,7 +54,7 @@ func (r ResolvedProfile) GetTask() (tasks.Task, error) {
 	case AdapterViteYarn:
 		return CreateViteTask(r), nil
 	case AdapterDotnet:
-		return tasks.Empty(), nil
+		return CreateDotnetTask(r), nil
 	}
 	return tasks.Empty(), fmt.Errorf("unknown adapter: '%s'", r.Adapter)
 }
