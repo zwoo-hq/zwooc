@@ -77,7 +77,7 @@ func NewInteractiveRunner(list config.TaskList, opts ViewOptions, conf config.Co
 
 	p := tea.NewProgram(
 		&Model{
-			writer: out,
+			// writer: out,
 		},
 		tea.WithAltScreen(),       // use the full size of the terminal in its "alternate screen buffer"
 		tea.WithMouseCellMotion(), // turn on mouse support so we can track the mouse wheel
@@ -91,12 +91,12 @@ func NewInteractiveRunner(list config.TaskList, opts ViewOptions, conf config.Co
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.listenToUpdates, tea.EnterAltScreen)
+	return tea.Batch(tea.EnterAltScreen)
 }
 
-func (m *Model) listenToUpdates() tea.Msg {
-	return <-m.writer.updates
-}
+// func (m *Model) listenToUpdates() tea.Msg {
+// 	return <-m.writer.updates
+// }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var (
@@ -114,7 +114,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logsView.SetContent(string(msg))
 		m.logsView.GotoBottom()
 		m.updateCount++
-		cmds = append(cmds, m.listenToUpdates)
+		// cmds = append(cmds, m.listenToUpdates)
 	case tea.WindowSizeMsg:
 		// headerHeight := lipgloss.Height(m.headerView())
 		// footerHeight := lipgloss.Height(m.footerView())
@@ -129,7 +129,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logsView = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
 			m.logsView.YPosition = 1
 			m.logsView.HighPerformanceRendering = false // useHighPerformanceRenderer
-			m.logsView.SetContent(m.writer.String())
+			// m.logsView.SetContent(m.writer.String())
 			m.ready = true
 
 			// // This is only necessary for high performance rendering, which in
@@ -162,5 +162,5 @@ func (m Model) View() string {
 	if !m.ready {
 		return "\n  Initializing..."
 	}
-	return fmt.Sprintf("%s %d %d\n%s", "zwooc...", len(m.writer.String()), m.updateCount, m.logsView.View())
+	return fmt.Sprintf("%s %d %d\n%s", "zwooc...", len("a"), m.updateCount, m.logsView.View())
 }
