@@ -129,7 +129,7 @@ func createProfileCommand(mode, usage string, conf config.Config) *cli.Command {
 	}
 }
 
-func execProfile(config config.Config, runMode string, c *cli.Context) error {
+func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	viewOptions := ui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
@@ -143,12 +143,16 @@ func execProfile(config config.Config, runMode string, c *cli.Context) error {
 		viewOptions.MaxConcurrency = 1
 	}
 
-	taskList, err := config.ResolveProfile(c.Args().First(), runMode)
+	taskList, err := conf.ResolveProfile(c.Args().First(), runMode)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	ui.NewRunner(taskList, viewOptions)
+	if runMode == config.ModeWatch || runMode == config.ModeRun {
+		ui.NewInteractiveRunner(taskList, viewOptions, conf)
+	} else {
+		ui.NewRunner(taskList, viewOptions)
+	}
 	return nil
 }
 

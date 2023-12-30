@@ -3,7 +3,7 @@
     "$adapter": "vite-yarn",
     "$fragments": {
       "print": {
-        "build": "echo $PWD && sleep 7"
+        "$default": "echo $PWD && sleep 7"
       }
     },
     "dev": {
@@ -20,7 +20,11 @@
         }
       },
       "run": true,
-      "watch": true
+      "watch": {
+        "$pre": {
+          "fragments": ["print", "print2"]
+        }
+      }
     },
     "dev2": {
       "build": {
@@ -38,7 +42,7 @@
   },
   "$fragments": {
     "print2": {
-      "build": "echo $PWD && sleep 3"
+      "$default": "echo $PWD && sleep 3"
     },
     "print3": {
       "$default": "git status"

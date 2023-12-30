@@ -45,7 +45,7 @@ func (s *Scheduler) Updates() <-chan SchedulerStatus {
 func (s *Scheduler) updateTaskStatus(task Task, status int) {
 	s.mu.Lock()
 	s.status[task.Name()] = status
-	s.updates <- maps.Clone(s.status)
+	// s.updates <- maps.Clone(s.status)
 	s.mu.Unlock()
 }
 
@@ -57,26 +57,26 @@ func (s *Scheduler) CancelTask(name string) {
 	s.mu.Unlock()
 }
 
-func (s *Scheduler) Schedule(tasks Task) {
+func (s *Scheduler) Schedule(task Task) {
 	cancel := make(chan bool, 1)
 	s.mu.Lock()
-	s.cancelForwards[tasks.Name()] = cancel
 	s.wg.Add(1)
 	s.mu.Unlock()
-	s.updateTaskStatus(tasks, StatusPending)
+	s.updateTaskStatus(task, StatusPending)
 	go func() {
+		s.cancelForwards[task.Name()] = cancel
 		defer s.wg.Done()
-		s.updateTaskStatus(tasks, StatusRunning)
-		err := tasks.Run(cancel)
+		s.updateTaskStatus(task, StatusRunning)
+		err := task.Run(cancel)
 		if err != nil {
-			s.updateTaskStatus(tasks, StatusError)
+			s.updateTaskStatus(task, StatusError)
 			s.mu.Lock()
 			s.errs = append(s.errs, err)
 			s.mu.Unlock()
 		} else if !s.wasCanceled.Load() {
-			s.updateTaskStatus(tasks, StatusCanceled)
+			s.updateTaskStatus(task, StatusCanceled)
 		} else {
-			s.updateTaskStatus(tasks, StatusDone)
+			s.updateTaskStatus(task, StatusDone)
 		}
 	}()
 }
