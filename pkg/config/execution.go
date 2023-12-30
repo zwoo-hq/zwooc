@@ -64,6 +64,29 @@ func (t *TaskList) Split() (pre TaskList, main ExecutionStep, post TaskList) {
 	return pre, main, post
 }
 
+func (t *TaskList) MergePostAligned(other TaskList) {
+	for i, step := range t.Steps {
+		if i > len(t.Steps)-1 {
+			t.Steps = append(t.Steps, other.Steps[i])
+		} else {
+			t.Steps[i].Tasks = append(step.Tasks, other.Steps[i].Tasks...)
+		}
+	}
+}
+
+func (t *TaskList) MergePreAligned(other TaskList) {
+	originOffset := len(t.Steps) - 1
+	otherOffset := len(other.Steps) - 1
+
+	for i := 0; i < len(other.Steps); i++ {
+		if originOffset-i < 0 {
+			t.Steps = append([]ExecutionStep{other.Steps[otherOffset-i]}, t.Steps...)
+		} else {
+			t.Steps[originOffset-i].Tasks = append(t.Steps[originOffset-i].Tasks, other.Steps[otherOffset-i].Tasks...)
+		}
+	}
+}
+
 type ExecutionStep struct {
 	Name          string
 	Tasks         []tasks.Task

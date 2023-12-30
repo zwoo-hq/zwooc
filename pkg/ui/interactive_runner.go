@@ -41,11 +41,25 @@ func (w *notifyWriter) Close() error {
 	return nil
 }
 
+type ActiveTask struct {
+	name   string
+	writer *notifyWriter
+	err    error
+}
+
 type Model struct {
 	ready       bool
 	updateCount int
-	writer      *notifyWriter
+
+	currentRunner tasks.TaskRunner
+
+	activeTasks []ActiveTask
 	logsView    viewport.Model
+
+	// the $pre step of newly scheduled tasklists
+	taskQueue []config.TaskList
+	// merged tasklists of $post step of running tasks
+	scheduledPost config.TaskList
 }
 
 type ContentUpdateMsg string
