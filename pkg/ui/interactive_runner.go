@@ -30,9 +30,9 @@ type ScheduledTask struct {
 
 type Model struct {
 	wasCanceled    bool
+	err            error
 	opts           ViewOptions
 	scheduledTasks []ScheduledTask
-	c              int
 
 	preTasks         []PreTaskStatus
 	preCurrentStage  int
@@ -163,8 +163,24 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 }
 
 func (m *Model) listenToWriterUpdates() tea.Msg {
-	m.c++
 	return ContentUpdateMsg(<-m.activeNotify.updates)
+}
+
+func (m *Model) cancelAllRunning() {
+	errs := []error{}
+	errs = append(errs, m.scheduler.Cancel())
+	if m.preCurrentRunner != nil {
+		errs = append(errs, m.preCurrentRunner.Cancel())
+	}
+
+	// start executing post tasks
+	list := config.TaskList{
+		Name: "cleanup",
+	}
+	for _, tasks := range m.scheduledPost {
+		list.MergePostAligned(tasks)
+	}
+	// TODO: run post tasks
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -186,16 +202,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ScheduledStageFinishedMsg:
 		stage := int(msg)
 		if stage+1 >= len(m.preCurrentList.Steps) || m.wasCanceled {
-			m.transitionCurrentScheduledIntoActive()
+			if !m.wasCanceled {
+				m.transitionCurrentScheduledIntoActive()
+			}
 			m.scheduledTasks = m.scheduledTasks[1:]
 			hasNext := m.prepareNextScheduled()
-			if hasNext {
+			if hasNext && !m.wasCanceled {
 				cmds = append(cmds, m.startScheduledStage, m.listenToRunnerUpdates)
 			}
 			if m.activeNotify != nil {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
-		} else {
+		} else if !m.wasCanceled {
 			m.initScheduledStage(stage + 1)
 			cmds = append(cmds, m.startScheduledStage, m.listenToRunnerUpdates)
 		}
