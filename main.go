@@ -1,6 +1,9 @@
 package main
 
 import (
+	"embed"
+	"fmt"
+	"io"
 	"os"
 	"sort"
 
@@ -16,6 +19,9 @@ var (
 	CategoryGeneral     = "General:"
 	CategoryFragments   = "Fragments:"
 )
+
+//go:embed autocomplete/*
+var autocompletion embed.FS
 
 func createGlobalFlags() []cli.Flag {
 	return []cli.Flag{
@@ -126,6 +132,14 @@ func createProfileCommand(mode, usage string, conf config.Config) *cli.Command {
 		Action: func(c *cli.Context) error {
 			return execProfile(conf, mode, c)
 		},
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+			for _, profile := range conf.GetProfiles() {
+				fmt.Println(profile.Name())
+			}
+		},
 	}
 }
 
@@ -164,6 +178,14 @@ func createFragmentCommand(conf config.Config) *cli.Command {
 		Flags:     createGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			return execFragment(conf, c)
+		},
+		BashComplete: func(c *cli.Context) {
+			if c.NArg() > 0 {
+				return
+			}
+			for _, fragment := range conf.GetFragments() {
+				fmt.Println(fragment.Name())
+			}
 		},
 	}
 }
@@ -207,6 +229,7 @@ func main() {
 		Flags:                  createGlobalFlags(),
 		Suggest:                true,
 		UseShortOptionHandling: true,
+		EnableBashCompletion:   true,
 		Commands: []*cli.Command{
 			createProfileCommand(config.ModeRun, "run a profile", conf),
 			createProfileCommand(config.ModeWatch, "run a profile with live reload enabled", conf),
@@ -216,6 +239,24 @@ func main() {
 				Name:  "launch",
 				Usage: "launch a compound",
 				Action: func(c *cli.Context) error {
+					return nil
+				},
+			},
+			{
+				// TODO: when cliv3 comes out this is no longer needed
+				Name:  "completion-script",
+				Usage: "generate shell completion script",
+				Action: func(c *cli.Context) error {
+					f, err := autocompletion.Open("autocomplete/bash_autocomplete")
+					if err != nil {
+						return err
+					}
+
+					content, err := io.ReadAll(f)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(content))
 					return nil
 				},
 			},
