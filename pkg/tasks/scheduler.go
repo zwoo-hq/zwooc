@@ -68,6 +68,7 @@ func (s *Scheduler) Schedule(task Task) {
 		defer s.wg.Done()
 		s.updateTaskStatus(task, StatusRunning)
 		err := task.Run(cancel)
+		delete(s.cancelForwards, task.Name())
 		if err != nil {
 			s.updateTaskStatus(task, StatusError)
 			s.mu.Lock()
@@ -89,6 +90,7 @@ func (s *Scheduler) Cancel() error {
 	}
 	s.mu.RUnlock()
 	s.wg.Wait()
+	close(s.updates)
 	if len(s.errs) == 0 {
 		return nil
 	}
