@@ -70,7 +70,12 @@ func newStaticRunner(taskList config.TaskList, opts ViewOptions) {
 					fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), key)
 					fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), err)
 					fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
-					fmt.Println(canceledStyle.Render(strings.TrimSpace(outputs[key].String())))
+					// ligloss does some messy things to the string and cant handle \r\n on windows...
+					wrapper := canceledStyle.Render("===")
+					parts := strings.Split(wrapper, "===")
+					fmt.Printf(parts[0])
+					fmt.Println(strings.TrimSpace(outputs[key].String()))
+					fmt.Printf(parts[1])
 				}
 			}
 			return

@@ -213,7 +213,7 @@ func execFragment(config config.Config, c *cli.Context) error {
 }
 
 func main() {
-	path, err := helper.FindFile("zwoo.config.json")
+	path, err := helper.FindFile("zwooc.config.json")
 	if err != nil {
 		ui.HandleError(err)
 	}

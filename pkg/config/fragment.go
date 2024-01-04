@@ -5,7 +5,7 @@ import "fmt"
 type Fragment struct {
 	name      string
 	directory string
-	raw       map[string]interface{}
+	raw       interface{}
 }
 
 func (f Fragment) Name() string {
@@ -17,22 +17,35 @@ func (f Fragment) GetConfig(mode string, callingProfile string) (ResolvedFragmen
 		return ResolvedFragment{}, fmt.Errorf("invalid run mode: '%s'", mode)
 	}
 
+	if defaultCmd, ok := f.raw.(string); ok {
+		return ResolvedFragment{
+			Name:       f.name,
+			Directory:  f.directory,
+			Command:    defaultCmd,
+			Options:    map[string]interface{}{},
+			Mode:       mode,
+			ProfileKey: callingProfile,
+		}, nil
+	}
+
 	precedenceIndexes := []string{
 		fmt.Sprintf("%s:%s", mode, callingProfile),
 		mode,
 		KeyDefault,
 	}
 
-	for _, index := range precedenceIndexes {
-		if fragmentCommand, ok := f.raw[index]; ok {
-			return ResolvedFragment{
-				Name:       f.name,
-				Directory:  f.directory,
-				Command:    fragmentCommand.(string),
-				Options:    f.raw,
-				Mode:       mode,
-				ProfileKey: callingProfile,
-			}, nil
+	if options, ok := f.raw.(map[string]interface{}); ok {
+		for _, index := range precedenceIndexes {
+			if fragmentCommand, ok := options[index]; ok {
+				return ResolvedFragment{
+					Name:       f.name,
+					Directory:  f.directory,
+					Command:    fragmentCommand.(string),
+					Options:    options,
+					Mode:       mode,
+					ProfileKey: callingProfile,
+				}, nil
+			}
 		}
 	}
 

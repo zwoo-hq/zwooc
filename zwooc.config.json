@@ -2,9 +2,7 @@
   "example": {
     "$adapter": "vite-yarn",
     "$fragments": {
-      "print": {
-        "$default": "echo $PWD && sleep 7"
-      }
+      "print": "echo $PWD && sleep 7"
     },
     "dev": {
       "build": {
@@ -19,7 +17,6 @@
           "command": "sleep 5"
         }
       },
-      "run": true,
       "watch": {
         "$pre": {
           "fragments": ["print", "print2"]
