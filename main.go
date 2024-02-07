@@ -127,19 +127,34 @@ func createGlobalFlags() []cli.Flag {
 	}
 }
 
-func createProfileCommand(mode, usage string, conf config.Config) *cli.Command {
+func loadConfig() config.Config {
+	path, err := helper.FindFile("zwooc.config.json")
+	if err != nil {
+		ui.HandleError(err)
+	}
+
+	conf, err := config.Load(path)
+	if err != nil {
+		ui.HandleError(err)
+	}
+	return conf
+}
+
+func createProfileCommand(mode, usage string) *cli.Command {
 	return &cli.Command{
 		Name:      mode,
 		Usage:     usage,
 		ArgsUsage: "[profile]",
 		Flags:     createGlobalFlags(),
 		Action: func(c *cli.Context) error {
+			conf := loadConfig()
 			return execProfile(conf, mode, c)
 		},
 		BashComplete: func(c *cli.Context) {
 			if c.NArg() > 0 {
 				return
 			}
+			conf := loadConfig()
 			for _, profile := range conf.GetProfiles() {
 				fmt.Println(profile.Name())
 			}
@@ -174,19 +189,21 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	return nil
 }
 
-func createFragmentCommand(conf config.Config) *cli.Command {
+func createFragmentCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "exec",
 		Usage:     "execute a fragment",
 		ArgsUsage: "[fragment] [extra arguments...]",
 		Flags:     createGlobalFlags(),
 		Action: func(c *cli.Context) error {
+			conf := loadConfig()
 			return execFragment(conf, c)
 		},
 		BashComplete: func(c *cli.Context) {
 			if c.NArg() > 0 {
 				return
 			}
+			conf := loadConfig()
 			for _, fragment := range conf.GetFragments() {
 				fmt.Println(fragment.Name())
 			}
@@ -217,29 +234,24 @@ func execFragment(config config.Config, c *cli.Context) error {
 }
 
 func main() {
-	path, err := helper.FindFile("zwooc.config.json")
-	if err != nil {
-		ui.HandleError(err)
-	}
-
-	conf, err := config.Load(path)
-	if err != nil {
-		ui.HandleError(err)
+	cli.VersionPrinter = func(c *cli.Context) {
+		fmt.Println(c.App.Version)
 	}
 
 	app := &cli.App{
-		Name:                   "zwooc",
-		Usage:                  "the official cli for building and developing zwoo",
-		Version:                VERSION,
+		Name:    "zwooc",
+		Usage:   "the official cli for building and developing zwoo",
+		Version: VERSION,
+
 		Flags:                  createGlobalFlags(),
 		Suggest:                true,
 		UseShortOptionHandling: true,
 		EnableBashCompletion:   true,
 		Commands: []*cli.Command{
-			createProfileCommand(config.ModeRun, "run a profile", conf),
-			createProfileCommand(config.ModeWatch, "run a profile with live reload enabled", conf),
-			createProfileCommand(config.ModeBuild, "build a profile", conf),
-			createFragmentCommand(conf),
+			createProfileCommand(config.ModeRun, "run a profile"),
+			createProfileCommand(config.ModeWatch, "run a profile with live reload enabled"),
+			createProfileCommand(config.ModeBuild, "build a profile"),
+			createFragmentCommand(),
 			{
 				Name:  "launch",
 				Usage: "launch a compound",
