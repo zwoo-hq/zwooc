@@ -14,6 +14,10 @@ import (
 )
 
 var (
+	VERSION = "0.0.0"
+)
+
+var (
 	CategoryStatic      = "Static mode (non TTY):"
 	CategoryInteractive = "Interactive mode:"
 	CategoryGeneral     = "General:"
@@ -226,6 +230,7 @@ func main() {
 	app := &cli.App{
 		Name:                   "zwooc",
 		Usage:                  "the official cli for building and developing zwoo",
+		Version:                VERSION,
 		Flags:                  createGlobalFlags(),
 		Suggest:                true,
 		UseShortOptionHandling: true,
