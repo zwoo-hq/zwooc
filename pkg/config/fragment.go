@@ -30,6 +30,7 @@ func (f Fragment) GetConfig(mode string, callingProfile string) (ResolvedFragmen
 
 	precedenceIndexes := []string{
 		fmt.Sprintf("%s:%s", mode, callingProfile),
+		callingProfile,
 		mode,
 		KeyDefault,
 	}

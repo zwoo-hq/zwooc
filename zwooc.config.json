@@ -28,7 +28,7 @@
     },
     "dev2": {
       "build": {
-        "alias": "dev",
+        "base": "dev",
         "args": {
           "outDir": "dist2"
         }
@@ -36,7 +36,7 @@
     },
     "$default": {
       "build": {
-        "alias": "dev"
+        "base": "dev"
       }
     }
   },

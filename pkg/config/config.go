@@ -29,8 +29,7 @@ type (
 	}
 
 	BaseOptions struct {
-		Alias            string   `json:"alias"`
-		SkipFragments    bool     `json:"skipFragments"`
+		Base             string   `json:"base"`
 		IncludeFragments []string `json:"includeFragments"`
 	}
 

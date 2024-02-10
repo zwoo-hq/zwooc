@@ -77,7 +77,7 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 "env": [
                     "FOO=BAR" // add FOO env var with bar as value
                 ],
-                "alias": "profile1", // use profile 1 as base (and apply these configs)
+                "base": "profile1", // use profile 1 as base (and apply these configs)
                 "skipFragments": true, // ignore all depended fragments
                 "$pre": {
                     "fragments": [], // list of fragments to run before
@@ -110,7 +110,7 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 "profile1": "watch", // profile 1 should be started inw watch mode
                 "profile2": "build" // profile 1 should be started inw watch mode
             },
-            // ... all other base options ($pre, $post, skipFragments, includeFragments, alias)
+            // ... all other base options ($pre, $post, skipFragments, includeFragments, base)
         }
     }
 }
