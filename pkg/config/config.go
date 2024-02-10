@@ -29,7 +29,7 @@ type (
 	}
 
 	BaseOptions struct {
-		Alias            string   `json:"alias"`
+		Base             string   `json:"base"`
 		IncludeFragments []string `json:"includeFragments"`
 	}
 

@@ -18,9 +18,9 @@ func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
 		return TaskList{}, err
 	}
 	opts := config.GetBaseOptions()
-	for opts.Alias != "" {
+	for opts.Base != "" {
 		// load aliased profile
-		newProfile, err := c.resolveRunConfig(opts.Alias, mode)
+		newProfile, err := c.resolveRunConfig(opts.Base, mode)
 		if err != nil {
 			return TaskList{}, err
 		}
@@ -33,7 +33,7 @@ func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
 			Options:   helper.MergeDeep(maps.Clone(newProfile.Options), config.Options),
 		}
 		opts = config.GetBaseOptions()
-		if newProfile.GetBaseOptions().Alias == "" {
+		if newProfile.GetBaseOptions().Base == "" {
 			break
 		}
 	}

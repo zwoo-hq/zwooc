@@ -23,7 +23,7 @@ A profile is a specific set of parameters in which a project can be run/built. T
 
 Profile shall contain at least one definition for one of the three available run modes `run`, `build` and `watch`.
 
-The definitions may define further options in order to configure the environment in which the project is run. These include `args` as of arguments which are passed to the process, `env` as of environment variables which will be available to the process, `alias` (soon to be `base`) as a reference to another profile of which the configuration will be inherited and `includeFragments` as of a list of fragments which will be run in parallel.
+The definitions may define further options in order to configure the environment in which the project is run. These include `args` as of arguments which are passed to the process, `env` as of environment variables which will be available to the process, `base` as a reference to another profile of which the configuration will be inherited and `includeFragments` as of a list of fragments which will be run in parallel.
 
 `args` are configured as an object with `key:value` pairs, which will be translated into `--key value`. If the key already starts with a hyphen (`-`) the auto prefixing will be disabled. `env` values are passed as a list of strings in the format `VAR=value`. These value will be passed as is without any modification. Additionally, adapters may include special env vars or arguments in order to achieve the output desired. Such special configuration will be used in order to enforce static or interactive mode or to provide special shorthand configuration syntax.  
 
@@ -170,4 +170,3 @@ Since this UI is currently under heavy construction the following table only out
 # TODOs:
 
 - :x: handle colons in bash completion better (https://stackoverflow.com/questions/10528695/how-to-reset-comp-wordbreaks-without-affecting-other-completion-script)
-- :x: (BREAKING) rename alias to base
