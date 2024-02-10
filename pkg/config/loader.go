@@ -94,7 +94,7 @@ func (c Config) loadFragments() ([]Fragment, error) {
 					newFragment := Fragment{
 						name:      fragmentKey,
 						directory: filepath.Join(c.baseDir, projectKey),
-						raw:       fragmentValue.(map[string]interface{}),
+						raw:       fragmentValue,
 					}
 					fragments = append(fragments, newFragment)
 				}

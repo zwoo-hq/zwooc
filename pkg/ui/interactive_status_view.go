@@ -190,10 +190,7 @@ func convertState(state int) string {
 func (m *StatusModel) convertRunnerState() {
 	for i := 0; i < len(m.tasksState); i++ {
 		status := &m.tasksState[i]
-		newState, found := m.currentState[status.name]
-		if !found {
-			continue
-		}
+		newState := m.currentState[status.name]
 		if newState != status.status {
 			status.status = newState
 			status.spinner = spinner.New()

@@ -29,12 +29,14 @@ type ScheduledTask struct {
 }
 
 type Model struct {
-	wasCanceled    bool
-	err            error
-	opts           ViewOptions
-	scheduledTasks []ScheduledTask
+	err               error
+	wasCanceled       bool
+	wasCancelCanceled bool
+	opts              ViewOptions
+	scheduledTasks    []ScheduledTask
 
 	preTasks         []PreTaskStatus
+	preError         error
 	preCurrentStage  int
 	preCurrentList   config.TaskList
 	preCurrentRunner *tasks.TaskRunner
@@ -46,13 +48,21 @@ type Model struct {
 	scheduler     *tasks.Scheduler
 	logsView      viewport.Model
 
-	scheduledPost map[string]config.TaskList
+	scheduledPost     map[string]config.TaskList
+	postError         error
+	postTasks         []PreTaskStatus
+	postCurrentStage  int
+	postCurrentList   config.TaskList
+	postCurrentRunner *tasks.TaskRunner
 }
 
-type ContentUpdateMsg string             // fired when the current logs content changes
-type RunnerUpdateMsg tasks.RunnerStatus  //fired when a $pre tasks updates
-type ScheduledStageFinishedMsg int       // fired whe a pre action of a scheduled task finished
-type ScheduledErroredMsg struct{ error } // fired when a scheduled task errored
+type ContentUpdateMsg string                // fired when the current logs content changes
+type PreRunnerUpdateMsg tasks.RunnerStatus  //fired when a $pre tasks updates
+type PostRunnerUpdateMsg tasks.RunnerStatus //fired when a $post tasks updates
+type ScheduledStageFinishedMsg int          // fired whe a pre action of a scheduled task finished
+type PostStageFinishedMsg int               // fired whe a post action of a scheduled task finished
+type ScheduledErroredMsg struct{ error }    // fired when a scheduled task errored
+type PostErroredMsg struct{ error }         // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
 func NewInteractiveRunner(list config.TaskList, opts ViewOptions, conf config.Config) error {
@@ -76,7 +86,7 @@ func NewInteractiveRunner(list config.TaskList, opts ViewOptions, conf config.Co
 func (m *Model) Init() tea.Cmd {
 	hasScheduledStage := m.prepareNextScheduled()
 	if hasScheduledStage {
-		return tea.Batch(tea.EnterAltScreen, m.startScheduledStage, m.listenToRunnerUpdates)
+		return tea.Batch(tea.EnterAltScreen, m.startScheduledStage, m.listenToPreRunner)
 	}
 	if m.activeNotify != nil {
 		return tea.Batch(tea.EnterAltScreen, m.listenToWriterUpdates)
@@ -96,6 +106,10 @@ func (m *Model) schedule(t config.TaskList) {
 
 func (m *Model) prepareNextScheduled() bool {
 	if len(m.scheduledTasks) == 0 {
+		m.preCurrentList = config.TaskList{}
+		m.preCurrentStage = 0
+		m.preTasks = []PreTaskStatus{}
+		m.preCurrentRunner = nil
 		return false
 	}
 
@@ -128,8 +142,29 @@ func (m *Model) initScheduledStage(stage int) {
 	m.preCurrentRunner = tasks.NewRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
 }
 
-func (m *Model) listenToRunnerUpdates() tea.Msg {
-	return RunnerUpdateMsg(<-m.preCurrentRunner.Updates())
+func (m *Model) initPostStage(stage int) {
+	t := []PreTaskStatus{}
+	for _, task := range m.postCurrentList.Steps[stage].Tasks {
+		// set status to 0 to enforce a status update on first load
+		cap := tasks.NewCapturer()
+		task.Pipe(cap)
+		t = append(t, PreTaskStatus{name: task.Name(), status: 0, out: cap})
+	}
+	sort.Slice(t, func(i, j int) bool {
+		return t[i].name < t[j].name
+	})
+
+	m.postCurrentStage = stage
+	m.postTasks = t
+	m.postCurrentRunner = tasks.NewRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
+}
+
+func (m *Model) listenToPreRunner() tea.Msg {
+	return PreRunnerUpdateMsg(<-m.preCurrentRunner.Updates())
+}
+
+func (m *Model) listenToPostRunner() tea.Msg {
+	return PostRunnerUpdateMsg(<-m.postCurrentRunner.Updates())
 }
 
 func (m *Model) startScheduledStage() tea.Msg {
@@ -138,6 +173,14 @@ func (m *Model) startScheduledStage() tea.Msg {
 		return ScheduledErroredMsg{err}
 	}
 	return ScheduledStageFinishedMsg(m.preCurrentStage)
+}
+
+func (m *Model) startPostStage() tea.Msg {
+	err := m.postCurrentRunner.Run()
+	if err != nil {
+		return PostErroredMsg{err}
+	}
+	return PostStageFinishedMsg(m.preCurrentStage)
 }
 
 func (m *Model) transitionCurrentScheduledIntoActive() {
@@ -166,11 +209,23 @@ func (m *Model) listenToWriterUpdates() tea.Msg {
 	return ContentUpdateMsg(<-m.activeNotify.updates)
 }
 
-func (m *Model) cancelAllRunning() {
-	errs := []error{}
-	errs = append(errs, m.scheduler.Cancel())
+func (m *Model) cancelAllRunning() tea.Msg {
+	if m.wasCanceled {
+		m.wasCancelCanceled = true
+		return func() {}
+	}
+
+	m.wasCanceled = true
+	m.err = m.scheduler.Cancel()
 	if m.preCurrentRunner != nil {
-		errs = append(errs, m.preCurrentRunner.Cancel())
+		m.preError = m.preCurrentRunner.Cancel()
+	}
+
+	// reset active state
+	m.activeTasks = []ActiveTask{}
+	if m.activeNotify != nil {
+		close(m.activeNotify.updates)
+		m.activeNotify = nil
 	}
 
 	// start executing post tasks
@@ -180,7 +235,16 @@ func (m *Model) cancelAllRunning() {
 	for _, tasks := range m.scheduledPost {
 		list.MergePostAligned(tasks)
 	}
-	// TODO: run post tasks
+	list.RemoveEmptyStagesAndTasks()
+
+	if list.IsEmpty() {
+		return tea.Quit()
+	}
+
+	m.postCurrentStage = 0
+	m.postCurrentList = list
+	m.initPostStage(0)
+	return m.startPostStage()
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -193,11 +257,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			return m, tea.Quit
+			return m, m.cancelAllRunning
 		}
-	case RunnerUpdateMsg:
-		m.convertRunnerState(tasks.RunnerStatus(msg))
-		cmds = append(cmds, m.listenToRunnerUpdates)
+	case PreRunnerUpdateMsg:
+		m.convertPreRunnerState(tasks.RunnerStatus(msg))
+		if m.preCurrentRunner != nil {
+			cmds = append(cmds, m.listenToPreRunner)
+		}
+
+	case PostRunnerUpdateMsg:
+		m.convertPostRunnerState(tasks.RunnerStatus(msg))
+		if m.postCurrentRunner != nil {
+			cmds = append(cmds, m.listenToPostRunner)
+		}
 
 	case ScheduledStageFinishedMsg:
 		stage := int(msg)
@@ -208,28 +280,44 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.scheduledTasks = m.scheduledTasks[1:]
 			hasNext := m.prepareNextScheduled()
 			if hasNext && !m.wasCanceled {
-				cmds = append(cmds, m.startScheduledStage, m.listenToRunnerUpdates)
+				cmds = append(cmds, m.startScheduledStage, m.listenToPreRunner)
 			}
 			if m.activeNotify != nil {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
 		} else if !m.wasCanceled {
 			m.initScheduledStage(stage + 1)
-			cmds = append(cmds, m.startScheduledStage, m.listenToRunnerUpdates)
+			cmds = append(cmds, m.startScheduledStage, m.listenToPreRunner)
+		}
+
+	case PostStageFinishedMsg:
+		stage := int(msg)
+		if stage+1 >= len(m.postCurrentList.Steps) || m.wasCancelCanceled {
+			return m, tea.Quit
+		} else if !m.wasCancelCanceled {
+			m.initPostStage(stage + 1)
+			cmds = append(cmds, m.startPostStage, m.listenToPostRunner)
 		}
 
 	case ScheduledErroredMsg:
 		// TODO: what to do here?
+		m.preError = msg.error
+
+	case PostErroredMsg:
+		// TODO: what to do here?
+		m.postError = msg.error
 
 	case ContentUpdateMsg:
 		m.logsView.SetContent(string(msg))
 		m.logsView.GotoBottom()
-		cmds = append(cmds, m.listenToWriterUpdates)
+		if m.activeNotify != nil {
+			cmds = append(cmds, m.listenToWriterUpdates)
+		}
 
 	case tea.WindowSizeMsg:
 		// headerHeight := lipgloss.Height(m.headerView())
 		// footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := 4 // headerHeight + footerHeight
+		verticalMarginHeight := 8 // headerHeight + footerHeight
 
 		if !m.viewportReady {
 			// Since this program is using the full size of the viewport we
@@ -238,7 +326,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
 			m.logsView = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.logsView.YPosition = 4
+			m.logsView.YPosition = 8
 			m.logsView.HighPerformanceRendering = false // useHighPerformanceRenderer
 			// m.logsView.SetContent(m.writer.String())
 			m.viewportReady = true
@@ -270,9 +358,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) convertRunnerState(state tasks.RunnerStatus) {
+func (m *Model) convertPreRunnerState(state tasks.RunnerStatus) {
 	for i := 0; i < len(m.preTasks); i++ {
 		status := &m.preTasks[i]
+		newState := state[status.name]
+		status.status = newState
+	}
+}
+
+func (m *Model) convertPostRunnerState(state tasks.RunnerStatus) {
+	for i := 0; i < len(m.postTasks); i++ {
+		status := &m.postTasks[i]
 		newState := state[status.name]
 		status.status = newState
 	}
@@ -294,13 +390,30 @@ func (m *Model) View() (s string) {
 		currentTasks = "There are no tasks scheduled"
 	}
 
+	var postTasks string
+	if !m.postCurrentList.IsEmpty() {
+		currentlyRunning := []string{}
+		for _, task := range m.postTasks {
+			if task.status == tasks.StatusRunning {
+				currentlyRunning = append(currentlyRunning, task.name)
+			}
+		}
+		postTasks = fmt.Sprintf("shutting down %s [] running (%s)", m.postCurrentList.Name, strings.Join(currentlyRunning, ", "))
+	} else {
+		postTasks = "There are no tasks shutting down"
+	}
+
 	s += header
 	s += "\n"
 	s += currentTasks
-	s += "\n"
+	s += "\n\n"
+	s += postTasks
+	s += "\n\n"
 
 	if !m.viewportReady {
 		s += "Initializing..."
+	} else if m.wasCanceled {
+		s += "Shutting down..."
 	} else {
 		s += m.logsView.View()
 	}

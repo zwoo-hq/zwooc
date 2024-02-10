@@ -18,20 +18,21 @@ func (p Profile) GetConfig(mode string) (ResolvedProfile, error) {
 		return ResolvedProfile{}, fmt.Errorf("invalid run mode: '%s'", mode)
 	}
 
-	if options, ok := p.raw[mode]; ok {
-		config := ResolvedProfile{
-			Name:      p.name,
-			Adapter:   p.adapter,
-			Directory: p.directory,
-			Mode:      mode,
-		}
-
-		if optionsMap, ok := options.(map[string]interface{}); ok {
-			config.Options = optionsMap
-		}
-
-		return config, nil
+	options := p.raw[mode]
+	if options == false {
+		return ResolvedProfile{}, fmt.Errorf("profile '%s' disabled mode '%s'", p.name, mode)
 	}
 
-	return ResolvedProfile{}, fmt.Errorf("profile '%s' does not contain a definition for mode '%s'", p.name, mode)
+	config := ResolvedProfile{
+		Name:      p.name,
+		Adapter:   p.adapter,
+		Directory: p.directory,
+		Mode:      mode,
+	}
+
+	if optionsMap, ok := options.(map[string]interface{}); ok {
+		config.Options = optionsMap
+	}
+
+	return config, nil
 }
