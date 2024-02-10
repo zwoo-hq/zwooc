@@ -52,14 +52,36 @@ Hooks may define a command or reference a list of fragments. Due to fragments be
 
 ### Build Mode
 
-| concept                     |       status       |
-| --------------------------- | :----------------: |
-| run a profile in build mode | :white_check_mark: |
-| run build mode  interactive | :white_check_mark: |
+The `build` run mode is defined for creating a compiled artifact from the code without executing the application or library. A standard profile definition is for the key `build` is required in order to execute a profile in build mode.
 
-### Run Mode
+When executing a profile in build mode, a simpler task runner UI is used.
 
-### Watch Mode
+| concept                          |       status       |
+| -------------------------------- | :----------------: |
+| execute build mode               | :white_check_mark: |
+| execute build mode (interactive) | :white_check_mark: |
+| execute hooks                    | :white_check_mark: |
+| execute included fragments       |     :question:     |
+
+### Run & Watch Mode
+
+The `run` run mode is defined for running an application once without applying changes after the source files were updated. 
+
+The `watch` run mode is defined for running an application whilst watching the source files for changes and applying then seamlessly.
+
+A standard profile definition is for the key `run` or `watch` is required in order to execute a profile in run or watch mode.
+
+When executing a profile in run or watch mode, a more complex and feature-fuller runner is used when using an interactive runner.
+
+| concept                                 |       status       |
+| --------------------------------------- | :----------------: |
+| execute run mode                        | :white_check_mark: |
+| execute run mode (interactive)          | :white_check_mark: |
+| execute watch mode                      | :white_check_mark: |
+| execute watch mode (interactive)        | :white_check_mark: |
+| execute hooks                           | :white_check_mark: |
+| execute included fragments              |     :question:     |
+| seamlessly switch between run and watch |        :x:         |
 
 ## Custom Tasks (Fragments)
 
