@@ -192,10 +192,7 @@ func (m *StatusModel) convertRunnerState() {
 		status := &m.tasksState[i]
 		newState, found := m.currentState[status.name]
 		if !found {
-			// stage changed
-			m.tasksState = []InteractiveTaskStatus{}
-			m.convertRunnerState()
-			return
+			continue
 		}
 		if newState != status.status {
 			status.status = newState

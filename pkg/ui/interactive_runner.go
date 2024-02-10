@@ -279,7 +279,7 @@ func (m *Model) convertRunnerState(state tasks.RunnerStatus) {
 }
 
 func (m *Model) View() (s string) {
-	header := fmt.Sprintf("zwooc running in interactive mode [%d] (%d scheduled tasks)\n", m.c, len(m.scheduledTasks))
+	header := fmt.Sprintf("zwooc running in interactive mode (%d scheduled tasks)\n", len(m.scheduledTasks))
 
 	var currentTasks string
 	if len(m.scheduledTasks) > 0 {
