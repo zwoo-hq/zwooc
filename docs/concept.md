@@ -10,6 +10,8 @@ This is an overview of the desired zwooc functionality with its implementation s
 
 A project is a standalone application or library. The key of a project must equal the directory relative to the location of the config file. The project key may include `$COMP_WORDBREAKS` characters. Projects shall define at least one profile.
 
+Projects may define a `$default` profile which will be execute if no specific profile is given.
+
 | concept                  |       status       |
 | ------------------------ | :----------------: |
 | define projects          | :white_check_mark: |
