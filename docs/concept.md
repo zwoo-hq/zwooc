@@ -171,4 +171,3 @@ Since this UI is currently under heavy construction the following table only out
 
 - :x: handle colons in bash completion better (https://stackoverflow.com/questions/10528695/how-to-reset-comp-wordbreaks-without-affecting-other-completion-script)
 - :x: (BREAKING) rename alias to base
-- :x: remove skip fragments from JSON config
