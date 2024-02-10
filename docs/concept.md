@@ -33,7 +33,7 @@ Furthermore, definitions may include options which are dependent on the adapter 
 | -------------------------------------- | :----------------: |
 | define profiles                        | :white_check_mark: |
 | define `args` options                  | :white_check_mark: |
-| don't enforce `--` prefix on arguments |        :x:         |
+| don't enforce `--` prefix on arguments | :white_check_mark: |
 | define env options                     | :white_check_mark: |
 | define a base profile                  | :white_check_mark: |
 | define included fragments              | :white_check_mark: |
