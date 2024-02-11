@@ -78,7 +78,7 @@ func (t *TaskList) Split() (pre TaskList, main ExecutionStep, post TaskList) {
 }
 
 func (t *TaskList) MergePostAligned(other TaskList) {
-	for i, step := range t.Steps {
+	for i, step := range other.Steps {
 		if i > len(t.Steps)-1 {
 			t.Steps = append(t.Steps, other.Steps[i])
 		} else {
