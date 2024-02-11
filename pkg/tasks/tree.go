@@ -20,12 +20,12 @@ func NewTaskTree(name string, mainTask Task, isLongRunning bool) *TaskTreeNode {
 	}
 }
 
-func (t *TaskTreeNode) AddPreChild(child *TaskTreeNode) {
-	t.Pre = append(t.Pre, child)
+func (t *TaskTreeNode) AddPreChild(child ...*TaskTreeNode) {
+	t.Pre = append(t.Pre, child...)
 }
 
-func (t *TaskTreeNode) AddPostChild(child *TaskTreeNode) {
-	t.Post = append(t.Post, child)
+func (t *TaskTreeNode) AddPostChild(child ...*TaskTreeNode) {
+	t.Post = append(t.Post, child...)
 }
 
 func (t *TaskTreeNode) FindNode(name string) *TaskTreeNode {
@@ -56,8 +56,8 @@ func (t *TaskTreeNode) Flatten() *TaskList {
 	list.InsertBefore(preList)
 
 	postList := NewTaskList(helper.BuildName(t.Name, "post"), []ExecutionStep{})
-	for _, pre := range t.Pre {
-		postList.MergePostAligned(*pre.Flatten())
+	for _, post := range t.Post {
+		postList.MergePostAligned(*post.Flatten())
 	}
 	list.InsertAfter(postList)
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -21,7 +20,7 @@ type InteractiveTaskStatus struct {
 
 type StatusModel struct {
 	currentIndex  int
-	tasks         config.TaskList
+	tasks         tasks.TaskList
 	tasksState    []InteractiveTaskStatus
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
@@ -35,7 +34,7 @@ type StatusUpdateMsg tasks.RunnerStatus
 type StatusStageFinishedMsg int
 type StatusErrorMsg struct{ error }
 
-func NewStatusView(list config.TaskList, opts ViewOptions) error {
+func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
 	model := StatusModel{
 		tasks:        list,
 		currentIndex: 0,

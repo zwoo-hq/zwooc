@@ -45,12 +45,15 @@ Furthermore, definitions may include options which are dependent on the adapter 
 ## Hooks
 Any hook-able entity may define `$pre` and `$post` hooks. All profile definitions, fragments and compounds are considered hook-able. `$pre` hooks are always executed before the entity, while `$post` hook are always executed after the entity. 
 
-Hooks may define a command or reference a list of fragments. Due to fragments being hook-able themselves, dependencies shall not be cyclic.
+Hooks may define a command or reference a list of fragments or event profiles. Due to fragments being hook-able themselves, dependencies shall not be cyclic.
 
-| concept                   |       status       |
-| ------------------------- | :----------------: |
-| define hooks              | :white_check_mark: |
-| check if hooks are cyclic |        :x:         |
+| concept                     |       status       |
+| --------------------------- | :----------------: |
+| define hooks                | :white_check_mark: |
+| define hooks with commands  | :white_check_mark: |
+| define hooks with fragments | :white_check_mark: |
+| define hooks with profiles  |        :x:         |
+| check if hooks are cyclic   |        :x:         |
 
 ### Build Mode
 

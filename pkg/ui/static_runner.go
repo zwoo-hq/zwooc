@@ -9,12 +9,11 @@ import (
 	"time"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 type staticView struct {
-	tasks         config.TaskList
+	tasks         tasks.TaskList
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
 	wasCanceled   bool
@@ -22,8 +21,8 @@ type staticView struct {
 	mu            sync.RWMutex
 }
 
-// RunStatic runs a config.TaskList with a static ui suited for non TTY environments
-func newStaticRunner(taskList config.TaskList, opts ViewOptions) {
+// RunStatic runs a tasks.TaskList with a static ui suited for non TTY environments
+func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 	model := &staticView{
 		tasks: taskList,
 	}

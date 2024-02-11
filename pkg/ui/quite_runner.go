@@ -6,18 +6,17 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 type quiteView struct {
-	tasks         config.TaskList
+	tasks         tasks.TaskList
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
 }
 
-// RunStatic runs a config.TaskList with a static ui suited for non TTY environments
-func newQuiteRunner(taskList config.TaskList, opts ViewOptions) {
+// RunStatic runs a tasks.TaskList with a static ui suited for non TTY environments
+func newQuiteRunner(taskList tasks.TaskList, opts ViewOptions) {
 	model := &quiteView{
 		tasks: taskList,
 	}

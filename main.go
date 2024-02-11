@@ -182,10 +182,12 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
+	list := *taskList.Flatten()
+	list.RemoveEmptyStagesAndTasks()
 	if runMode == config.ModeWatch || runMode == config.ModeRun {
-		ui.NewInteractiveRunner(taskList, viewOptions, conf)
+		ui.NewInteractiveRunner(list, viewOptions, conf)
 	} else {
-		ui.NewRunner(taskList, viewOptions)
+		ui.NewRunner(list, viewOptions)
 	}
 	return nil
 }
@@ -253,15 +255,15 @@ func createGraphCommand() *cli.Command {
 func graphTaskList(conf config.Config, c *cli.Context) error {
 	mode := c.Args().First()
 	target := c.Args().Get(1)
-	var taskList config.TaskList
+	var taskList tasks.TaskList
 	var err error
 
 	if mode == "exec" {
 		var task tasks.Task
 		task, err = conf.ResolvedFragment(target, []string{})
-		taskList = config.TaskList{
+		taskList = tasks.TaskList{
 			Name: "fragment",
-			Steps: []config.ExecutionStep{
+			Steps: []tasks.ExecutionStep{
 				{
 					Name:  "fragment",
 					Tasks: []tasks.Task{task},
@@ -269,7 +271,11 @@ func graphTaskList(conf config.Config, c *cli.Context) error {
 			},
 		}
 	} else if mode == "run" || mode == "watch" || mode == "build" {
-		taskList, err = conf.ResolveProfile(target, mode)
+		var tree *tasks.TaskTreeNode
+		tree, err = conf.ResolveProfile(target, mode)
+		if tree != nil {
+			taskList = *tree.Flatten()
+		}
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}
@@ -277,7 +283,7 @@ func graphTaskList(conf config.Config, c *cli.Context) error {
 	if err != nil {
 		ui.HandleError(err)
 	}
-
+	taskList.RemoveEmptyStagesAndTasks()
 	ui.GraphDependencies(taskList)
 	return nil
 }
