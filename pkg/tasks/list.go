@@ -1,9 +1,22 @@
-package config
+package tasks
 
 import (
 	"github.com/zwoo-hq/zwooc/pkg/helper"
-	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
+
+type ExecutionStep struct {
+	Name          string
+	Tasks         []Task
+	IsLongRunning bool
+}
+
+func NewExecutionStep(name string, tasks []Task, isLongRunning bool) ExecutionStep {
+	return ExecutionStep{
+		Name:          name,
+		Tasks:         tasks,
+		IsLongRunning: isLongRunning,
+	}
+}
 
 type TaskList struct {
 	Name  string
@@ -30,7 +43,7 @@ func (t *TaskList) RemoveEmptyStagesAndTasks() {
 	for _, step := range t.Steps {
 		// remove empty tasks
 		for i := 0; i < len(step.Tasks); i++ {
-			if tasks.IsEmptyTask(step.Tasks[i]) {
+			if IsEmptyTask(step.Tasks[i]) {
 				step.Tasks = append(step.Tasks[:i], step.Tasks[i+1:]...)
 				i--
 			}
@@ -48,8 +61,8 @@ func (t *TaskList) IsEmpty() bool {
 }
 
 func (t *TaskList) Split() (pre TaskList, main ExecutionStep, post TaskList) {
-	pre = NewTaskList(helper.BuildName(t.Name, KeyPre), []ExecutionStep{})
-	post = NewTaskList(helper.BuildName(t.Name, KeyPost), []ExecutionStep{})
+	pre = NewTaskList(helper.BuildName(t.Name, "pre"), []ExecutionStep{})
+	post = NewTaskList(helper.BuildName(t.Name, "post"), []ExecutionStep{})
 	wasMain := false
 	for _, step := range t.Steps {
 		if step.IsLongRunning {
@@ -84,19 +97,5 @@ func (t *TaskList) MergePreAligned(other TaskList) {
 		} else {
 			t.Steps[originOffset-i].Tasks = append(t.Steps[originOffset-i].Tasks, other.Steps[otherOffset-i].Tasks...)
 		}
-	}
-}
-
-type ExecutionStep struct {
-	Name          string
-	Tasks         []tasks.Task
-	IsLongRunning bool
-}
-
-func NewExecutionStep(name string, tasks []tasks.Task, isLongRunning bool) ExecutionStep {
-	return ExecutionStep{
-		Name:          name,
-		Tasks:         tasks,
-		IsLongRunning: isLongRunning,
 	}
 }
