@@ -1,3 +1,5 @@
+![zwooc-social-image](https://github.com/zwoo-hq/zwooc/assets/47701374/68f176e6-2eba-4abf-9e3a-a9d3a2d93619)
+
 # Zwoo Build System
 
 The zwoo build system is a <insert fancy name> for executing a number of commands in order to build or run zwoo related projects.
