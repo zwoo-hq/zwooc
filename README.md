@@ -1,16 +1,18 @@
 ![zwooc-social-image](https://github.com/zwoo-hq/zwooc/assets/47701374/68f176e6-2eba-4abf-9e3a-a9d3a2d93619)
 
-# Zwoo Build System
+# zwooc
 
-The zwoo build system is a <insert fancy name> for executing a number of commands in order to build or run zwoo related projects.
+The official build system for [zwoo](https://github.com/fabiankachlock/zwoo)!
 
-Although you can theoretically use this with any project, this build system is built specially for zwoo and (for now) only has first class support for toolchains used in zwoo. This results in the following available project adapters:
+---
 
-- `dotnet`
-- `vite`
+## Install
 
+You can install zwooc from the  [GitHub Releases](https://github.com/zwoo-hq/zwooc/releases) or via `/go install github.com/zwoo-hq/zwooc@latest` (go 1.20 is needed).
 
 ## Concepts
+
+This is a rough overview about all concepts, for a full documentation see [`docs/concept.md`](https://github.com/zwoo-hq/zwooc/blob/main/docs/concept.md)
 
 ### Run Mode
 
