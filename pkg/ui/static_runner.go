@@ -75,6 +75,7 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 					fmt.Printf(parts[0])
 					fmt.Println(strings.TrimSpace(outputs[key].String()))
 					fmt.Printf(parts[1])
+					os.Exit(1)
 				}
 			}
 			return

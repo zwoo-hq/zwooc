@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -54,7 +55,12 @@ func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
 				fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), status.name)
 				fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), model.currentError)
 				fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
-				fmt.Println(canceledStyle.Render(strings.TrimSpace(status.out.String())))
+				wrapper := canceledStyle.Render("===")
+				parts := strings.Split(wrapper, "===")
+				fmt.Printf(parts[0])
+				fmt.Println(strings.TrimSpace(status.out.String()))
+				fmt.Printf(parts[1])
+				os.Exit(1)
 			}
 		}
 		return nil
