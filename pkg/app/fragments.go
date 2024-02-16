@@ -41,6 +41,11 @@ func execFragment(config config.Config, c *cli.Context) error {
 		viewOptions.MaxConcurrency = 1
 	}
 
+	if isCI() && !c.Bool("no-ci") {
+		viewOptions.DisableTUI = true
+		viewOptions.InlineOutput = true
+	}
+
 	args := c.Args().Tail()
 	fragmentKey := c.Args().First()
 	task, err := config.ResolvedFragment(fragmentKey, args)

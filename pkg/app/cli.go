@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -28,4 +30,8 @@ func loadConfig() config.Config {
 		ui.HandleError(err)
 	}
 	return conf
+}
+
+func isCI() bool {
+	return os.Getenv("CI") == "true"
 }

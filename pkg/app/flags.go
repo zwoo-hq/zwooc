@@ -99,5 +99,13 @@ func CreateGlobalFlags() []cli.Flag {
 			Usage:    "excludes certain fragments from being executed",
 			Category: CategoryFragments,
 		},
+
+		// Other
+		&cli.BoolFlag{
+			Name:     "no-ci",
+			Usage:    "disable ci mode",
+			Value:    false,
+			Category: CategoryGeneral,
+		},
 	}
 }

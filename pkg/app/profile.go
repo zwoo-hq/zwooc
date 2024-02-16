@@ -44,6 +44,11 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		viewOptions.MaxConcurrency = 1
 	}
 
+	if isCI() && !c.Bool("no-ci") {
+		viewOptions.DisableTUI = true
+		viewOptions.InlineOutput = true
+	}
+
 	taskList, err := conf.ResolveProfile(c.Args().First(), runMode)
 	if err != nil {
 		ui.HandleError(err)
