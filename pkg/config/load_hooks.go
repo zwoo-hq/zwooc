@@ -31,7 +31,16 @@ func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile st
 		if err != nil {
 			return nil, err
 		}
-		taskList = append(taskList, tasks.NewTaskTree("", fragmentConfig.GetTaskWithBaseName(helper.BuildName(hook.Base, hook.Kind), []string{}), false))
+		name := helper.BuildName(hook.Base, hook.Kind)
+		taskList = append(taskList, tasks.NewTaskTree(name, fragmentConfig.GetTaskWithBaseName(name, []string{}), false))
+	}
+
+	for profile, mode := range hook.Profiles {
+		profileConfig, err := c.ResolveProfile(profile, mode)
+		if err != nil {
+			return nil, err
+		}
+		taskList = append(taskList, profileConfig)
 	}
 
 	return taskList, nil
