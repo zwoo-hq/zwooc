@@ -8,25 +8,31 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func (c Config) ResolvedFragment(key string, extraArgs []string) (tasks.Task, error) {
-	parts := strings.Split(key, ":")
-	mode := ""
-	profile := ""
-
+func normalizeFragmentKey(fullKey string) (key, mode, profile string) {
+	parts := strings.Split(fullKey, ":")
+	key = parts[0]
 	if len(parts) >= 2 {
-		key = parts[0]
 		mode = parts[1]
 	}
 	if len(parts) >= 3 {
-		key = parts[2]
+		profile = parts[2]
 	}
+	return
+}
 
+func (c Config) ResolvedFragment(key string, extraArgs []string) (*tasks.TaskTreeNode, error) {
+	key, mode, profile := normalizeFragmentKey(key)
 	fragment, err := c.resolveFragment(key, mode, profile)
 	if err != nil {
-		return tasks.Empty(), err
+		return nil, err
 	}
 
-	return fragment.GetTask(extraArgs), nil
+	node := tasks.NewTaskTree(fragment.Name, fragment.GetTask(extraArgs), false)
+	err = c.resolveHooks(fragment, node, mode, profile)
+	if err != nil {
+		return nil, err
+	}
+	return node, nil
 }
 
 func (c Config) resolveFragment(key, mode, profile string) (ResolvedFragment, error) {

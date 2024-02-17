@@ -74,18 +74,3 @@ func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
 	}
 	return config, nil
 }
-
-func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile string) ([]*tasks.TaskTreeNode, error) {
-	taskList := []*tasks.TaskTreeNode{
-		tasks.NewTaskTree(helper.BuildName(hook.Base, hook.Kind), hook.GetTask(), false),
-	}
-	for _, fragment := range hook.Fragments {
-		fragmentConfig, err := c.resolveFragment(fragment, mode, profile)
-		if err != nil {
-			return nil, err
-		}
-		taskList = append(taskList, tasks.NewTaskTree("", fragmentConfig.GetTaskWithBaseName(helper.BuildName(hook.Base, hook.Kind), []string{}), false))
-	}
-
-	return taskList, nil
-}

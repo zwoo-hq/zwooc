@@ -53,6 +53,8 @@ func execFragment(config config.Config, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	ui.NewFragmentRunner(task, viewOptions)
+	list := task.Flatten()
+	list.RemoveEmptyStagesAndTasks()
+	ui.NewRunner(*list, viewOptions)
 	return nil
 }

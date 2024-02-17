@@ -9,6 +9,7 @@ type ResolvedHook struct {
 	Kind      string
 	Command   string
 	Fragments []string
+	Profiles  map[string]string
 	Base      string
 	Directory string
 }
@@ -18,6 +19,7 @@ func (h HookOptions) ResolveWithProfile(callingProfile ResolvedProfile, kind str
 		Kind:      kind,
 		Command:   h.Command,
 		Fragments: h.Fragments,
+		Profiles:  h.Profiles,
 		Base:      helper.BuildName(callingProfile.Name, callingProfile.Mode),
 		Directory: callingProfile.Directory,
 	}
@@ -28,6 +30,7 @@ func (h HookOptions) ResolveWithFragment(callingFragment ResolvedFragment, kind 
 		Kind:      kind,
 		Command:   h.Command,
 		Fragments: h.Fragments,
+		Profiles:  h.Profiles,
 		Base:      callingFragment.Name,
 		Directory: callingFragment.Directory,
 	}

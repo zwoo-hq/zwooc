@@ -5,7 +5,7 @@ import "github.com/zwoo-hq/zwooc/pkg/helper"
 type TaskTreeNode struct {
 	Name          string
 	Pre           []*TaskTreeNode
-	Main          *Task
+	Main          Task
 	Post          []*TaskTreeNode
 	IsLongRunning bool
 }
@@ -14,7 +14,7 @@ func NewTaskTree(name string, mainTask Task, isLongRunning bool) *TaskTreeNode {
 	return &TaskTreeNode{
 		Name:          name,
 		Pre:           []*TaskTreeNode{},
-		Main:          &mainTask,
+		Main:          mainTask,
 		Post:          []*TaskTreeNode{},
 		IsLongRunning: isLongRunning,
 	}
@@ -44,7 +44,7 @@ func (t *TaskTreeNode) Flatten() *TaskList {
 	list := NewTaskList(t.Name, []ExecutionStep{
 		{
 			Name:          t.Name,
-			Tasks:         []Task{*t.Main},
+			Tasks:         []Task{t.Main},
 			IsLongRunning: t.IsLongRunning,
 		},
 	})

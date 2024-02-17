@@ -32,17 +32,9 @@ func graphTaskList(conf config.Config, c *cli.Context) error {
 	var err error
 
 	if mode == "exec" {
-		var task tasks.Task
+		var task *tasks.TaskTreeNode
 		task, err = conf.ResolvedFragment(target, []string{})
-		taskList = tasks.TaskList{
-			Name: "fragment",
-			Steps: []tasks.ExecutionStep{
-				{
-					Name:  "fragment",
-					Tasks: []tasks.Task{task},
-				},
-			},
-		}
+		taskList = *task.Flatten()
 	} else if mode == "run" || mode == "watch" || mode == "build" {
 		var tree *tasks.TaskTreeNode
 		tree, err = conf.ResolveProfile(target, mode)
