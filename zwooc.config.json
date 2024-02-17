@@ -7,10 +7,7 @@
       "print": {
         "$default": "echo $PWD && sleep 7",
         "$pre": {
-          "fragments": ["print2"],
-          "profiles": {
-            "dev": "build"
-          }
+          "fragments": ["print2"]
         }
       }
     },

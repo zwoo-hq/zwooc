@@ -32,7 +32,9 @@ func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile st
 			return nil, err
 		}
 		name := helper.BuildName(hook.Base, hook.Kind)
-		taskList = append(taskList, tasks.NewTaskTree(fragmentConfig.Name, fragmentConfig.GetTaskWithBaseName(name, []string{}), false))
+		fragmentTask := tasks.NewTaskTree(fragmentConfig.Name, fragmentConfig.GetTaskWithBaseName(name, []string{}), false)
+		c.resolveHooks(fragmentConfig, fragmentTask, mode, profile)
+		taskList = append(taskList, fragmentTask)
 	}
 
 	for profile, mode := range hook.Profiles {

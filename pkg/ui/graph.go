@@ -25,18 +25,22 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 	}
 
 	if len(node.Pre) > 0 {
-		newPrefix := "  │ "
+		newPrefix := "│ "
+		prePrefix := "│ "
+		if isLast {
+			prePrefix = "  "
+		}
 		name := graphPreStyle.Render(config.KeyPre)
 		info := graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Pre)))
 		if len(node.Post) == 0 {
-			newPrefix = "    "
-			fmt.Printf("%s  └─┬%s %s\n", prefix, name, info)
+			newPrefix = "  "
+			fmt.Printf("%s%s└─┬%s %s\n", prefix, prePrefix, name, info)
 		} else {
-			fmt.Printf("%s  ├─┬%s %s\n", prefix, name, info)
+			fmt.Printf("%s%s├─┬%s %s\n", prefix, prePrefix, name, info)
 		}
 
 		for i, child := range node.Pre {
-			printNode(child, prefix+newPrefix, i == len(node.Pre)-1)
+			printNode(child, prefix+prePrefix+newPrefix, i == len(node.Pre)-1)
 		}
 	}
 
