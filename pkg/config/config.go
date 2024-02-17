@@ -23,10 +23,6 @@ const (
 type (
 	FragmentOptions map[string]interface{}
 
-	ComplexFragment struct {
-		Command string `json:"command"`
-	}
-
 	HookOptions struct {
 		Command   string            `json:"command"`
 		Fragments []string          `json:"fragments"`
