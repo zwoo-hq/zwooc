@@ -19,9 +19,9 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 		connector = "─"
 	}
 	if isLast {
-		fmt.Printf("%s└─%s%s\n", prefix, connector, graphMainStyle.Render(node.Main.Name()))
+		fmt.Printf("%s└─%s%s %s\n", prefix, connector, graphMainStyle.Render(node.Name), graphInfoStyle.Render(node.Main.Name()))
 	} else {
-		fmt.Printf("%s├─%s%s\n", prefix, connector, graphMainStyle.Render(node.Main.Name()))
+		fmt.Printf("%s├─%s%s %s\n", prefix, connector, graphMainStyle.Render(node.Name), graphInfoStyle.Render(node.Main.Name()))
 	}
 
 	if len(node.Pre) > 0 {
