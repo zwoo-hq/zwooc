@@ -28,19 +28,13 @@ func CreateGraphCommand() *cli.Command {
 func graphTaskList(conf config.Config, c *cli.Context) error {
 	mode := c.Args().First()
 	target := c.Args().Get(1)
-	var taskList tasks.TaskList
+	var tree *tasks.TaskTreeNode
 	var err error
 
 	if mode == "exec" {
-		var task *tasks.TaskTreeNode
-		task, err = conf.ResolvedFragment(target, []string{})
-		taskList = *task.Flatten()
+		tree, err = conf.ResolvedFragment(target, []string{})
 	} else if mode == "run" || mode == "watch" || mode == "build" {
-		var tree *tasks.TaskTreeNode
 		tree, err = conf.ResolveProfile(target, mode)
-		if tree != nil {
-			taskList = *tree.Flatten()
-		}
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}
@@ -48,7 +42,6 @@ func graphTaskList(conf config.Config, c *cli.Context) error {
 	if err != nil {
 		ui.HandleError(err)
 	}
-	taskList.RemoveEmptyStagesAndTasks()
-	ui.GraphDependencies(taskList)
+	ui.GraphDependencies(tree)
 	return nil
 }

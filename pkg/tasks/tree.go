@@ -63,3 +63,22 @@ func (t *TaskTreeNode) Flatten() *TaskList {
 
 	return &list
 }
+
+func (t *TaskTreeNode) RemoveEmptyNodes() {
+	for i := 0; i < len(t.Pre); i++ {
+		if IsEmptyTask(t.Pre[i].Main) {
+			t.Pre = append(t.Pre[:i], t.Pre[i+1:]...)
+			i--
+		} else {
+			t.Pre[i].RemoveEmptyNodes()
+		}
+	}
+	for i := 0; i < len(t.Post); i++ {
+		if IsEmptyTask(t.Post[i].Main) {
+			t.Post = append(t.Post[:i], t.Post[i+1:]...)
+			i--
+		} else {
+			t.Post[i].RemoveEmptyNodes()
+		}
+	}
+}

@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -55,7 +54,7 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 		go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")
 
 		start := time.Now()
-		fmt.Printf("╭─── running step %s (%d/%d)\n", lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true).Render(step.Name), i+1, len(taskList.Steps))
+		fmt.Printf("╭─── running step %s (%d/%d)\n", stepStyle.Render(step.Name), i+1, len(taskList.Steps))
 		err := model.currentRunner.Run()
 		end := time.Now()
 		// wait until everything is completed
