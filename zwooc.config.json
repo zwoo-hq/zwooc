@@ -7,7 +7,8 @@
       "print": {
         "$default": "echo $PWD && sleep 7",
         "$pre": {
-          "fragments": ["print2"]
+          "fragments": ["print2"],
+          "command": "echo 'pre'"
         }
       }
     },

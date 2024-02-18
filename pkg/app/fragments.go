@@ -34,6 +34,9 @@ func execFragment(config config.Config, c *cli.Context) error {
 	viewOptions := ui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
+		InlineOutput:   c.Bool("inline-output"),
+		CombineOutput:  c.Bool("combine-output"),
+		DisablePrefix:  c.Bool("no-prefix"),
 		MaxConcurrency: c.Int("max-concurrency"),
 	}
 

@@ -16,7 +16,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "main.go",
-      "args": ["graph", "exec", "print"]
+      "args": ["exec", "-to", "print"]
     }
   ]
 }
