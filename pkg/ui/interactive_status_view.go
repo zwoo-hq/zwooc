@@ -2,13 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -21,7 +21,7 @@ type InteractiveTaskStatus struct {
 
 type StatusModel struct {
 	currentIndex  int
-	tasks         config.TaskList
+	tasks         tasks.TaskList
 	tasksState    []InteractiveTaskStatus
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
@@ -35,7 +35,7 @@ type StatusUpdateMsg tasks.RunnerStatus
 type StatusStageFinishedMsg int
 type StatusErrorMsg struct{ error }
 
-func NewStatusView(list config.TaskList, opts ViewOptions) error {
+func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
 	model := StatusModel{
 		tasks:        list,
 		currentIndex: 0,
@@ -55,7 +55,12 @@ func NewStatusView(list config.TaskList, opts ViewOptions) error {
 				fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), status.name)
 				fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), model.currentError)
 				fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
-				fmt.Println(canceledStyle.Render(strings.TrimSpace(status.out.String())))
+				wrapper := canceledStyle.Render("===")
+				parts := strings.Split(wrapper, "===")
+				fmt.Printf(parts[0])
+				fmt.Println(strings.TrimSpace(status.out.String()))
+				fmt.Printf(parts[1])
+				os.Exit(1)
 			}
 		}
 		return nil

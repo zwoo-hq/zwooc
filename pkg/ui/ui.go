@@ -1,10 +1,8 @@
 package ui
 
-import (
-	"github.com/zwoo-hq/zwooc/pkg/config"
-)
+import "github.com/zwoo-hq/zwooc/pkg/tasks"
 
-func NewRunner(tasks config.TaskList, options ViewOptions) {
+func NewRunner(tasks tasks.TaskList, options ViewOptions) {
 	if options.QuiteMode {
 		newQuiteRunner(tasks, options)
 		return

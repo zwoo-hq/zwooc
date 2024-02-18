@@ -23,9 +23,9 @@ type ActiveTask struct {
 }
 
 type ScheduledTask struct {
-	preStage  config.TaskList
-	mainTasks config.ExecutionStep
-	postStage config.TaskList
+	preStage  tasks.TaskList
+	mainTasks tasks.ExecutionStep
+	postStage tasks.TaskList
 }
 
 type Model struct {
@@ -38,7 +38,7 @@ type Model struct {
 	preTasks         []PreTaskStatus
 	preError         error
 	preCurrentStage  int
-	preCurrentList   config.TaskList
+	preCurrentList   tasks.TaskList
 	preCurrentRunner *tasks.TaskRunner
 
 	viewportReady bool
@@ -48,11 +48,11 @@ type Model struct {
 	scheduler     *tasks.Scheduler
 	logsView      viewport.Model
 
-	scheduledPost     map[string]config.TaskList
+	scheduledPost     map[string]tasks.TaskList
 	postError         error
 	postTasks         []PreTaskStatus
 	postCurrentStage  int
-	postCurrentList   config.TaskList
+	postCurrentList   tasks.TaskList
 	postCurrentRunner *tasks.TaskRunner
 }
 
@@ -65,13 +65,13 @@ type ScheduledErroredMsg struct{ error }    // fired when a scheduled task error
 type PostErroredMsg struct{ error }         // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
-func NewInteractiveRunner(list config.TaskList, opts ViewOptions, conf config.Config) error {
+func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Config) error {
 	m := &Model{
 		opts:           opts,
 		scheduledTasks: []ScheduledTask{},
 		activeTasks:    []ActiveTask{},
 		scheduler:      tasks.NewScheduler(),
-		scheduledPost:  make(map[string]config.TaskList),
+		scheduledPost:  make(map[string]tasks.TaskList),
 	}
 
 	m.schedule(list)
@@ -94,7 +94,7 @@ func (m *Model) Init() tea.Cmd {
 	return tea.Batch(tea.EnterAltScreen)
 }
 
-func (m *Model) schedule(t config.TaskList) {
+func (m *Model) schedule(t tasks.TaskList) {
 	pre, main, post := t.Split()
 	scheduled := ScheduledTask{
 		preStage:  pre,
@@ -106,7 +106,7 @@ func (m *Model) schedule(t config.TaskList) {
 
 func (m *Model) prepareNextScheduled() bool {
 	if len(m.scheduledTasks) == 0 {
-		m.preCurrentList = config.TaskList{}
+		m.preCurrentList = tasks.TaskList{}
 		m.preCurrentStage = 0
 		m.preTasks = []PreTaskStatus{}
 		m.preCurrentRunner = nil
@@ -229,7 +229,7 @@ func (m *Model) cancelAllRunning() tea.Msg {
 	}
 
 	// start executing post tasks
-	list := config.TaskList{
+	list := tasks.TaskList{
 		Name: "cleanup",
 	}
 	for _, tasks := range m.scheduledPost {

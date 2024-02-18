@@ -8,13 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 type staticView struct {
-	tasks         config.TaskList
+	tasks         tasks.TaskList
 	currentState  tasks.RunnerStatus
 	currentRunner *tasks.TaskRunner
 	wasCanceled   bool
@@ -22,8 +20,8 @@ type staticView struct {
 	mu            sync.RWMutex
 }
 
-// RunStatic runs a config.TaskList with a static ui suited for non TTY environments
-func newStaticRunner(taskList config.TaskList, opts ViewOptions) {
+// RunStatic runs a tasks.TaskList with a static ui suited for non TTY environments
+func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 	model := &staticView{
 		tasks: taskList,
 	}
@@ -56,7 +54,7 @@ func newStaticRunner(taskList config.TaskList, opts ViewOptions) {
 		go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")
 
 		start := time.Now()
-		fmt.Printf("╭─── running step %s (%d/%d)\n", lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true).Render(step.Name), i+1, len(taskList.Steps))
+		fmt.Printf("╭─── running step %s (%d/%d)\n", stepStyle.Render(step.Name), i+1, len(taskList.Steps))
 		err := model.currentRunner.Run()
 		end := time.Now()
 		// wait until everything is completed
@@ -76,6 +74,7 @@ func newStaticRunner(taskList config.TaskList, opts ViewOptions) {
 					fmt.Printf(parts[0])
 					fmt.Println(strings.TrimSpace(outputs[key].String()))
 					fmt.Printf(parts[1])
+					os.Exit(1)
 				}
 			}
 			return

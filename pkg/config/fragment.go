@@ -17,6 +17,7 @@ func (f Fragment) GetConfig(mode string, callingProfile string) (ResolvedFragmen
 		return ResolvedFragment{}, fmt.Errorf("invalid run mode: '%s'", mode)
 	}
 
+	// shorthand fragment definition
 	if defaultCmd, ok := f.raw.(string); ok {
 		return ResolvedFragment{
 			Name:       f.name,

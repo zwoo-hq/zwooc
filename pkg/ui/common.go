@@ -41,11 +41,16 @@ var (
 		FPS: time.Second / 8,
 	}
 
-	pendingStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
-	runningStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("75"))
-	successStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
-	errorStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("124"))
-	canceledStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
+	pendingStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
+	runningStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("75"))
+	successStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
+	errorStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("124"))
+	canceledStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
+	stepStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true)
+	graphMainStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("93"))
+	graphPreStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("117")).Italic(true)
+	graphPostStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("130")).Italic(true)
+	graphInfoStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("249")).Faint(true)
 )
 
 func HandleError(err error) {

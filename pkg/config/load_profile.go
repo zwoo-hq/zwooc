@@ -8,21 +8,21 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
+func (c Config) ResolveProfile(key, mode string) (*tasks.TaskTreeNode, error) {
 	if key == "" {
 		key = KeyDefault
 	}
 
 	config, err := c.resolveRunConfig(key, mode)
 	if err != nil {
-		return TaskList{}, err
+		return nil, err
 	}
 	opts := config.GetBaseOptions()
 	for opts.Base != "" {
 		// load aliased profile
 		newProfile, err := c.resolveRunConfig(opts.Base, mode)
 		if err != nil {
-			return TaskList{}, err
+			return nil, err
 		}
 		// merge profiles
 		config = ResolvedProfile{
@@ -41,29 +41,22 @@ func (c Config) ResolveProfile(key, mode string) (TaskList, error) {
 	name := helper.BuildName(key, mode)
 	preStage, err := c.resolveHook(config.GetPreHooks(), config, config.Mode, config.Name)
 	if err != nil {
-		return TaskList{}, err
+		return nil, err
 	}
 
 	postStage, err := c.resolveHook(config.GetPostHooks(), config, config.Mode, config.Name)
 	if err != nil {
-		return TaskList{}, err
+		return nil, err
 	}
 
 	mainTask, err := config.GetTask()
 	if err != nil {
-		return TaskList{}, err
+		return nil, err
 	}
-	list := NewTaskList(name, []ExecutionStep{
-		{
-			Name:          name,
-			Tasks:         []tasks.Task{mainTask},
-			IsLongRunning: mode == ModeWatch || mode == ModeRun,
-		},
-	})
+	list := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
 
-	list.InsertBefore(preStage)
-	list.InsertAfter(postStage)
-	list.RemoveEmptyStagesAndTasks()
+	list.AddPreChild(preStage...)
+	list.AddPostChild(postStage...)
 	return list, nil
 }
 
@@ -80,22 +73,4 @@ func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
 		return ResolvedProfile{}, err
 	}
 	return config, nil
-}
-
-func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile string) (TaskList, error) {
-	taskList := []tasks.Task{hook.GetTask()}
-	for _, fragment := range hook.Fragments {
-		fragmentConfig, err := c.resolveFragment(fragment, mode, profile)
-		if err != nil {
-			return TaskList{}, err
-		}
-		taskList = append(taskList, fragmentConfig.GetTaskWithBaseName(helper.BuildName(hook.Base, hook.Kind), []string{}))
-	}
-
-	return NewTaskList("", []ExecutionStep{
-		{
-			Name:  helper.BuildName(hook.Base, hook.Kind),
-			Tasks: taskList,
-		},
-	}), nil
 }

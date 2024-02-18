@@ -15,7 +15,11 @@ func CreateViteTask(c ResolvedProfile) tasks.Task {
 
 	profileOptions := c.GetProfileOptions()
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "FORCE_COLOR=1")
+	if os.Getenv("CI") != "true" {
+		cmd.Env = append(cmd.Env, "FORCE_COLOR=1")
+	} else {
+		cmd.Env = append(cmd.Env, "NO_COLOR=true")
+	}
 	cmd.Env = append(cmd.Env, profileOptions.Env...)
 
 	viteOptions := c.GetViteOptions()

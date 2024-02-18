@@ -21,11 +21,12 @@ const (
 )
 
 type (
-	FragmentOptions map[string]string
+	FragmentOptions map[string]interface{}
 
 	HookOptions struct {
-		Fragments []string `json:"fragments"`
-		Command   string   `json:"command"`
+		Command   string            `json:"command"`
+		Fragments []string          `json:"fragments"`
+		Profiles  map[string]string `json:"profiles"`
 	}
 
 	BaseOptions struct {

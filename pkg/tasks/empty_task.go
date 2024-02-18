@@ -2,12 +2,14 @@ package tasks
 
 import "io"
 
-type emptyTask struct{}
+type emptyTask struct {
+	name string
+}
 
 var _ Task = (*emptyTask)(nil)
 
 func (e *emptyTask) Name() string {
-	return "#empty#"
+	return e.name
 }
 
 func (e *emptyTask) Pipe(destination io.Writer) {
@@ -19,7 +21,9 @@ func (e *emptyTask) Run(cancel <-chan bool) error {
 }
 
 func Empty() Task {
-	return &emptyTask{}
+	return &emptyTask{
+		name: "#empty#",
+	}
 }
 
 func IsEmptyTask(task Task) bool {
