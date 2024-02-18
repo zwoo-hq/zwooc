@@ -52,7 +52,7 @@ Hooks may define a command or reference a list of fragments or event profiles. D
 | define hooks                | :white_check_mark: |
 | define hooks with commands  | :white_check_mark: |
 | define hooks with fragments | :white_check_mark: |
-| define hooks with profiles  |        :x:         |
+| define hooks with profiles  | :white_check_mark: |
 | check if hooks are cyclic   |        :x:         |
 
 ### Build Mode
@@ -101,15 +101,16 @@ When executing fragments via `exec` will execute the `$default` version, because
 | concept                                        |       status       |
 | ---------------------------------------------- | :----------------: |
 | define project scoped fragments                | :white_check_mark: |
-| define global scoped fragments                 |     :question:     |
+| define global scoped fragments                 | :white_check_mark: |
 | execute fragments                              | :white_check_mark: |
 | execute fragments (interactive)                | :white_check_mark: |
-| pass extra arguments                           |     :question:     |
-| execute with command dependencies              |        :x:         |
-| execute with fragment dependencies             |        :x:         |
+| pass extra arguments                           | :white_check_mark: |
+| execute with command dependencies              | :white_check_mark: |
+| execute with fragment dependencies             | :white_check_mark: |
+| execute with profile dependencies              | :white_check_mark: |
 | detect cyclic dependencies                     |        :x:         |
 | specific version based on run mode             | :white_check_mark: |
-| specific version based on profile              |        :x:         |
+| specific version based on profile              | :white_check_mark: |
 | specific version based on run mode and profile | :white_check_mark: |
 
 ## Compounds
@@ -138,7 +139,7 @@ Along the core functionality, `zwooc` should provide additional utilities.
 | version                              | :white_check_mark: |
 | help                                 | :white_check_mark: |
 | bash completion                      | :white_check_mark: |
-| dependency/execution graph (dry run) |        :x:         |
+| dependency/execution graph (dry run) | :white_check_mark: |
 
 Furthermore, `zwooc` should provide global options in order to provide flexibility whilst executing tasks.
 
