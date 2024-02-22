@@ -1,9 +1,11 @@
 package tasks
 
 import (
+	"fmt"
 	"io"
-	"os"
 	"os/exec"
+	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -14,16 +16,19 @@ type commandTask struct {
 	name   string
 	cmd    *exec.Cmd
 	writer *multiWriter
+	stdIn  io.WriteCloser
 }
 
 func NewCommandTask(name string, cmd *exec.Cmd) Task {
 	writer := newMultiWriter()
 	cmd.Stdout = writer
 	cmd.Stderr = writer
+	in, _ := cmd.StdinPipe()
 	return commandTask{
 		name:   name,
 		cmd:    cmd,
 		writer: writer,
+		stdIn:  in,
 	}
 }
 
@@ -34,13 +39,14 @@ func NewBasicCommandTask(name string, command string, dir string, args []string)
 	if dir != "" {
 		cmd.Dir = dir
 	}
-	cmd.Stdin = os.Stdin
+	in, _ := cmd.StdinPipe()
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 	return commandTask{
 		name:   name,
 		cmd:    cmd,
 		writer: writer,
+		stdIn:  in,
 	}
 }
 
@@ -57,15 +63,13 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 	if err := ct.cmd.Start(); err != nil {
 		return err
 	}
-	// if err != nil {
-	// 	return err
-	// }
 
 	errChan := make(chan error, 1)
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
 		// wait until the command is finished
+		ct.writer.Write([]byte(fmt.Sprintf("pid: %d\n", ct.cmd.Process.Pid)))
 		err := ct.cmd.Wait()
 		if err != nil {
 			errChan <- err
@@ -77,8 +81,19 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 	select {
 	case <-cancel:
 		// task go cancelled
-		if err := ct.cmd.Process.Kill(); err != nil {
-			return err
+		var err error
+
+		if runtime.GOOS == "windows" {
+			err = exec.Command("taskkill", "/F", "/T", "/PID", strconv.Itoa(ct.cmd.Process.Pid)).Run()
+		} else {
+			err = exec.Command("pkill", "-P", strconv.Itoa(ct.cmd.Process.Pid)).Run()
+		}
+
+		if err != nil {
+			// fall back to builtin kill
+			if err := ct.cmd.Process.Kill(); err != nil {
+				return err
+			}
 		}
 	case <-helper.WaitFor(&wg):
 		// task finished

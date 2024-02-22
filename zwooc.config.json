@@ -26,10 +26,10 @@
         }
       },
       "watch": {
-        "$pre": {
+        "__$pre": {
           "fragments": ["print", "print2"]
         },
-        "$post": {
+        "__$post": {
           "command": "sleep 5"
         }
       }
