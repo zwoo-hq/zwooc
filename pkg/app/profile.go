@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -23,9 +21,7 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 				return
 			}
 			conf := loadConfig()
-			for _, profile := range conf.GetProfiles() {
-				fmt.Println(profile.Name())
-			}
+			completeProfiles(conf)
 		},
 	}
 }

@@ -20,7 +20,23 @@ func CreateGraphCommand() *cli.Command {
 			return graphTaskList(conf, c)
 		},
 		BashComplete: func(c *cli.Context) {
-			// TODO: implement
+			if c.NArg() > 1 {
+				return
+			}
+			// complete first argument
+			if c.NArg() == 0 {
+				for _, mode := range []string{config.ModeBuild, config.ModeRun, config.ModeWatch, "exec"} {
+					fmt.Println(mode)
+				}
+				return
+			}
+
+			conf := loadConfig()
+			if c.Args().First() == "exec" {
+				completeFragments(conf)
+				return
+			}
+			completeProfiles(conf)
 		},
 	}
 }

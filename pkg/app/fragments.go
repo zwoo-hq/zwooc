@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -23,9 +21,7 @@ func CreateFragmentCommand() *cli.Command {
 				return
 			}
 			conf := loadConfig()
-			for _, fragment := range conf.GetFragments() {
-				fmt.Println(fragment.Name())
-			}
+			completeFragments(conf)
 		},
 	}
 }

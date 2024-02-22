@@ -42,7 +42,7 @@
         }
       }
     },
-    "$default": {
+    "$$default": {
       "build": {
         "base": "dev"
       }
