@@ -12,7 +12,7 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 	return &cli.Command{
 		Name:      mode,
 		Usage:     usage,
-		ArgsUsage: "[profile]",
+		ArgsUsage: "[profile] [extra arguments...]",
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
@@ -49,7 +49,9 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		viewOptions.InlineOutput = true
 	}
 
-	taskList, err := conf.ResolveProfile(c.Args().First(), runMode)
+	args := c.Args().Tail()
+	profileKey := c.Args().First()
+	taskList, err := conf.ResolveProfile(profileKey, runMode, args)
 	if err != nil {
 		ui.HandleError(err)
 	}

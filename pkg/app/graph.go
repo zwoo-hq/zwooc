@@ -34,7 +34,7 @@ func graphTaskList(conf config.Config, c *cli.Context) error {
 	if mode == "exec" {
 		tree, err = conf.ResolvedFragment(target, []string{})
 	} else if mode == "run" || mode == "watch" || mode == "build" {
-		tree, err = conf.ResolveProfile(target, mode)
+		tree, err = conf.ResolveProfile(target, mode, []string{})
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}

@@ -8,7 +8,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func CreateViteTask(c ResolvedProfile) tasks.Task {
+func CreateViteTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 	cmd := exec.Command("yarn")
 	cmd.Args = append(cmd.Args, "vite")
 	cmd.Args = append(cmd.Args, convertModeToVite(c.Mode))
@@ -35,6 +35,7 @@ func CreateViteTask(c ResolvedProfile) tasks.Task {
 		}
 	}
 
+	cmd.Args = append(cmd.Args, extraArgs...)
 	cmd.Dir = c.Directory
 	return tasks.NewCommandTask(c.Name, cmd)
 }

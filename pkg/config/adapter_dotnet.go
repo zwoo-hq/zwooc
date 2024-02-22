@@ -7,7 +7,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func CreateDotnetTask(c ResolvedProfile) tasks.Task {
+func CreateDotnetTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 	cmd := exec.Command("dotnet")
 	cmd.Args = append(cmd.Args, convertModeToDotnet(c.Mode))
 
@@ -30,6 +30,7 @@ func CreateDotnetTask(c ResolvedProfile) tasks.Task {
 	}
 
 	cmd.Dir = c.Directory
+	cmd.Args = append(cmd.Args, extraArgs...)
 	return tasks.NewCommandTask(c.Name, cmd)
 }
 
