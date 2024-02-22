@@ -17,7 +17,7 @@ func CreateGraphCommand() *cli.Command {
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
-			return graphTaskList(conf, c)
+			return graphTaskList(conf, c, "")
 		},
 		BashComplete: func(c *cli.Context) {
 			if c.NArg() > 1 {
@@ -41,9 +41,14 @@ func CreateGraphCommand() *cli.Command {
 	}
 }
 
-func graphTaskList(conf config.Config, c *cli.Context) error {
+func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error {
 	mode := c.Args().First()
 	target := c.Args().Get(1)
+	if defaultMode != "" {
+		mode = defaultMode
+		target = c.Args().First()
+	}
+
 	var tree *tasks.TaskTreeNode
 	var err error
 

@@ -27,6 +27,10 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 }
 
 func execProfile(conf config.Config, runMode string, c *cli.Context) error {
+	if c.Bool("dry-run") {
+		return graphTaskList(conf, c, runMode)
+	}
+
 	viewOptions := ui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),

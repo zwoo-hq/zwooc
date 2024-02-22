@@ -18,6 +18,7 @@ var (
 	CategoryInteractive = "Interactive mode:"
 	CategoryGeneral     = "General:"
 	CategoryFragments   = "Fragments:"
+	CategoryMisc        = "Miscellaneous:"
 )
 
 func loadConfig() config.Config {

@@ -27,6 +27,10 @@ func CreateFragmentCommand() *cli.Command {
 }
 
 func execFragment(config config.Config, c *cli.Context) error {
+	if c.Bool("dry-run") {
+		return graphTaskList(config, c, "exec")
+	}
+
 	viewOptions := ui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
