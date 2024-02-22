@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -23,14 +21,16 @@ func CreateFragmentCommand() *cli.Command {
 				return
 			}
 			conf := loadConfig()
-			for _, fragment := range conf.GetFragments() {
-				fmt.Println(fragment.Name())
-			}
+			completeFragments(conf)
 		},
 	}
 }
 
 func execFragment(config config.Config, c *cli.Context) error {
+	if c.Bool("dry-run") {
+		return graphTaskList(config, c, "exec")
+	}
+
 	viewOptions := ui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),

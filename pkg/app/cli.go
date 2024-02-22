@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/zwoo-hq/zwooc/pkg/config"
@@ -17,6 +18,7 @@ var (
 	CategoryInteractive = "Interactive mode:"
 	CategoryGeneral     = "General:"
 	CategoryFragments   = "Fragments:"
+	CategoryMisc        = "Miscellaneous:"
 )
 
 func loadConfig() config.Config {
@@ -34,4 +36,20 @@ func loadConfig() config.Config {
 
 func isCI() bool {
 	return os.Getenv("CI") == "true"
+}
+
+func completeProfiles(c config.Config) {
+	for _, profile := range c.GetProfiles() {
+		if profile.Name() != config.KeyDefault {
+			fmt.Print(profile.Name())
+		}
+	}
+}
+
+func completeFragments(c config.Config) {
+	for _, fragment := range c.GetFragments() {
+		if fragment.Name() != config.KeyDefault {
+			fmt.Print(fragment.Name())
+		}
+	}
 }

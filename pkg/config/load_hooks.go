@@ -38,7 +38,7 @@ func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile st
 	}
 
 	for profile, mode := range hook.Profiles {
-		profileConfig, err := c.ResolveProfile(profile, mode)
+		profileConfig, err := c.ResolveProfile(profile, mode, []string{})
 		if err != nil {
 			return nil, err
 		}

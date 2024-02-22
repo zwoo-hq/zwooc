@@ -8,7 +8,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func (c Config) ResolveProfile(key, mode string) (*tasks.TaskTreeNode, error) {
+func (c Config) ResolveProfile(key, mode string, extraArgs []string) (*tasks.TaskTreeNode, error) {
 	if key == "" {
 		key = KeyDefault
 	}
@@ -49,7 +49,7 @@ func (c Config) ResolveProfile(key, mode string) (*tasks.TaskTreeNode, error) {
 		return nil, err
 	}
 
-	mainTask, err := config.GetTask()
+	mainTask, err := config.GetTask(extraArgs)
 	if err != nil {
 		return nil, err
 	}

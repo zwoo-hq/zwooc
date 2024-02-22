@@ -8,13 +8,18 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func CreateDotnetTask(c ResolvedProfile) tasks.Task {
+func CreateDotnetTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 	cmd := exec.Command("dotnet")
 	cmd.Args = append(cmd.Args, convertModeToDotnet(c.Mode))
 
 	profileOptions := c.GetProfileOptions()
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, profileOptions.Env...)
+
+	if c.Mode == ModeBuild {
+		// run build mode by default in release mode
+		cmd.Args = append(cmd.Args, "-c", "Release")
+	}
 
 	dotnetOptions := c.GetDotNetOptions()
 	if dotnetOptions.Project != "" {
@@ -30,6 +35,7 @@ func CreateDotnetTask(c ResolvedProfile) tasks.Task {
 	}
 
 	cmd.Dir = c.Directory
+	cmd.Args = append(cmd.Args, extraArgs...)
 	return tasks.NewCommandTask(c.Name, cmd)
 }
 

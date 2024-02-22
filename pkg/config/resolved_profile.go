@@ -49,12 +49,12 @@ func (r ResolvedProfile) GetPostHooks() ResolvedHook {
 	return ResolvedHook{}
 }
 
-func (r ResolvedProfile) GetTask() (tasks.Task, error) {
+func (r ResolvedProfile) GetTask(args []string) (tasks.Task, error) {
 	switch r.Adapter {
 	case AdapterViteYarn:
-		return CreateViteTask(r), nil
+		return CreateViteTask(r, args), nil
 	case AdapterDotnet:
-		return CreateDotnetTask(r), nil
+		return CreateDotnetTask(r, args), nil
 	}
 	return tasks.Empty(), fmt.Errorf("unknown adapter: '%s'", r.Adapter)
 }

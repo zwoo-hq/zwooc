@@ -105,7 +105,13 @@ func CreateGlobalFlags() []cli.Flag {
 			Name:     "no-ci",
 			Usage:    "disable ci mode",
 			Value:    false,
-			Category: CategoryGeneral,
+			Category: CategoryMisc,
+		},
+		&cli.BoolFlag{
+			Name:     "dry-run",
+			Usage:    "dry run mode, no tasks will be executed (same as graph)",
+			Value:    false,
+			Category: CategoryMisc,
 		},
 	}
 }

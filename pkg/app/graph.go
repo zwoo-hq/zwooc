@@ -17,24 +17,45 @@ func CreateGraphCommand() *cli.Command {
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
-			return graphTaskList(conf, c)
+			return graphTaskList(conf, c, "")
 		},
 		BashComplete: func(c *cli.Context) {
-			// TODO: implement
+			if c.NArg() > 1 {
+				return
+			}
+			// complete first argument
+			if c.NArg() == 0 {
+				for _, mode := range []string{config.ModeBuild, config.ModeRun, config.ModeWatch, "exec"} {
+					fmt.Println(mode)
+				}
+				return
+			}
+
+			conf := loadConfig()
+			if c.Args().First() == "exec" {
+				completeFragments(conf)
+				return
+			}
+			completeProfiles(conf)
 		},
 	}
 }
 
-func graphTaskList(conf config.Config, c *cli.Context) error {
+func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error {
 	mode := c.Args().First()
 	target := c.Args().Get(1)
+	if defaultMode != "" {
+		mode = defaultMode
+		target = c.Args().First()
+	}
+
 	var tree *tasks.TaskTreeNode
 	var err error
 
 	if mode == "exec" {
 		tree, err = conf.ResolvedFragment(target, []string{})
 	} else if mode == "run" || mode == "watch" || mode == "build" {
-		tree, err = conf.ResolveProfile(target, mode)
+		tree, err = conf.ResolveProfile(target, mode, []string{})
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}

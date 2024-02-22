@@ -61,22 +61,25 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 "build": ""
             },
             "fragment3": {
+                "profile1": "", // run when its an dependency of profile1 in any mode
                 "build:profile1": "" // run when its an dependency of profile1 in build mode
             },
             "fragment4": {
-                "$pre": "", // fragments can have pre & post hooks
-                "$post": ""
+                "$pre": {}, // fragments can have pre & post hooks
+                "$post": {}
             }
         },
         "profile1": {
             "run": true, // use the default command
             "watch": "", // use a custom command
-            // since build is not set, there is no build command
+            "build": false // since build is set to false set, there is no build command
         },
         "profile2": {
             "build": {
                 "args": {
-                    "foo": "bar" // add --foo bar to command
+                    "foo": "bar", // add --foo bar to command
+                    "-foo": "bar", // add -foo bar to command
+                    "--foo": "bar" // add -foo bar to command
                 },
                 "env": [
                     "FOO=BAR" // add FOO env var with bar as value
@@ -85,6 +88,7 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
                 "skipFragments": true, // ignore all depended fragments
                 "$pre": {
                     "fragments": [], // list of fragments to run before
+                    "profiles": {}, // list of profiles with the mode to run before
                     "command": "" // command to run before
                 },
                 "$post": {

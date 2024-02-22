@@ -16,7 +16,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "main.go",
-      "args": ["exec", "-to", "print"]
+      "args": ["build", "--dry-run"]
     }
   ]
 }

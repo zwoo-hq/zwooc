@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -12,7 +10,7 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 	return &cli.Command{
 		Name:      mode,
 		Usage:     usage,
-		ArgsUsage: "[profile]",
+		ArgsUsage: "[profile] [extra arguments...]",
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
@@ -23,14 +21,16 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 				return
 			}
 			conf := loadConfig()
-			for _, profile := range conf.GetProfiles() {
-				fmt.Println(profile.Name())
-			}
+			completeProfiles(conf)
 		},
 	}
 }
 
 func execProfile(conf config.Config, runMode string, c *cli.Context) error {
+	if c.Bool("dry-run") {
+		return graphTaskList(conf, c, runMode)
+	}
+
 	viewOptions := ui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
@@ -49,7 +49,9 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		viewOptions.InlineOutput = true
 	}
 
-	taskList, err := conf.ResolveProfile(c.Args().First(), runMode)
+	args := c.Args().Tail()
+	profileKey := c.Args().First()
+	taskList, err := conf.ResolveProfile(profileKey, runMode, args)
 	if err != nil {
 		ui.HandleError(err)
 	}
