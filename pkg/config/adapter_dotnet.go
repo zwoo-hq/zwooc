@@ -15,6 +15,11 @@ func CreateDotnetTask(c ResolvedProfile) tasks.Task {
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, profileOptions.Env...)
 
+	if c.Mode == ModeBuild {
+		// run build mode by default in release mode
+		cmd.Args = append(cmd.Args, "-c", "Release")
+	}
+
 	dotnetOptions := c.GetDotNetOptions()
 	if dotnetOptions.Project != "" {
 		cmd.Env = append(cmd.Args, "--project", dotnetOptions.Project)
