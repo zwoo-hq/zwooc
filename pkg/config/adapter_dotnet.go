@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
@@ -21,7 +22,11 @@ func CreateDotnetTask(c ResolvedProfile) tasks.Task {
 	}
 
 	for k, v := range profileOptions.Args {
-		cmd.Args = append(cmd.Args, "--"+k, v)
+		if strings.HasPrefix(k, "-") {
+			cmd.Args = append(cmd.Args, k, v)
+		} else {
+			cmd.Args = append(cmd.Args, "--"+k, v)
+		}
 	}
 
 	cmd.Dir = c.Directory
