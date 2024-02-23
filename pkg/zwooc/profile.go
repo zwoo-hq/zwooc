@@ -1,4 +1,4 @@
-package app
+package zwooc
 
 import (
 	"github.com/urfave/cli/v2"
@@ -6,29 +6,29 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
-func CreateFragmentCommand() *cli.Command {
+func CreateProfileCommand(mode, usage string) *cli.Command {
 	return &cli.Command{
-		Name:      "exec",
-		Usage:     "execute a fragment",
-		ArgsUsage: "[fragment] [extra arguments...]",
+		Name:      mode,
+		Usage:     usage,
+		ArgsUsage: "[profile] [extra arguments...]",
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
-			return execFragment(conf, c)
+			return execProfile(conf, mode, c)
 		},
 		BashComplete: func(c *cli.Context) {
 			if c.NArg() > 0 {
 				return
 			}
 			conf := loadConfig()
-			completeFragments(conf)
+			completeProfiles(conf)
 		},
 	}
 }
 
-func execFragment(config config.Config, c *cli.Context) error {
+func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(config, c, "exec")
+		return graphTaskList(conf, c, runMode)
 	}
 
 	viewOptions := ui.ViewOptions{
@@ -50,14 +50,18 @@ func execFragment(config config.Config, c *cli.Context) error {
 	}
 
 	args := c.Args().Tail()
-	fragmentKey := c.Args().First()
-	task, err := config.ResolvedFragment(fragmentKey, args)
+	profileKey := c.Args().First()
+	taskList, err := conf.ResolveProfile(profileKey, runMode, args)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	list := task.Flatten()
+	list := *taskList.Flatten()
 	list.RemoveEmptyStagesAndTasks()
-	ui.NewRunner(*list, viewOptions)
+	if runMode == config.ModeWatch || runMode == config.ModeRun {
+		ui.NewInteractiveRunner(list, viewOptions, conf)
+	} else {
+		ui.NewRunner(list, viewOptions)
+	}
 	return nil
 }

@@ -8,9 +8,9 @@ import (
 	"sort"
 
 	"github.com/urfave/cli/v2"
-	"github.com/zwoo-hq/zwooc/pkg/app"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	"github.com/zwoo-hq/zwooc/pkg/zwooc"
 )
 
 //go:embed autocomplete/*
@@ -21,21 +21,21 @@ func main() {
 		fmt.Println(c.App.Version)
 	}
 
-	app := &cli.App{
+	zwooc := &cli.App{
 		Name:    "zwooc",
 		Usage:   "the official cli for building and developing zwoo",
-		Version: app.VERSION,
+		Version: zwooc.VERSION,
 
-		Flags:                  app.CreateGlobalFlags(),
+		Flags:                  zwooc.CreateGlobalFlags(),
 		Suggest:                true,
 		UseShortOptionHandling: true,
 		EnableBashCompletion:   true,
 		Commands: []*cli.Command{
-			app.CreateProfileCommand(config.ModeRun, "run a profile"),
-			app.CreateProfileCommand(config.ModeWatch, "run a profile with live reload enabled"),
-			app.CreateProfileCommand(config.ModeBuild, "build a profile"),
-			app.CreateFragmentCommand(),
-			app.CreateGraphCommand(),
+			zwooc.CreateProfileCommand(config.ModeRun, "run a profile"),
+			zwooc.CreateProfileCommand(config.ModeWatch, "run a profile with live reload enabled"),
+			zwooc.CreateProfileCommand(config.ModeBuild, "build a profile"),
+			zwooc.CreateFragmentCommand(),
+			zwooc.CreateGraphCommand(),
 			{
 				Name:  "launch",
 				Usage: "launch a compound",
@@ -64,10 +64,10 @@ func main() {
 		},
 	}
 
-	sort.Sort(cli.FlagsByName(app.Flags))
-	sort.Sort(cli.CommandsByName(app.Commands))
+	sort.Sort(cli.FlagsByName(zwooc.Flags))
+	sort.Sort(cli.CommandsByName(zwooc.Commands))
 
-	if err := app.Run(os.Args); err != nil {
+	if err := zwooc.Run(os.Args); err != nil {
 		ui.HandleError(err)
 	}
 }
