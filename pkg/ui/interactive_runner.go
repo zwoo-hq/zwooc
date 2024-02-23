@@ -223,10 +223,6 @@ func (m *Model) cancelAllRunning() tea.Msg {
 
 	// reset active state
 	m.activeTasks = []ActiveTask{}
-	if m.activeNotify != nil {
-		close(m.activeNotify.updates)
-		m.activeNotify = nil
-	}
 
 	// start executing post tasks
 	list := tasks.TaskList{

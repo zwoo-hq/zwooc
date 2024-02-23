@@ -2,7 +2,7 @@ project_name: zwooc
 
 builds:
   - id: zwooc
-    main: ./main.go
+    main: ./cmd/zwooc/main.go
     binary: zwooc
     env:
       - CGO_ENABLED=0

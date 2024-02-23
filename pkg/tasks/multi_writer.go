@@ -1,6 +1,8 @@
 package tasks
 
-import "io"
+import (
+	"io"
+)
 
 type multiWriter struct {
 	writers []io.Writer
