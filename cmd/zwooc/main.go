@@ -35,14 +35,8 @@ func main() {
 			zwooc.CreateProfileCommand(config.ModeWatch, "run a profile with live reload enabled"),
 			zwooc.CreateProfileCommand(config.ModeBuild, "build a profile"),
 			zwooc.CreateFragmentCommand(),
+			zwooc.CreateCompoundCommand(),
 			zwooc.CreateGraphCommand(),
-			{
-				Name:  "launch",
-				Usage: "launch a compound",
-				Action: func(c *cli.Context) error {
-					return nil
-				},
-			},
 			{
 				// TODO: when cliv3 comes out this is no longer needed
 				Name:  "completion-script",

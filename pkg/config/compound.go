@@ -1,18 +1,25 @@
 package config
 
-type Compound struct {
-	name string
-	raw  map[string]interface{}
-}
+import (
+	"github.com/zwoo-hq/zwooc/pkg/helper"
+)
 
-func newCompound(name string, data map[string]interface{}) Compound {
-	c := Compound{
-		name: name,
-		raw:  data,
-	}
-	return c
+type Compound struct {
+	name      string
+	directory string
+	raw       map[string]interface{}
 }
 
 func (c Compound) Name() string {
 	return c.name
+}
+
+func (c Compound) ResolveConfig() ResolvedCompound {
+	options := helper.MapToStruct(c.raw, CompoundOptions{})
+	return ResolvedCompound{
+		Name:      c.name,
+		Directory: c.directory,
+		Profiles:  options.Profiles,
+		Options:   c.raw,
+	}
 }

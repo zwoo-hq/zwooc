@@ -25,3 +25,14 @@ func (h HookOptions) ResolveWithFragment(callingFragment ResolvedFragment, kind 
 		Directory: callingFragment.Directory,
 	}
 }
+
+func (h HookOptions) ResolveWithCompound(callingCompound ResolvedCompound, kind string) ResolvedHook {
+	return ResolvedHook{
+		Kind:      kind,
+		Command:   h.Command,
+		Fragments: h.Fragments,
+		Profiles:  h.Profiles,
+		Base:      callingCompound.Name,
+		Directory: callingCompound.Directory,
+	}
+}
