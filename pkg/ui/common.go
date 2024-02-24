@@ -47,6 +47,7 @@ var (
 	errorStyle                = lipgloss.NewStyle().Foreground(lipgloss.Color("124"))
 	canceledStyle             = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
 	stepStyle                 = lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true)
+	graphHeaderStyle          = lipgloss.NewStyle().Foreground(lipgloss.Color("93")).Bold(true)
 	graphMainStyle            = lipgloss.NewStyle().Foreground(lipgloss.Color("93"))
 	graphPreStyle             = lipgloss.NewStyle().Foreground(lipgloss.Color("117")).Italic(true)
 	graphPostStyle            = lipgloss.NewStyle().Foreground(lipgloss.Color("130")).Italic(true)

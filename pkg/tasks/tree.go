@@ -1,6 +1,8 @@
 package tasks
 
-import "github.com/zwoo-hq/zwooc/pkg/helper"
+import (
+	"github.com/zwoo-hq/zwooc/pkg/helper"
+)
 
 type TaskTreeNode struct {
 	Name          string
@@ -81,4 +83,22 @@ func (t *TaskTreeNode) RemoveEmptyNodes() {
 			t.Post[i].RemoveEmptyNodes()
 		}
 	}
+}
+
+func (t *TaskTreeNode) CountStages() int {
+	preCount := 0
+	for _, pre := range t.Pre {
+		count := pre.CountStages()
+		if count > preCount {
+			preCount = count
+		}
+	}
+	postCount := 0
+	for _, post := range t.Post {
+		count := post.CountStages()
+		if count > postCount {
+			postCount = count
+		}
+	}
+	return 1 + preCount + postCount
 }

@@ -63,6 +63,7 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 	if err != nil {
 		ui.HandleError(err)
 	}
+	tree.RemoveEmptyNodes()
 	ui.GraphDependencies(tree)
 	return nil
 }

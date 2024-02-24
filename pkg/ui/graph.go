@@ -8,7 +8,8 @@ import (
 )
 
 func GraphDependencies(tasks *tasks.TaskTreeNode) {
-	fmt.Printf("viewing %s\n", tasks.Name)
+	fmt.Printf("viewing %s ", graphHeaderStyle.Render(tasks.Name))
+	fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total stages)", tasks.CountStages())))
 	tasks.RemoveEmptyNodes()
 	printNode(tasks, "", true)
 }

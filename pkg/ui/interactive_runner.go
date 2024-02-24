@@ -60,10 +60,10 @@ type Model struct {
 }
 
 type ContentUpdateMsg string                // fired when the current logs content changes
-type PreRunnerUpdateMsg tasks.RunnerStatus  //fired when a $pre tasks updates
-type PostRunnerUpdateMsg tasks.RunnerStatus //fired when a $post tasks updates
-type ScheduledStageFinishedMsg int          // fired whe a pre action of a scheduled task finished
-type PostStageFinishedMsg int               // fired whe a post action of a scheduled task finished
+type PreRunnerUpdateMsg tasks.RunnerStatus  // fired when a $pre tasks updates
+type PostRunnerUpdateMsg tasks.RunnerStatus // fired when a $post tasks updates
+type ScheduledStageFinishedMsg int          // fired when a pre action of a scheduled task finished
+type PostStageFinishedMsg int               // fired when a post action of a scheduled task finished
 type ScheduledErroredMsg struct{ error }    // fired when a scheduled task errored
 type PostErroredMsg struct{ error }         // fired when a post task errored
 
