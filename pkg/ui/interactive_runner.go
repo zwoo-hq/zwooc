@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -44,8 +45,7 @@ type Model struct {
 
 	viewportReady bool
 	activeTasks   []ActiveTask
-	activeNotify  *notifyWriter
-	taskToShow    string
+	activeIndex   int
 	scheduler     *tasks.Scheduler
 	logsView      viewport.Model
 
@@ -75,6 +75,7 @@ func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Con
 		activeTasks:    []ActiveTask{},
 		scheduler:      tasks.NewScheduler(),
 		scheduledPost:  make(map[string]tasks.TaskList),
+		activeIndex:    -1,
 	}
 
 	m.schedule(list)
@@ -89,12 +90,13 @@ func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Con
 func (m *Model) Init() tea.Cmd {
 	hasScheduledStage := m.prepareNextScheduled()
 	if hasScheduledStage {
-		return tea.Batch(tea.EnterAltScreen, m.startScheduledStage, m.listenToPreRunner)
+		return tea.Batch(tea.EnterAltScreen, m.startScheduledStage, m.listenToPreRunner, tea.SetWindowTitle("zwooc"))
 	}
-	if m.activeNotify != nil {
-		return tea.Batch(tea.EnterAltScreen, m.listenToWriterUpdates)
+	if len(m.activeTasks) > 0 {
+		m.activeIndex = 0
+		return tea.Batch(tea.EnterAltScreen, m.listenToWriterUpdates, tea.SetWindowTitle("zwooc"))
 	}
-	return tea.Batch(tea.EnterAltScreen)
+	return tea.Batch(tea.EnterAltScreen, tea.SetWindowTitle("zwooc"))
 }
 
 func (m *Model) schedule(t tasks.TaskList) {
@@ -198,10 +200,9 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 		task.Pipe(notify)
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.scheduler.Schedule(task)
-		if m.taskToShow == "" {
-			// this is the first long running task
-			m.taskToShow = current.mainTasks.Name
-			m.activeNotify = notify
+		if m.activeIndex < 0 {
+			// set this as current tab
+			m.activeIndex = len(m.activeTasks) - 1
 		}
 	}
 
@@ -209,7 +210,7 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 }
 
 func (m *Model) listenToWriterUpdates() tea.Msg {
-	return ContentUpdateMsg(<-m.activeNotify.updates)
+	return ContentUpdateMsg(<-m.activeTasks[m.activeIndex].writer.updates)
 }
 
 func (m *Model) cancelAllRunning() tea.Msg {
@@ -285,7 +286,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if hasNext && !m.wasCanceled {
 				cmds = append(cmds, m.startScheduledStage, m.listenToPreRunner)
 			}
-			if m.activeNotify != nil {
+			if m.activeIndex >= 0 {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
 		} else if !m.wasCanceled {
@@ -313,14 +314,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ContentUpdateMsg:
 		m.logsView.SetContent(string(msg))
 		m.logsView.GotoBottom()
-		if m.activeNotify != nil {
+		if m.activeIndex >= 0 {
 			cmds = append(cmds, m.listenToWriterUpdates)
 		}
 
 	case tea.WindowSizeMsg:
 		// headerHeight := lipgloss.Height(m.headerView())
 		// footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := 8 // headerHeight + footerHeight
+		verticalMarginHeight := 9 // headerHeight + footerHeight
 
 		if !m.viewportReady {
 			// Since this program is using the full size of the viewport we
@@ -329,7 +330,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// quickly, though asynchronously, which is why we wait for them
 			// here.
 			m.logsView = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.logsView.YPosition = 8
+			// m.logsView.YPosition = 10
 			m.logsView.HighPerformanceRendering = false // useHighPerformanceRenderer
 			// m.logsView.SetContent(m.writer.String())
 			m.viewportReady = true
@@ -417,22 +418,50 @@ func (m *Model) View() (s string) {
 	s += postTasks
 	s += "\n\n"
 
+	s += m.RenderTabs()
+
 	if !m.viewportReady {
 		s += "Initializing..."
 	} else if m.wasCanceled {
 		s += "Shutting down..."
 	} else {
-		s += m.logsView.View()
+		s += m.logsView.View() + "\n"
 	}
+	help := interactiveKeyStyle.Render("h") + interactiveHelpStyle.Render(" • show help")
+	s += fmt.Sprintf("╾%s┤ %s", helper.Repeat("─", m.logsView.Width-lipgloss.Width(help)-3), help)
 	return
 }
 
 func (m *Model) ViewHelp() (s string) {
 	s += "zwooc interactive runner - help\n\n"
-	align := lipgloss.NewStyle().Width(10).Align(lipgloss.Right).MarginRight(1)
+	align := lipgloss.NewStyle().Width(10).Align(lipgloss.Right).MarginRight(1).MarginLeft(2)
 
 	s += align.Render(interactiveKeyStyle.Render("q/ctrl+c")) + interactiveHelpStyle.Render(" quit the runner") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("h")) + interactiveHelpStyle.Render(" show/hide this help") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("esc")) + interactiveHelpStyle.Render(" close the alt screen") + "\n\n"
 	return
+}
+
+func (m *Model) RenderTabs() string {
+	tabs := "│ "
+	tabsBorder := "└─"
+
+	for i, task := range m.activeTasks {
+		var currentName string
+		if i == m.activeIndex {
+			currentName = interactiveActiveTabStyle.Render(task.name)
+		} else {
+			currentName = interactiveTabStyle.Render(task.name)
+		}
+		tabs += currentName + " │ "
+		tabsBorder += helper.Repeat("─", lipgloss.Width(currentName)) + "─┴─"
+	}
+
+	if len(m.activeTasks) == 0 {
+		tabs = "│ (no active tasks) │"
+		tabsBorder = "└───────────────────┴"
+	}
+	tabsBorder += helper.Repeat("─", m.logsView.Width-1-lipgloss.Width(tabsBorder)) + "╼"
+
+	return tabs + "\n" + tabsBorder + "\n"
 }
