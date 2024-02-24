@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
@@ -54,6 +55,8 @@ type Model struct {
 	postCurrentStage  int
 	postCurrentList   tasks.TaskList
 	postCurrentRunner *tasks.TaskRunner
+
+	isHelpOpen bool
 }
 
 type ContentUpdateMsg string                // fired when the current logs content changes
@@ -254,6 +257,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, m.cancelAllRunning
+		case "h":
+			m.isHelpOpen = !m.isHelpOpen
+		case "esc":
+			m.isHelpOpen = false
 		}
 	case PreRunnerUpdateMsg:
 		m.convertPreRunnerState(tasks.RunnerStatus(msg))
@@ -371,6 +378,10 @@ func (m *Model) convertPostRunnerState(state tasks.RunnerStatus) {
 }
 
 func (m *Model) View() (s string) {
+	if m.isHelpOpen {
+		return m.ViewHelp()
+	}
+
 	header := fmt.Sprintf("zwooc running in interactive mode (%d scheduled tasks)\n", len(m.scheduledTasks))
 
 	var currentTasks string
@@ -413,5 +424,15 @@ func (m *Model) View() (s string) {
 	} else {
 		s += m.logsView.View()
 	}
+	return
+}
+
+func (m *Model) ViewHelp() (s string) {
+	s += "zwooc interactive runner - help\n\n"
+	align := lipgloss.NewStyle().Width(10).Align(lipgloss.Right).MarginRight(1)
+
+	s += align.Render(interactiveKeyStyle.Render("q/ctrl+c")) + interactiveHelpStyle.Render(" quit the runner") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("h")) + interactiveHelpStyle.Render(" show/hide this help") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("esc")) + interactiveHelpStyle.Render(" close the alt screen") + "\n\n"
 	return
 }
