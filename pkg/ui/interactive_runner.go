@@ -199,6 +199,9 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 		notify := NewNotifyWriter()
 		task.Pipe(notify)
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
+		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
+		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
+		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.scheduler.Schedule(task)
 		if m.activeIndex < 0 {
 			// set this as current tab
@@ -416,7 +419,7 @@ func (m *Model) View() (s string) {
 	s += currentTasks
 	s += "\n\n"
 	s += postTasks
-	s += "\n\n"
+	s += "\n"
 
 	s += m.RenderTabs()
 
@@ -443,8 +446,9 @@ func (m *Model) ViewHelp() (s string) {
 }
 
 func (m *Model) RenderTabs() string {
+	tabsTop := "╭─"
 	tabs := "│ "
-	tabsBorder := "└─"
+	tabsBorder := "┵─"
 
 	for i, task := range m.activeTasks {
 		var currentName string
@@ -455,13 +459,20 @@ func (m *Model) RenderTabs() string {
 		}
 		tabs += currentName + " │ "
 		tabsBorder += helper.Repeat("─", lipgloss.Width(currentName)) + "─┴─"
+		tabsTop += helper.Repeat("─", lipgloss.Width(currentName)) + "─"
+		if i == len(m.activeTasks)-1 {
+			tabsTop += "╮"
+		} else {
+			tabsTop += "┬─"
+		}
 	}
 
 	if len(m.activeTasks) == 0 {
+		tabsTop = "╭───────────────────╮"
 		tabs = "│ (no active tasks) │"
-		tabsBorder = "└───────────────────┴"
+		tabsBorder = "┵───────────────────┴"
 	}
 	tabsBorder += helper.Repeat("─", m.logsView.Width-1-lipgloss.Width(tabsBorder)) + "╼"
 
-	return tabs + "\n" + tabsBorder + "\n"
+	return tabsTop + "\n" + tabs + "\n" + tabsBorder + "\n"
 }
