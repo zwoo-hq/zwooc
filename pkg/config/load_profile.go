@@ -8,19 +8,19 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func (c Config) ResolveProfile(key, mode string, extraArgs []string) (*tasks.TaskTreeNode, error) {
+func (c Config) LoadProfile(key, mode string, extraArgs []string) (*tasks.TaskTreeNode, error) {
 	if key == "" {
 		key = KeyDefault
 	}
 
-	config, err := c.resolveRunConfig(key, mode)
+	config, err := c.resolveProfile(key, mode)
 	if err != nil {
 		return nil, err
 	}
 	opts := config.GetBaseOptions()
 	for opts.Base != "" {
 		// load aliased profile
-		newProfile, err := c.resolveRunConfig(opts.Base, mode)
+		newProfile, err := c.resolveProfile(opts.Base, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -39,12 +39,12 @@ func (c Config) ResolveProfile(key, mode string, extraArgs []string) (*tasks.Tas
 	}
 
 	name := helper.BuildName(key, mode)
-	preStage, err := c.resolveHook(config.GetPreHooks(), config, config.Mode, config.Name)
+	preStage, err := c.loadHook(config.ResolvePreHook(), config, config.Mode, config.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	postStage, err := c.resolveHook(config.GetPostHooks(), config, config.Mode, config.Name)
+	postStage, err := c.loadHook(config.ResolvePostHook(), config, config.Mode, config.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (c Config) ResolveProfile(key, mode string, extraArgs []string) (*tasks.Tas
 	return list, nil
 }
 
-func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
+func (c Config) resolveProfile(key, mode string) (ResolvedProfile, error) {
 	target, found := helper.FindBy(c.profiles, func(p Profile) bool {
 		return p.Name() == key
 	})
@@ -68,7 +68,7 @@ func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
 		return ResolvedProfile{}, fmt.Errorf("profile '%s' not found", key)
 	}
 
-	config, err := target.GetConfig(mode)
+	config, err := target.ResolveConfig(mode)
 	if err != nil {
 		return ResolvedProfile{}, err
 	}

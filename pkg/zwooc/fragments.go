@@ -51,7 +51,7 @@ func execFragment(config config.Config, c *cli.Context) error {
 
 	args := c.Args().Tail()
 	fragmentKey := c.Args().First()
-	task, err := config.ResolvedFragment(fragmentKey, args)
+	task, err := config.LoadFragment(fragmentKey, args)
 	if err != nil {
 		ui.HandleError(err)
 	}

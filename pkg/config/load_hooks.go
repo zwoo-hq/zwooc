@@ -5,13 +5,13 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func (c Config) resolveHooks(caller Hookable, node *tasks.TaskTreeNode, mode, profile string) error {
-	preStage, err := c.resolveHook(caller.GetPreHooks(), caller, mode, profile)
+func (c Config) loadAllHooks(caller Hookable, node *tasks.TaskTreeNode, mode, profile string) error {
+	preStage, err := c.loadHook(caller.ResolvePreHook(), caller, mode, profile)
 	if err != nil {
 		return err
 	}
 
-	postStage, err := c.resolveHook(caller.GetPostHooks(), caller, mode, profile)
+	postStage, err := c.loadHook(caller.ResolvePostHook(), caller, mode, profile)
 	if err != nil {
 		return err
 	}
@@ -21,7 +21,7 @@ func (c Config) resolveHooks(caller Hookable, node *tasks.TaskTreeNode, mode, pr
 	return nil
 }
 
-func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile string) ([]*tasks.TaskTreeNode, error) {
+func (c Config) loadHook(hook ResolvedHook, caller Hookable, mode, profile string) ([]*tasks.TaskTreeNode, error) {
 	taskList := []*tasks.TaskTreeNode{
 		tasks.NewTaskTree(helper.BuildName(hook.Base, hook.Kind), hook.GetTask(), false),
 	}
@@ -33,12 +33,12 @@ func (c Config) resolveHook(hook ResolvedHook, caller Hookable, mode, profile st
 		}
 		name := helper.BuildName(hook.Base, hook.Kind)
 		fragmentTask := tasks.NewTaskTree(fragmentConfig.Name, fragmentConfig.GetTaskWithBaseName(name, []string{}), false)
-		c.resolveHooks(fragmentConfig, fragmentTask, mode, profile)
+		c.loadAllHooks(fragmentConfig, fragmentTask, mode, profile)
 		taskList = append(taskList, fragmentTask)
 	}
 
 	for profile, mode := range hook.Profiles {
-		profileConfig, err := c.ResolveProfile(profile, mode, []string{})
+		profileConfig, err := c.LoadProfile(profile, mode, []string{})
 		if err != nil {
 			return nil, err
 		}

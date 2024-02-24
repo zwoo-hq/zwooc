@@ -33,7 +33,7 @@ func (r ResolvedProfile) GetProfileOptions() ProfileOptions {
 	return helper.MapToStruct(r.Options, ProfileOptions{})
 }
 
-func (r ResolvedProfile) GetPreHooks() ResolvedHook {
+func (r ResolvedProfile) ResolvePreHook() ResolvedHook {
 	if options, ok := r.Options[KeyPre]; ok {
 		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
 		return options.ResolveWithProfile(r, KeyPre)
@@ -41,7 +41,7 @@ func (r ResolvedProfile) GetPreHooks() ResolvedHook {
 	return ResolvedHook{}
 }
 
-func (r ResolvedProfile) GetPostHooks() ResolvedHook {
+func (r ResolvedProfile) ResolvePostHook() ResolvedHook {
 	if options, ok := r.Options[KeyPost]; ok {
 		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
 		return options.ResolveWithProfile(r, KeyPost)

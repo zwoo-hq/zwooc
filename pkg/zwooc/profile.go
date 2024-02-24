@@ -51,7 +51,7 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 
 	args := c.Args().Tail()
 	profileKey := c.Args().First()
-	taskList, err := conf.ResolveProfile(profileKey, runMode, args)
+	taskList, err := conf.LoadProfile(profileKey, runMode, args)
 	if err != nil {
 		ui.HandleError(err)
 	}

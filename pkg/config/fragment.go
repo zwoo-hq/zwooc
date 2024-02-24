@@ -12,7 +12,7 @@ func (f Fragment) Name() string {
 	return f.name
 }
 
-func (f Fragment) GetConfig(mode string, callingProfile string) (ResolvedFragment, error) {
+func (f Fragment) ResolveConfig(mode string, callingProfile string) (ResolvedFragment, error) {
 	if !IsValidRunMode(mode) && mode != "" {
 		return ResolvedFragment{}, fmt.Errorf("invalid run mode: '%s'", mode)
 	}

@@ -54,8 +54,8 @@ type (
 
 type (
 	Hookable interface {
-		GetPreHooks() ResolvedHook
-		GetPostHooks() ResolvedHook
+		ResolvePreHook() ResolvedHook
+		ResolvePostHook() ResolvedHook
 	}
 )
 
