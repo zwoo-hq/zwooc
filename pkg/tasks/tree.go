@@ -42,7 +42,7 @@ func (t *TaskTreeNode) FindNode(name string) *TaskTreeNode {
 	return nil
 }
 
-func (t *TaskTreeNode) Flatten() *TaskList {
+func (t *TaskTreeNode) Flatten() TaskList {
 	list := NewTaskList(t.Name, []ExecutionStep{
 		{
 			Name:          t.Name,
@@ -53,17 +53,17 @@ func (t *TaskTreeNode) Flatten() *TaskList {
 
 	preList := NewTaskList(helper.BuildName(t.Name, "pre"), []ExecutionStep{})
 	for _, pre := range t.Pre {
-		preList.MergePreAligned(*pre.Flatten())
+		preList.MergePreAligned(pre.Flatten())
 	}
 	list.InsertBefore(preList)
 
 	postList := NewTaskList(helper.BuildName(t.Name, "post"), []ExecutionStep{})
 	for _, post := range t.Post {
-		postList.MergePostAligned(*post.Flatten())
+		postList.MergePostAligned(post.Flatten())
 	}
 	list.InsertAfter(postList)
 
-	return &list
+	return list
 }
 
 func (t *TaskTreeNode) RemoveEmptyNodes() {

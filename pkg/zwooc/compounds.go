@@ -5,7 +5,6 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
-	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
@@ -53,13 +52,11 @@ func execCompound(conf config.Config, c *cli.Context) error {
 	}
 
 	compoundKey := c.Args().First()
-	_, err := conf.LoadCompound(compoundKey)
+	compoundTasks, err := conf.LoadCompound(compoundKey)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	// list := *taskList.Flatten()
-	// list.RemoveEmptyStagesAndTasks()
-	ui.NewInteractiveRunner(tasks.TaskList{}, viewOptions, conf)
+	ui.NewInteractiveRunner(compoundTasks, viewOptions, conf)
 	return nil
 }

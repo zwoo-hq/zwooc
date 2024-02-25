@@ -59,7 +59,11 @@ type Model struct {
 	isHelpOpen bool
 }
 
-type ContentUpdateMsg string                // fired when the current logs content changes
+// fired when the current logs content changes
+type ContentUpdateMsg struct {
+	tabId   int
+	content string
+}
 type PreRunnerUpdateMsg tasks.RunnerStatus  // fired when a $pre tasks updates
 type PostRunnerUpdateMsg tasks.RunnerStatus // fired when a $post tasks updates
 type ScheduledStageFinishedMsg int          // fired when a pre action of a scheduled task finished
@@ -68,7 +72,7 @@ type ScheduledErroredMsg struct{ error }    // fired when a scheduled task error
 type PostErroredMsg struct{ error }         // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
-func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Config) error {
+func NewInteractiveRunner(forest []*tasks.TaskTreeNode, opts ViewOptions, conf config.Config) error {
 	m := &Model{
 		opts:           opts,
 		scheduledTasks: []ScheduledTask{},
@@ -78,7 +82,10 @@ func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Con
 		activeIndex:    -1,
 	}
 
-	m.schedule(list)
+	for _, tree := range forest {
+		list := tree.Flatten()
+		m.schedule(list)
+	}
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	if _, err := p.Run(); err != nil {
@@ -90,13 +97,13 @@ func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Con
 func (m *Model) Init() tea.Cmd {
 	hasScheduledStage := m.prepareNextScheduled()
 	if hasScheduledStage {
-		return tea.Batch(tea.EnterAltScreen, m.startScheduledStage, m.listenToPreRunner, tea.SetWindowTitle("zwooc"))
+		return tea.Batch(m.startScheduledStage, m.listenToPreRunner, tea.SetWindowTitle("zwooc"))
 	}
 	if len(m.activeTasks) > 0 {
 		m.activeIndex = 0
-		return tea.Batch(tea.EnterAltScreen, m.listenToWriterUpdates, tea.SetWindowTitle("zwooc"))
+		return tea.Batch(m.listenToWriterUpdates, tea.SetWindowTitle("zwooc"))
 	}
-	return tea.Batch(tea.EnterAltScreen, tea.SetWindowTitle("zwooc"))
+	return tea.Batch(tea.SetWindowTitle("zwooc"))
 }
 
 func (m *Model) schedule(t tasks.TaskList) {
@@ -165,6 +172,9 @@ func (m *Model) initPostStage(stage int) {
 }
 
 func (m *Model) listenToPreRunner() tea.Msg {
+	if m.preCurrentRunner == nil {
+		return func() {}
+	}
 	return PreRunnerUpdateMsg(<-m.preCurrentRunner.Updates())
 }
 
@@ -201,7 +211,6 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
-		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.scheduler.Schedule(task)
 		if m.activeIndex < 0 {
 			// set this as current tab
@@ -213,7 +222,21 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 }
 
 func (m *Model) listenToWriterUpdates() tea.Msg {
-	return ContentUpdateMsg(<-m.activeTasks[m.activeIndex].writer.updates)
+	currentId := m.activeIndex
+	if currentId < 0 || currentId >= len(m.activeTasks) {
+		return func() {}
+	}
+	return ContentUpdateMsg{
+		tabId:   currentId,
+		content: <-m.activeTasks[currentId].writer.updates,
+	}
+}
+
+func (m *Model) updateCurrentLogsView() tea.Msg {
+	return ContentUpdateMsg{
+		tabId:   m.activeIndex,
+		content: m.activeTasks[m.activeIndex].writer.String(),
+	}
 }
 
 func (m *Model) cancelAllRunning() tea.Msg {
@@ -265,6 +288,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.isHelpOpen = !m.isHelpOpen
 		case "esc":
 			m.isHelpOpen = false
+		case "tab":
+			if len(m.activeTasks) > 0 {
+				m.activeIndex = (m.activeIndex + 1) % len(m.activeTasks)
+				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
+			}
+		case "shift+tab":
+			if len(m.activeTasks) > 0 {
+				m.activeIndex = (m.activeIndex - 1 + len(m.activeTasks)) % len(m.activeTasks)
+				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
+			}
 		}
 	case PreRunnerUpdateMsg:
 		m.convertPreRunnerState(tasks.RunnerStatus(msg))
@@ -315,10 +348,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.postError = msg.error
 
 	case ContentUpdateMsg:
-		m.logsView.SetContent(string(msg))
-		m.logsView.GotoBottom()
-		if m.activeIndex >= 0 {
-			cmds = append(cmds, m.listenToWriterUpdates)
+		// this is to ignore old (pending) updates from other tabs after the tab changed
+		if msg.tabId == m.activeIndex {
+			m.logsView.SetContent(string(msg.content))
+			m.logsView.GotoBottom()
+			if m.activeIndex >= 0 {
+				cmds = append(cmds, m.listenToWriterUpdates)
+			}
+		}
+
+	case tea.MouseMsg:
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 4 && msg.Y < 8 {
+			clickedIdx := m.determineTabClicked(msg.X)
+			if clickedIdx >= 0 {
+				m.activeIndex = clickedIdx
+				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
+			}
 		}
 
 	case tea.WindowSizeMsg:
@@ -424,9 +469,9 @@ func (m *Model) View() (s string) {
 	s += m.RenderTabs()
 
 	if !m.viewportReady {
-		s += "Initializing..."
+		s += "Initializing...\n"
 	} else if m.wasCanceled {
-		s += "Shutting down..."
+		s += "Shutting down...\n"
 	} else {
 		s += m.logsView.View() + "\n"
 	}
@@ -441,7 +486,9 @@ func (m *Model) ViewHelp() (s string) {
 
 	s += align.Render(interactiveKeyStyle.Render("q/ctrl+c")) + interactiveHelpStyle.Render(" quit the runner") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("h")) + interactiveHelpStyle.Render(" show/hide this help") + "\n\n"
-	s += align.Render(interactiveKeyStyle.Render("esc")) + interactiveHelpStyle.Render(" close the alt screen") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("esc")) + interactiveHelpStyle.Render(" close the alt (help) screen") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("tab")) + interactiveHelpStyle.Render(" switch to next tab") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("shift+tab")) + interactiveHelpStyle.Render(" switch to previous tab") + "\n\n"
 	return
 }
 
@@ -472,7 +519,22 @@ func (m *Model) RenderTabs() string {
 		tabs = "│ (no active tasks) │"
 		tabsBorder = "┵───────────────────┴"
 	}
-	tabsBorder += helper.Repeat("─", m.logsView.Width-1-lipgloss.Width(tabsBorder)) + "╼"
+	help := interactiveKeyStyle.Render("tab") + interactiveHelpStyle.Render(" • switch tab")
+	tabsBorder += helper.Repeat("─", m.logsView.Width-3-lipgloss.Width(tabsBorder)-lipgloss.Width(help))
+	tabsBorder += "┤ " + help
 
 	return tabsTop + "\n" + tabs + "\n" + tabsBorder + "\n"
+}
+
+func (m *Model) determineTabClicked(x int) int {
+	var current = 0
+	for i, task := range m.activeTasks {
+		tabWidth := len(task.name) + 2
+		if x > current && x < current+tabWidth+1 {
+			return i
+		}
+		current += tabWidth + 1
+	}
+
+	return -1
 }
