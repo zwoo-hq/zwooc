@@ -41,6 +41,58 @@ var (
 		FPS: time.Second / 8,
 	}
 
+	shutdownTabSpinner = spinner.Spinner{
+		Frames: []string{
+			"⣿⣿",
+			"⣾⣷",
+			"⣶⣶",
+			"⣴⣦",
+			"⣤⣤",
+			"⣠⣄",
+			"⣀⣀",
+			"⣄⣠",
+			"⣤⣤",
+			"⣦⣴",
+			"⣶⣶",
+			"⣷⣾",
+		},
+		FPS: time.Second / 10,
+	}
+
+	pendingTabSpinner = spinner.Spinner{
+		Frames: []string{
+			"⡇ ",
+			"⢸ ",
+			"⢸⡇",
+			" ⣿",
+			" ⢸",
+			" ⣹",
+			" ⣉",
+			"⣉ ",
+			"⣏ ",
+			"⡇ ",
+		},
+		FPS: time.Second / 10,
+	}
+
+	runningTabSpinner = spinner.Spinner{
+		Frames: []string{
+			"⡇ ",
+			"⡇ ",
+			"⣏ ",
+			"⣉ ",
+			" ⣉",
+			" ⣹",
+			" ⢸",
+			" ⢸",
+			" ⣹",
+			" ⣉",
+			"⣉ ",
+			"⣏ ",
+		},
+		FPS: time.Second / 10,
+	}
+
 	pendingStyle              = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
 	runningStyle              = lipgloss.NewStyle().Foreground(lipgloss.Color("75"))
 	successStyle              = lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
