@@ -57,6 +57,11 @@ type (
 		ResolvePreHook() ResolvedHook
 		ResolvePostHook() ResolvedHook
 	}
+
+	LoadOptions struct {
+		SkipHooks bool
+		Exclude   []string
+	}
 )
 
 func IsReservedKey(key string) bool {

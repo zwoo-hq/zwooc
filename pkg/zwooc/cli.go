@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -17,7 +18,6 @@ var (
 	CategoryStatic      = "Static mode (non TTY):"
 	CategoryInteractive = "Interactive mode:"
 	CategoryGeneral     = "General:"
-	CategoryFragments   = "Fragments:"
 	CategoryMisc        = "Miscellaneous:"
 )
 
@@ -52,4 +52,39 @@ func completeFragments(c config.Config) {
 			fmt.Print(fragment.Name())
 		}
 	}
+}
+
+// func executeWithConfig(handler func(conf config.Config, c *cli.Context) error) func(c *cli.Context) error {
+// 	return func(c *cli.Context) error {
+// 		conf := loadConfig()
+// 		return handler(conf, c)
+// 	}
+// }
+
+func getLoadOptions(c *cli.Context) config.LoadOptions {
+	return config.LoadOptions{
+		SkipHooks: c.Bool("skip-hooks"),
+		Exclude:   c.StringSlice("exclude"),
+	}
+}
+
+func getViewOptions(c *cli.Context) ui.ViewOptions {
+	viewOptions := ui.ViewOptions{
+		DisableTUI:     c.Bool("no-tty"),
+		QuiteMode:      c.Bool("quite"),
+		InlineOutput:   c.Bool("inline-output"),
+		CombineOutput:  c.Bool("combine-output"),
+		DisablePrefix:  c.Bool("no-prefix"),
+		MaxConcurrency: c.Int("max-concurrency"),
+	}
+
+	if c.Bool("serial") {
+		viewOptions.MaxConcurrency = 1
+	}
+
+	if isCI() && !c.Bool("no-ci") {
+		viewOptions.DisableTUI = true
+		viewOptions.InlineOutput = true
+	}
+	return viewOptions
 }

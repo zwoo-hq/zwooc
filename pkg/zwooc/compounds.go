@@ -33,24 +33,7 @@ func execCompound(conf config.Config, c *cli.Context) error {
 		return fmt.Errorf("--dry-run is currently not supported for compounds")
 	}
 
-	viewOptions := ui.ViewOptions{
-		DisableTUI:     c.Bool("no-tty"),
-		QuiteMode:      c.Bool("quite"),
-		InlineOutput:   c.Bool("inline-output"),
-		CombineOutput:  c.Bool("combine-output"),
-		DisablePrefix:  c.Bool("no-prefix"),
-		MaxConcurrency: c.Int("max-concurrency"),
-	}
-
-	if c.Bool("serial") {
-		viewOptions.MaxConcurrency = 1
-	}
-
-	if isCI() && !c.Bool("no-ci") {
-		viewOptions.DisableTUI = true
-		viewOptions.InlineOutput = true
-	}
-
+	viewOptions := getViewOptions(c)
 	compoundKey := c.Args().First()
 	compoundTasks, err := conf.LoadCompound(compoundKey)
 	if err != nil {

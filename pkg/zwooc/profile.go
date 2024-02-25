@@ -32,24 +32,7 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		return graphTaskList(conf, c, runMode)
 	}
 
-	viewOptions := ui.ViewOptions{
-		DisableTUI:     c.Bool("no-tty"),
-		QuiteMode:      c.Bool("quite"),
-		InlineOutput:   c.Bool("inline-output"),
-		CombineOutput:  c.Bool("combine-output"),
-		DisablePrefix:  c.Bool("no-prefix"),
-		MaxConcurrency: c.Int("max-concurrency"),
-	}
-
-	if c.Bool("serial") {
-		viewOptions.MaxConcurrency = 1
-	}
-
-	if isCI() && !c.Bool("no-ci") {
-		viewOptions.DisableTUI = true
-		viewOptions.InlineOutput = true
-	}
-
+	viewOptions := getViewOptions(c)
 	args := c.Args().Tail()
 	profileKey := c.Args().First()
 	taskList, err := conf.LoadProfile(profileKey, runMode, args)
