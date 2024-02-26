@@ -9,6 +9,7 @@ type TaskTreeNode struct {
 	Pre           []*TaskTreeNode
 	Main          Task
 	Post          []*TaskTreeNode
+	Parent        *TaskTreeNode
 	IsLongRunning bool
 }
 
@@ -23,10 +24,16 @@ func NewTaskTree(name string, mainTask Task, isLongRunning bool) *TaskTreeNode {
 }
 
 func (t *TaskTreeNode) AddPreChild(child ...*TaskTreeNode) {
+	for _, c := range child {
+		c.Parent = t
+	}
 	t.Pre = append(t.Pre, child...)
 }
 
 func (t *TaskTreeNode) AddPostChild(child ...*TaskTreeNode) {
+	for _, c := range child {
+		c.Parent = t
+	}
 	t.Post = append(t.Post, child...)
 }
 
@@ -39,6 +46,18 @@ func (t *TaskTreeNode) FindNode(name string) *TaskTreeNode {
 			return node
 		}
 	}
+	return nil
+}
+
+func (t *TaskTreeNode) FindParent(name string) *TaskTreeNode {
+	parent := t
+	for parent != nil {
+		if parent.Name == name {
+			return parent
+		}
+		parent = parent.Parent
+	}
+
 	return nil
 }
 

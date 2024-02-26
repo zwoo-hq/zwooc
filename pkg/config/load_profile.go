@@ -8,7 +8,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func (c Config) LoadProfile(key, mode string, extraArgs []string) (*tasks.TaskTreeNode, error) {
+func (c Config) LoadProfile(key, mode string, ctx loadingContext) (*tasks.TaskTreeNode, error) {
 	if key == "" {
 		key = KeyDefault
 	}
@@ -39,25 +39,16 @@ func (c Config) LoadProfile(key, mode string, extraArgs []string) (*tasks.TaskTr
 	}
 
 	name := helper.BuildName(key, mode)
-	preStage, err := c.loadHook(config.ResolvePreHook(), config, config.Mode, config.Name)
+	mainTask, err := config.GetTask(ctx.getArgs())
 	if err != nil {
 		return nil, err
 	}
-
-	postStage, err := c.loadHook(config.ResolvePostHook(), config, config.Mode, config.Name)
+	treeNode := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
+	err = c.loadAllHooks(config, treeNode, mode, key, ctx.withCaller(name))
 	if err != nil {
 		return nil, err
 	}
-
-	mainTask, err := config.GetTask(extraArgs)
-	if err != nil {
-		return nil, err
-	}
-	list := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
-
-	list.AddPreChild(preStage...)
-	list.AddPostChild(postStage...)
-	return list, nil
+	return treeNode, nil
 }
 
 func (c Config) resolveProfile(key, mode string) (ResolvedProfile, error) {

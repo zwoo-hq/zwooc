@@ -26,14 +26,15 @@ func CreateFragmentCommand() *cli.Command {
 	}
 }
 
-func execFragment(config config.Config, c *cli.Context) error {
+func execFragment(conf config.Config, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(config, c, "exec")
+		return graphTaskList(conf, c, "exec")
 	}
+
 	viewOptions := getViewOptions(c)
-	args := c.Args().Tail()
+	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	fragmentKey := c.Args().First()
-	task, err := config.LoadFragment(fragmentKey, args)
+	task, err := conf.LoadFragment(fragmentKey, ctx)
 	if err != nil {
 		ui.HandleError(err)
 	}

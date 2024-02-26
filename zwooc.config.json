@@ -2,12 +2,17 @@
   "example": {
     "$adapter": "vite-yarn",
     "$fragments": {
-      "foo": "echo $PWD && sleep 7",
-      "foo:dev": "echo 'BAR'",
+      "foo": {
+        "$default": "echo $PWD && sleep 7",
+        "dev": "echo 'BAR'"
+      },
       "print": {
         "$default": "echo $PWD && sleep 7",
         "$pre": {
           "fragments": ["print2"],
+          "profiles": {
+            "dev": "build"
+          },
           "command": "echo 'pre'"
         }
       }
@@ -15,7 +20,7 @@
     "dev": {
       "build": {
         "$pre": {
-          "fragments": ["print", "print2", "foo:dev"]
+          "fragments": ["print", "print2", "foo"]
         },
         "env": ["VITE_APP_TEST=build1"],
         "args": {

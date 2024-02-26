@@ -34,8 +34,9 @@ func execCompound(conf config.Config, c *cli.Context) error {
 	}
 
 	viewOptions := getViewOptions(c)
+	ctx := config.NewContext(getLoadOptions(c, []string{}))
 	compoundKey := c.Args().First()
-	compoundTasks, err := conf.LoadCompound(compoundKey)
+	compoundTasks, err := conf.LoadCompound(compoundKey, ctx)
 	if err != nil {
 		ui.HandleError(err)
 	}

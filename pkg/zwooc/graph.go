@@ -49,13 +49,14 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 		target = c.Args().First()
 	}
 
+	ctx := config.NewContext(getLoadOptions(c, []string{}))
 	var tree *tasks.TaskTreeNode
 	var err error
 
 	if mode == "exec" {
-		tree, err = conf.LoadFragment(target, []string{})
+		tree, err = conf.LoadFragment(target, ctx)
 	} else if mode == "run" || mode == "watch" || mode == "build" {
-		tree, err = conf.LoadProfile(target, mode, []string{})
+		tree, err = conf.LoadProfile(target, mode, ctx)
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}

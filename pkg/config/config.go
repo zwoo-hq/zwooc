@@ -1,5 +1,10 @@
 package config
 
+import (
+	"fmt"
+	"strings"
+)
+
 const (
 	ModeRun   = "run"
 	ModeBuild = "build"
@@ -61,6 +66,14 @@ type (
 	LoadOptions struct {
 		SkipHooks bool
 		Exclude   []string
+		ExtraArgs []string
+	}
+
+	loadingContext struct {
+		skipHooks bool
+		exclude   []string
+		extraArgs []string
+		callStack []string
 	}
 )
 
@@ -90,4 +103,38 @@ func IsValidRunMode(key string) bool {
 		return true
 	}
 	return false
+}
+
+func NewContext(opts LoadOptions) loadingContext {
+	return loadingContext{
+		skipHooks: opts.SkipHooks,
+		exclude:   opts.Exclude,
+		extraArgs: opts.ExtraArgs,
+		callStack: []string{},
+	}
+}
+
+func (c loadingContext) getArgs() []string {
+	if len(c.callStack) == 0 {
+		return c.extraArgs
+	}
+	return []string{}
+}
+
+func (c loadingContext) withCaller(caller string) loadingContext {
+	c.callStack = append(c.callStack, caller)
+	return c
+}
+
+func (c loadingContext) hasCaller(caller string) bool {
+	for _, c := range c.callStack {
+		if c == caller {
+			return true
+		}
+	}
+	return false
+}
+
+func createCircularDependencyError(caller []string, target string) error {
+	return fmt.Errorf("circular dependency detected: '%s' from %s", target, strings.Join(caller, " -> "))
 }

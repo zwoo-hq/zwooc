@@ -61,10 +61,11 @@ func completeFragments(c config.Config) {
 // 	}
 // }
 
-func getLoadOptions(c *cli.Context) config.LoadOptions {
+func getLoadOptions(c *cli.Context, extraArgs []string) config.LoadOptions {
 	return config.LoadOptions{
 		SkipHooks: c.Bool("skip-hooks"),
 		Exclude:   c.StringSlice("exclude"),
+		ExtraArgs: extraArgs,
 	}
 }
 
