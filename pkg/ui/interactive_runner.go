@@ -482,7 +482,7 @@ func (m *Model) View() (s string) {
 
 func (m *Model) ViewHelp() (s string) {
 	s += "zwooc interactive runner - help\n\n"
-	align := lipgloss.NewStyle().Width(10).Align(lipgloss.Right).MarginRight(1).MarginLeft(2)
+	align := lipgloss.NewStyle().Width(12).Align(lipgloss.Right).MarginRight(1).MarginLeft(2)
 
 	s += align.Render(interactiveKeyStyle.Render("q/ctrl+c")) + interactiveHelpStyle.Render(" quit the runner") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("h")) + interactiveHelpStyle.Render(" show/hide this help") + "\n\n"
