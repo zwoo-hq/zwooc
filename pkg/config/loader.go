@@ -107,7 +107,7 @@ func (c Config) loadFragments() ([]Fragment, error) {
 			newFragment := Fragment{
 				name:      fragmentKey,
 				directory: c.baseDir,
-				raw:       fragmentValue.(map[string]interface{}),
+				raw:       fragmentValue,
 			}
 			fragments = append(fragments, newFragment)
 		}

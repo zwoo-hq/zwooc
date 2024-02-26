@@ -10,9 +10,6 @@
         "$default": "echo $PWD && sleep 7",
         "$pre": {
           "fragments": ["print2"],
-          "profiles": {
-            "dev": "build"
-          },
           "command": "echo 'pre'"
         }
       }
@@ -60,12 +57,8 @@
     }
   },
   "$fragments": {
-    "print2": {
-      "$default": "echo $PWD && sleep 3"
-    },
-    "print3": {
-      "$default": "git status"
-    }
+    "print2": "echo $PWD && sleep 3",
+    "print3": "git status"
   },
   "$compounds": {
     "test": {
