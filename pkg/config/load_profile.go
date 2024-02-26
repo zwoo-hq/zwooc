@@ -39,16 +39,30 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collect
 	}
 
 	name := helper.BuildName(key, mode)
+	ctx = ctx.withCaller(name)
 	mainTask, err := config.GetTask(ctx.getArgs())
 	if err != nil {
 		return nil, err
 	}
 	treeNode := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
-	err = c.loadAllHooks(config, treeNode, mode, key, ctx.withCaller(name))
+	err = c.loadAllHooks(config, treeNode, mode, key, ctx)
 	if err != nil {
 		return nil, err
 	}
-	return tasks.NewCollection(treeNode), nil
+
+	allTasks := tasks.NewCollection(treeNode)
+	for _, fragmentKey := range opts.IncludeFragments {
+		fragment, err := c.LoadFragment(combineFragmentKey(fragmentKey, mode, key), ctx.withCaller("includes"))
+		if err != nil {
+			return nil, err
+		}
+		if mode == ModeWatch || mode == ModeRun {
+			fragment.IsLongRunning = true
+		}
+		allTasks = append(allTasks, fragment)
+	}
+
+	return allTasks, nil
 }
 
 func (c Config) resolveProfile(key, mode string) (ResolvedProfile, error) {
