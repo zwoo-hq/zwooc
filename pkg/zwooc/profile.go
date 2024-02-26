@@ -3,7 +3,6 @@ package zwooc
 import (
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
-	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
@@ -40,10 +39,10 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	if runMode == config.ModeWatch || runMode == config.ModeRun {
-		ui.NewInteractiveRunner([]*tasks.TaskTreeNode{taskList}, viewOptions, conf)
+	if runMode == config.ModeWatch || runMode == config.ModeRun || len(taskList) > 1 {
+		ui.NewInteractiveRunner(taskList, viewOptions, conf)
 	} else {
-		list := taskList.Flatten()
+		list := taskList[0].Flatten()
 		list.RemoveEmptyStagesAndTasks()
 		ui.NewRunner(list, viewOptions)
 	}

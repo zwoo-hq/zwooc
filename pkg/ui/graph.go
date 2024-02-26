@@ -7,11 +7,13 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func GraphDependencies(tasks *tasks.TaskTreeNode) {
-	fmt.Printf("viewing %s ", graphHeaderStyle.Render(tasks.Name))
-	fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total stages)", tasks.CountStages())))
-	tasks.RemoveEmptyNodes()
-	printNode(tasks, "", true)
+func GraphDependencies(collection tasks.Collection) {
+	for _, tasks := range collection {
+		fmt.Printf("viewing %s ", graphHeaderStyle.Render(tasks.Name))
+		fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total stages)", tasks.CountStages())))
+		tasks.RemoveEmptyNodes()
+		printNode(tasks, "", true)
+	}
 }
 
 func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {

@@ -55,7 +55,7 @@ func (c Config) loadHook(hook ResolvedHook, mode, profile string, ctx loadingCon
 		if err != nil {
 			return nil, err
 		}
-		taskList = append(taskList, profileConfig)
+		taskList = append(taskList, profileConfig...)
 	}
 
 	return taskList, nil

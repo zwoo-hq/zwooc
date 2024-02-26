@@ -7,19 +7,19 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func (c Config) LoadCompound(key string, ctx loadingContext) ([]*tasks.TaskTreeNode, error) {
+func (c Config) LoadCompound(key string, ctx loadingContext) (tasks.Collection, error) {
 	compound, err := c.resolveCompound(key)
 	if err != nil {
 		return []*tasks.TaskTreeNode{}, err
 	}
 
-	nodes := []*tasks.TaskTreeNode{}
+	nodes := tasks.NewCollection()
 	for profileKey, mode := range compound.Profiles {
 		resolved, err := c.LoadProfile(profileKey, mode, ctx.withCaller(key))
 		if err != nil {
 			return []*tasks.TaskTreeNode{}, err
 		}
-		nodes = append(nodes, resolved)
+		nodes = append(nodes, resolved...)
 	}
 
 	return nodes, nil

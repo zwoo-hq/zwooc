@@ -8,7 +8,7 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func (c Config) LoadProfile(key, mode string, ctx loadingContext) (*tasks.TaskTreeNode, error) {
+func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collection, error) {
 	if key == "" {
 		key = KeyDefault
 	}
@@ -48,7 +48,7 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (*tasks.TaskTr
 	if err != nil {
 		return nil, err
 	}
-	return treeNode, nil
+	return tasks.NewCollection(treeNode), nil
 }
 
 func (c Config) resolveProfile(key, mode string) (ResolvedProfile, error) {

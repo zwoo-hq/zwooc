@@ -72,7 +72,7 @@ type ScheduledErroredMsg struct{ error }    // fired when a scheduled task error
 type PostErroredMsg struct{ error }         // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
-func NewInteractiveRunner(forest []*tasks.TaskTreeNode, opts ViewOptions, conf config.Config) error {
+func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config.Config) error {
 	m := &Model{
 		opts:           opts,
 		scheduledTasks: []ScheduledTask{},
