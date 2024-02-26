@@ -30,6 +30,15 @@ type ScheduledTask struct {
 	postStage tasks.TaskList
 }
 
+type ActiveView int
+
+const (
+	ViewDefault ActiveView = iota
+	ViewHelp
+	ViewFullScreen
+	ViewAddTask
+)
+
 type Model struct {
 	err               error
 	wasCanceled       bool
@@ -56,7 +65,9 @@ type Model struct {
 	postCurrentList   tasks.TaskList
 	postCurrentRunner *tasks.TaskRunner
 
-	isHelpOpen bool
+	activeView   ActiveView
+	windowWidth  int
+	windowHeight int
 }
 
 // fired when the current logs content changes
@@ -80,6 +91,7 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 		scheduler:      tasks.NewScheduler(),
 		scheduledPost:  make(map[string]tasks.TaskList),
 		activeIndex:    -1,
+		activeView:     ViewDefault,
 	}
 
 	for _, tree := range forest {
@@ -253,6 +265,7 @@ func (m *Model) cancelAllRunning() tea.Msg {
 
 	// reset active state
 	m.activeTasks = []ActiveTask{}
+	m.activeIndex = -1
 
 	// start executing post tasks
 	list := tasks.TaskList{
@@ -285,9 +298,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q":
 			return m, m.cancelAllRunning
 		case "h":
-			m.isHelpOpen = !m.isHelpOpen
+			if m.activeView == ViewHelp {
+				m.activeView = ViewDefault
+				m.setLogsViewDefaultPosition()
+			} else {
+				m.activeView = ViewHelp
+			}
+		case "f":
+			if m.activeView == ViewFullScreen {
+				m.activeView = ViewDefault
+				m.setLogsViewDefaultPosition()
+			} else {
+				m.activeView = ViewFullScreen
+				m.setLogsViewFullScreenPosition()
+			}
 		case "esc":
-			m.isHelpOpen = false
+			m.activeView = ViewDefault
+			m.setLogsViewDefaultPosition()
 		case "tab":
 			if len(m.activeTasks) > 0 {
 				m.activeIndex = (m.activeIndex + 1) % len(m.activeTasks)
@@ -358,7 +385,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.MouseMsg:
-		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 4 && msg.Y < 8 {
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 4 && msg.Y < 8 && m.activeView == ViewDefault {
 			clickedIdx := m.determineTabClicked(msg.X)
 			if clickedIdx >= 0 {
 				m.activeIndex = clickedIdx
@@ -367,31 +394,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
-		// headerHeight := lipgloss.Height(m.headerView())
-		// footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := 9 // headerHeight + footerHeight
+		m.windowWidth = msg.Width
+		m.windowHeight = msg.Height
 
 		if !m.viewportReady {
-			// Since this program is using the full size of the viewport we
-			// need to wait until we've received the window dimensions before
-			// we can initialize the viewport. The initial dimensions come in
-			// quickly, though asynchronously, which is why we wait for them
-			// here.
-			m.logsView = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			// m.logsView.YPosition = 10
-			m.logsView.HighPerformanceRendering = false // useHighPerformanceRenderer
-			// m.logsView.SetContent(m.writer.String())
+			m.logsView = viewport.New(msg.Width, msg.Height)
+			m.logsView.HighPerformanceRendering = false
+			// m.logsView.YPosition = 10 (use only with high performance rendering)
 			m.viewportReady = true
 			m.logsView.SetContent("== empty ==")
-
-			// // This is only necessary for high performance rendering, which in
-			// // most cases you won't need.
-			// //
-			// // Render the viewport one line below the header.
-			// m.logsView.YPosition = headerHeight + 1
+			m.setLogsViewDefaultPosition()
 		} else {
-			m.logsView.Width = msg.Width
-			m.logsView.Height = msg.Height - verticalMarginHeight
+			if m.activeView == ViewFullScreen {
+				m.setLogsViewFullScreenPosition()
+			} else {
+				m.setLogsViewDefaultPosition()
+			}
 		}
 
 		// if useHighPerformanceRenderer {
@@ -408,6 +426,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) setLogsViewDefaultPosition() {
+	m.logsView.Width = m.windowWidth
+	m.logsView.Height = m.windowHeight - 9
+}
+
+func (m *Model) setLogsViewFullScreenPosition() {
+	m.logsView.Width = m.windowWidth
+	m.logsView.Height = m.windowHeight - 1
 }
 
 func (m *Model) convertPreRunnerState(state tasks.RunnerStatus) {
@@ -427,8 +455,12 @@ func (m *Model) convertPostRunnerState(state tasks.RunnerStatus) {
 }
 
 func (m *Model) View() (s string) {
-	if m.isHelpOpen {
+	if m.activeView == ViewHelp {
 		return m.ViewHelp()
+	}
+
+	if m.activeView == ViewFullScreen {
+		return m.ViewFullScreen()
 	}
 
 	header := fmt.Sprintf("zwooc running in interactive mode (%d scheduled tasks)\n", len(m.scheduledTasks))
@@ -486,9 +518,27 @@ func (m *Model) ViewHelp() (s string) {
 
 	s += align.Render(interactiveKeyStyle.Render("q/ctrl+c")) + interactiveHelpStyle.Render(" quit the runner") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("h")) + interactiveHelpStyle.Render(" show/hide this help") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("f")) + interactiveHelpStyle.Render(" toggle full screen mode") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("esc")) + interactiveHelpStyle.Render(" close the alt (help) screen") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("tab")) + interactiveHelpStyle.Render(" switch to next tab") + "\n\n"
 	s += align.Render(interactiveKeyStyle.Render("shift+tab")) + interactiveHelpStyle.Render(" switch to previous tab") + "\n\n"
+	return
+}
+
+func (m *Model) ViewFullScreen() (s string) {
+	if m.activeIndex < 0 || len(m.activeTasks) == 0 {
+		return "there is no active tab"
+	}
+	name := interactiveFullScreenTabStyle.Render(" " + m.activeTasks[m.activeIndex].name + " ")
+	help := interactiveKeyStyle.Render("h") + interactiveHelpStyle.Render(" • show help")
+	fs := interactiveKeyStyle.Render("f") + interactiveHelpStyle.Render(" • toggle fullscreen")
+
+	start := fmt.Sprintf("╾─┤%s├", name)
+	end := fmt.Sprintf(" %s │ %s ", fs, help)
+	middle := helper.Repeat("─", m.logsView.Width-lipgloss.Width(start)-lipgloss.Width(end)-2)
+
+	s += start + middle + "─╼" + end + "\n"
+	s += m.logsView.View()
 	return
 }
 
