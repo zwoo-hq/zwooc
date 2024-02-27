@@ -32,8 +32,8 @@
         "$pre": {
           "fragments": ["print", "print2"]
         },
-        "includeFragments": ["print3", "recurse"],
-        "__$post": {
+        "includeFragments": ["print3"],
+        "$post": {
           "command": "sleep 5"
         }
       }

@@ -11,6 +11,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
+	"github.com/zwoo-hq/zwooc/pkg/ui/textinput"
 )
 
 type PreTaskStatus struct {
@@ -65,6 +66,8 @@ type Model struct {
 	postCurrentList   tasks.TaskList
 	postCurrentRunner *tasks.TaskRunner
 
+	input textinput.Model
+
 	activeView   ActiveView
 	windowWidth  int
 	windowHeight int
@@ -92,7 +95,14 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 		scheduledPost:  make(map[string]tasks.TaskList),
 		activeIndex:    -1,
 		activeView:     ViewDefault,
+		input:          textinput.New(),
 	}
+
+	m.input.Placeholder = "Enter a task key"
+	m.input.Cursor.Style = interactiveActiveTabStyle
+	m.input.Width = 30
+	m.input.ShowSuggestions = true
+	m.input.SetSuggestions([]string{"test", "test2", "test3"})
 
 	for _, tree := range forest {
 		list := tree.Flatten()
@@ -312,6 +322,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.activeView = ViewFullScreen
 				m.setLogsViewFullScreenPosition()
 			}
+		case "a":
+			if m.activeView == ViewAddTask {
+				m.activeView = ViewDefault
+				m.setLogsViewDefaultPosition()
+			} else {
+				m.activeView = ViewAddTask
+				m.input.Focus()
+				cmds = append(cmds, textinput.Blink)
+			}
 		case "esc":
 			m.activeView = ViewDefault
 			m.setLogsViewDefaultPosition()
@@ -424,6 +443,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle keyboard and mouse events in the viewport
 	m.logsView, cmd = m.logsView.Update(msg)
 	cmds = append(cmds, cmd)
+	m.input, cmd = m.input.Update(msg)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
 }
@@ -461,6 +482,10 @@ func (m *Model) View() (s string) {
 
 	if m.activeView == ViewFullScreen {
 		return m.ViewFullScreen()
+	}
+
+	if m.activeView == ViewAddTask {
+		return m.ViewAddTask()
 	}
 
 	header := fmt.Sprintf("zwooc running in interactive mode (%d scheduled tasks)\n", len(m.scheduledTasks))
@@ -539,6 +564,27 @@ func (m *Model) ViewFullScreen() (s string) {
 
 	s += start + middle + "─╼" + end + "\n"
 	s += m.logsView.View()
+	return
+}
+
+func (m *Model) ViewAddTask() (s string) {
+	s += "zwooc interactive runner - add task\n\n"
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1).Width(m.windowWidth - 2)
+	truncatedContent := lipgloss.NewStyle().MaxWidth(m.windowWidth - 2).Render(m.input.View())
+	s += border.Render(truncatedContent)
+	s += "\n"
+
+	suggestions := m.input.MatchedSuggestions()
+	if len(suggestions) == 0 {
+		suggestions = m.input.AvailableSuggestions()
+	}
+	for _, suggestion := range suggestions {
+		if m.input.CurrentSuggestion() == suggestion {
+			s += "  ◦ " + interactiveActiveTabStyle.Render(suggestion) + "\n"
+		} else {
+			s += "  ◦ " + suggestion + "\n"
+		}
+	}
 	return
 }
 
