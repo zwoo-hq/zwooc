@@ -231,8 +231,6 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 		notify := NewNotifyWriter()
 		task.Pipe(notify)
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
-		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
-		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.scheduler.Schedule(task)
 		if m.activeIndex < 0 {
 			// set this as current tab

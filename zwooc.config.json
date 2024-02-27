@@ -32,7 +32,7 @@
         "$pre": {
           "fragments": ["print", "print2"]
         },
-        "includeFragments": ["print3"],
+        "includeFragments": ["print3", "recurse"],
         "$post": {
           "command": "sleep 5"
         }
