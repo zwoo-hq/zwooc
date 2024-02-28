@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/zwoo-hq/zwooc/main/zwooc.schema.json",
+  "foo": {
+    "$adapter": "dotnet"
+  },
+  "bar": {
+    "$adapter": "vite-yarn"
+  },
+  "$fragments": {},
+  "$compounds": {}
+}

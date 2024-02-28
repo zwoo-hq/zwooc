@@ -118,3 +118,7 @@ func HandleError(err error) {
 	fmt.Println(runningStyle.Render("exiting zwooc"))
 	os.Exit(1)
 }
+
+func PrintSuccess(msg string) {
+	fmt.Printf(" %s %s\n", successStyle.Render("✓"), msg)
+}
