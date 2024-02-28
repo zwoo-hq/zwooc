@@ -1,4 +1,5 @@
 {
+  "$schema": "./zwooc.schema.json",
   "example": {
     "$adapter": "vite-yarn",
     "$fragments": {
@@ -15,7 +16,9 @@
       }
     },
     "dev": {
+      "mode": "test",
       "build": {
+        "project": "",
         "$pre": {
           "fragments": ["print", "print2", "foo"]
         },
@@ -23,7 +26,6 @@
         "args": {
           "outDir": "dist"
         },
-        "includeFragments": ["print3"],
         "$post": {
           "command": "sleep 5"
         }
@@ -56,6 +58,12 @@
       "build": {
         "base": "dev"
       }
+    }
+  },
+  "example2": {
+    "$adapter": "dotnet",
+    "test": {
+      "project": "a.b"
     }
   },
   "$fragments": {

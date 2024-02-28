@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://zwooc.igd20.de/zwooc.schema.json",
+  "name": "run.json",
+  "description": "run scripts definition file",
+  "fileMatch": ["run.json"],
+  "url": "https://raw.githubusercontent.com/zwoo-hq/zwooc/main/zwooc.schema.json",
+  "type": "object",
+  "additionalProperties": {
+    "description": "A project definition.",
+    "$ref": "#/$defs/project"
+  },
+  "properties": {
+    "$schema": {},
+    "$fragments": {
+      "description": "A collection of global fragment definitions.",
+      "type": "object",
+      "additionalProperties": {
+        "description": "A global fragment definition.",
+        "$ref": "#/$defs/fragment"
+      }
+    },
+    "$compounds": {
+      "description": "A collection of compound definitions.",
+      "type": "object",
+      "additionalProperties": {
+        "description": "A profile definition.",
+        "$ref": "#/$defs/compound"
+      }
+    }
+  },
+  "$defs": {
+    "project": {
+      "type": "object",
+      "description": "A project definition.",
+      "properties": {
+        "$adapter": {
+          "description": "The adapter to use for this profile.",
+          "type": "string",
+          "enum": ["vite-yarn", "dotnet"]
+        },
+        "$fragments": {
+          "description": "A collection of local fragment definitions.",
+          "type": "object",
+          "additionalProperties": {
+            "description": "A local fragment definition.",
+            "$ref": "#/$defs/fragment"
+          }
+        }
+      },
+      "additionalProperties": {
+        "description": "A profile definition.",
+        "oneOf": [
+          {
+            "$ref": "#/$defs/viteProfile"
+          },
+          {
+            "$ref": "#/$defs/dotnetProfile"
+          }
+        ]
+      }
+    },
+    "hook": {
+      "type": "object",
+      "description": "A hook definition.",
+      "properties": {
+        "command": {
+          "description": "A script for the hook.",
+          "type": "string"
+        },
+        "fragments": {
+          "description": "All fragment dependencies of the hook.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "profiles": {
+          "description": "All profile dependencies of the hook.",
+          "additionalProperties": {
+            "description": "A reference to a profile.",
+            "type": "string",
+            "enum": ["build", "run", "watch"]
+          }
+        }
+      }
+    },
+    "fragment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "$pre": {
+              "$ref": "#/$defs/hook"
+            },
+            "$post": {
+              "$ref": "#/$defs/hook"
+            },
+            "$default": {
+              "description": "The default command to run for this fragment.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "baseProfile": {
+      "type": "object",
+      "properties": {
+        "build": {
+          "description": "The build definition for a profile.",
+          "$ref": "#/$defs/runDefinition"
+        },
+        "run": {
+          "description": "The run definition for a profile.",
+          "$ref": "#/$defs/runDefinition"
+        },
+        "watch": {
+          "description": "The watch definition for a profile.",
+          "$ref": "#/$defs/runDefinition"
+        }
+      }
+    },
+    "viteProfile": {
+      "allOf": [
+        { "$ref": "#/$defs/baseProfile" },
+        {
+          "properties": {
+            "mode": {
+              "description": "The vite mode for this profile.",
+              "type": "string"
+            }
+          },
+          "required": ["mode"]
+        }
+      ]
+    },
+    "dotnetProfile": {
+      "allOf": [
+        { "$ref": "#/$defs/baseProfile" },
+        {
+          "properties": {
+            "project": {
+              "description": "The .csproj for this profile.",
+              "type": "string"
+            }
+          },
+          "required": ["project"]
+        }
+      ]
+    },
+    "runDefinition": {
+      "type": "object",
+      "properties": {
+        "$pre": {
+          "$ref": "#/$defs/hook"
+        },
+        "$post": {
+          "$ref": "#/$defs/hook"
+        },
+        "env": {
+          "description": "Environment variables to set for the profile.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "includeFragments": {
+          "description": "Fragments included with the profile.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "args": {
+          "description": "Arguments to pass to the profile.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "base": {
+          "type": "string",
+          "description": "The base definition for the profile."
+        }
+      }
+    },
+    "compound": {
+      "type": "object",
+      "description": "A compound definition.",
+      "properties": {
+        "profiles": {
+          "description": "All profile dependencies of the compound.",
+          "type": "object",
+          "additionalProperties": {
+            "description": "A reference to a profile.",
+            "type": "string",
+            "enum": ["build", "run", "watch"]
+          }
+        }
+      }
+    }
+  }
+}

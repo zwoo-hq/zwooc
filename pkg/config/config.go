@@ -89,6 +89,8 @@ func IsReservedKey(key string) bool {
 		return true
 	case KeyPost:
 		return true
+	case "$schema":
+		return true
 	}
 	return false
 }
