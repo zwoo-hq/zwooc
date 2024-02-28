@@ -22,8 +22,8 @@ func CreateDotnetTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 	}
 
 	dotnetOptions := c.GetDotNetOptions()
-	if dotnetOptions.Project != "" {
-		cmd.Env = append(cmd.Args, "--project", dotnetOptions.Project)
+	if dotnetOptions.Project != "" && c.Mode != ModeBuild {
+		cmd.Args = append(cmd.Args, "--project", dotnetOptions.Project)
 	}
 
 	for k, v := range profileOptions.Args {
@@ -35,6 +35,9 @@ func CreateDotnetTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 	}
 
 	cmd.Dir = c.Directory
+	if dotnetOptions.Project != "" && c.Mode == ModeBuild {
+		cmd.Args = append(cmd.Args, dotnetOptions.Project)
+	}
 	cmd.Args = append(cmd.Args, extraArgs...)
 	return tasks.NewCommandTask(c.Name, cmd)
 }
