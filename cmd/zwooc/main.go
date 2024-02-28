@@ -37,6 +37,7 @@ func main() {
 			zwooc.CreateFragmentCommand(),
 			zwooc.CreateCompoundCommand(),
 			zwooc.CreateGraphCommand(),
+			zwooc.CreateInitCommand(),
 			{
 				// TODO: when cliv3 comes out this is no longer needed
 				Name:  "completion-script",

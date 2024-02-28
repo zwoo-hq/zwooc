@@ -8,7 +8,7 @@ The official build system for [zwoo](https://github.com/fabiankachlock/zwoo)!
 
 ## Install
 
-You can install zwooc from the  [GitHub Releases](https://github.com/zwoo-hq/zwooc/releases) or via `go install github.com/zwoo-hq/zwooc@latest` (go 1.20 is needed).
+You can install zwooc from the  [GitHub Releases](https://github.com/zwoo-hq/zwooc/releases) or via `go install github.com/zwoo-hq/zwooc/cmd/zwooc@latest` (go 1.20 is needed).
 
 ## Concepts
 

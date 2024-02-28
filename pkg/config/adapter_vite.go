@@ -24,7 +24,7 @@ func CreateViteTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 
 	viteOptions := c.GetViteOptions()
 	if viteOptions.Mode != "" {
-		cmd.Env = append(cmd.Args, "--mode", viteOptions.Mode)
+		cmd.Args = append(cmd.Args, "--mode", viteOptions.Mode)
 	}
 
 	for k, v := range profileOptions.Args {
