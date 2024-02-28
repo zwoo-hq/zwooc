@@ -1,12 +1,15 @@
 package tasks
 
-import "github.com/zwoo-hq/zwooc/pkg/helper"
+import (
+	"github.com/zwoo-hq/zwooc/pkg/helper"
+)
 
 type TaskTreeNode struct {
 	Name          string
 	Pre           []*TaskTreeNode
 	Main          Task
 	Post          []*TaskTreeNode
+	Parent        *TaskTreeNode
 	IsLongRunning bool
 }
 
@@ -21,10 +24,16 @@ func NewTaskTree(name string, mainTask Task, isLongRunning bool) *TaskTreeNode {
 }
 
 func (t *TaskTreeNode) AddPreChild(child ...*TaskTreeNode) {
+	for _, c := range child {
+		c.Parent = t
+	}
 	t.Pre = append(t.Pre, child...)
 }
 
 func (t *TaskTreeNode) AddPostChild(child ...*TaskTreeNode) {
+	for _, c := range child {
+		c.Parent = t
+	}
 	t.Post = append(t.Post, child...)
 }
 
@@ -40,7 +49,19 @@ func (t *TaskTreeNode) FindNode(name string) *TaskTreeNode {
 	return nil
 }
 
-func (t *TaskTreeNode) Flatten() *TaskList {
+func (t *TaskTreeNode) FindParent(name string) *TaskTreeNode {
+	parent := t
+	for parent != nil {
+		if parent.Name == name {
+			return parent
+		}
+		parent = parent.Parent
+	}
+
+	return nil
+}
+
+func (t *TaskTreeNode) Flatten() TaskList {
 	list := NewTaskList(t.Name, []ExecutionStep{
 		{
 			Name:          t.Name,
@@ -51,17 +72,17 @@ func (t *TaskTreeNode) Flatten() *TaskList {
 
 	preList := NewTaskList(helper.BuildName(t.Name, "pre"), []ExecutionStep{})
 	for _, pre := range t.Pre {
-		preList.MergePreAligned(*pre.Flatten())
+		preList.MergePreAligned(pre.Flatten())
 	}
 	list.InsertBefore(preList)
 
 	postList := NewTaskList(helper.BuildName(t.Name, "post"), []ExecutionStep{})
 	for _, post := range t.Post {
-		postList.MergePostAligned(*post.Flatten())
+		postList.MergePostAligned(post.Flatten())
 	}
 	list.InsertAfter(postList)
 
-	return &list
+	return list
 }
 
 func (t *TaskTreeNode) RemoveEmptyNodes() {
@@ -81,4 +102,22 @@ func (t *TaskTreeNode) RemoveEmptyNodes() {
 			t.Post[i].RemoveEmptyNodes()
 		}
 	}
+}
+
+func (t *TaskTreeNode) CountStages() int {
+	preCount := 0
+	for _, pre := range t.Pre {
+		count := pre.CountStages()
+		if count > preCount {
+			preCount = count
+		}
+	}
+	postCount := 0
+	for _, post := range t.Post {
+		count := post.CountStages()
+		if count > postCount {
+			postCount = count
+		}
+	}
+	return 1 + preCount + postCount
 }

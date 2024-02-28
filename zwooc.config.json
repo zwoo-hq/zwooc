@@ -2,8 +2,10 @@
   "example": {
     "$adapter": "vite-yarn",
     "$fragments": {
-      "foo": "echo $PWD && sleep 7",
-      "foo:dev": "echo 'BAR'",
+      "foo": {
+        "$default": "echo $PWD && sleep 7",
+        "dev": "echo 'BAR'"
+      },
       "print": {
         "$default": "echo $PWD && sleep 7",
         "$pre": {
@@ -15,21 +17,23 @@
     "dev": {
       "build": {
         "$pre": {
-          "fragments": ["print", "print2", "foo:dev"]
+          "fragments": ["print", "print2", "foo"]
         },
         "env": ["VITE_APP_TEST=build1"],
         "args": {
           "outDir": "dist"
         },
+        "includeFragments": ["print3"],
         "$post": {
           "command": "sleep 5"
         }
       },
       "watch": {
-        "__$pre": {
+        "$pre": {
           "fragments": ["print", "print2"]
         },
-        "__$post": {
+        "includeFragments": ["print3", "recurse"],
+        "$post": {
           "command": "sleep 5"
         }
       }
@@ -40,6 +44,12 @@
         "args": {
           "outDir": "dist2"
         }
+      },
+      "watch": {
+        "base": "dev",
+        "args": {
+          "port": "6000"
+        }
       }
     },
     "$default": {
@@ -49,11 +59,23 @@
     }
   },
   "$fragments": {
-    "print2": {
-      "$default": "echo $PWD && sleep 3"
-    },
-    "print3": {
-      "$default": "git status"
+    "print2": "echo $PWD && sleep 3",
+    "print3": "git status",
+    "recurse": {
+      "$pre": {
+        "profiles": {
+          "dev": "build"
+        }
+      },
+      "$default": "echo 'recurse'"
+    }
+  },
+  "$compounds": {
+    "test": {
+      "profiles": {
+        "dev": "watch",
+        "dev2": "watch"
+      }
     }
   }
 }

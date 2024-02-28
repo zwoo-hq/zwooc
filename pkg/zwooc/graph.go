@@ -49,13 +49,16 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 		target = c.Args().First()
 	}
 
-	var tree *tasks.TaskTreeNode
+	ctx := config.NewContext(getLoadOptions(c, []string{}))
+	var forest tasks.Collection
 	var err error
 
 	if mode == "exec" {
-		tree, err = conf.ResolvedFragment(target, []string{})
+		var task *tasks.TaskTreeNode
+		task, err = conf.LoadFragment(target, ctx)
+		forest = tasks.NewCollection(task)
 	} else if mode == "run" || mode == "watch" || mode == "build" {
-		tree, err = conf.ResolveProfile(target, mode, []string{})
+		forest, err = conf.LoadProfile(target, mode, ctx)
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}
@@ -63,6 +66,9 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 	if err != nil {
 		ui.HandleError(err)
 	}
-	ui.GraphDependencies(tree)
+	for _, tree := range forest {
+		tree.RemoveEmptyNodes()
+	}
+	ui.GraphDependencies(forest)
 	return nil
 }

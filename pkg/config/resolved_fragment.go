@@ -16,7 +16,7 @@ type ResolvedFragment struct {
 
 var _ Hookable = (*ResolvedFragment)(nil)
 
-func (r ResolvedFragment) GetPreHooks() ResolvedHook {
+func (r ResolvedFragment) ResolvePreHook() ResolvedHook {
 	if options, ok := r.Options[KeyPre]; ok {
 		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
 		return options.ResolveWithFragment(r, KeyPre)
@@ -24,7 +24,7 @@ func (r ResolvedFragment) GetPreHooks() ResolvedHook {
 	return ResolvedHook{}
 }
 
-func (r ResolvedFragment) GetPostHooks() ResolvedHook {
+func (r ResolvedFragment) ResolvePostHook() ResolvedHook {
 	if options, ok := r.Options[KeyPost]; ok {
 		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
 		return options.ResolveWithFragment(r, KeyPost)

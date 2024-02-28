@@ -31,36 +31,19 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		return graphTaskList(conf, c, runMode)
 	}
 
-	viewOptions := ui.ViewOptions{
-		DisableTUI:     c.Bool("no-tty"),
-		QuiteMode:      c.Bool("quite"),
-		InlineOutput:   c.Bool("inline-output"),
-		CombineOutput:  c.Bool("combine-output"),
-		DisablePrefix:  c.Bool("no-prefix"),
-		MaxConcurrency: c.Int("max-concurrency"),
-	}
-
-	if c.Bool("serial") {
-		viewOptions.MaxConcurrency = 1
-	}
-
-	if isCI() && !c.Bool("no-ci") {
-		viewOptions.DisableTUI = true
-		viewOptions.InlineOutput = true
-	}
-
-	args := c.Args().Tail()
+	viewOptions := getViewOptions(c)
+	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	profileKey := c.Args().First()
-	taskList, err := conf.ResolveProfile(profileKey, runMode, args)
+	taskList, err := conf.LoadProfile(profileKey, runMode, ctx)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	list := *taskList.Flatten()
-	list.RemoveEmptyStagesAndTasks()
-	if runMode == config.ModeWatch || runMode == config.ModeRun {
-		ui.NewInteractiveRunner(list, viewOptions, conf)
+	if runMode == config.ModeWatch || runMode == config.ModeRun || len(taskList) > 1 {
+		ui.NewInteractiveRunner(taskList, viewOptions, conf)
 	} else {
+		list := taskList[0].Flatten()
+		list.RemoveEmptyStagesAndTasks()
 		ui.NewRunner(list, viewOptions)
 	}
 	return nil

@@ -13,7 +13,7 @@ func (p Profile) Name() string {
 	return p.name
 }
 
-func (p Profile) GetConfig(mode string) (ResolvedProfile, error) {
+func (p Profile) ResolveConfig(mode string) (ResolvedProfile, error) {
 	if !IsValidRunMode(mode) {
 		return ResolvedProfile{}, fmt.Errorf("invalid run mode: '%s'", mode)
 	}

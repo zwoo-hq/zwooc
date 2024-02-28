@@ -9,3 +9,9 @@ type Task interface {
 	Run(cancel <-chan bool) error
 	Pipe(destination io.Writer)
 }
+
+type Collection []*TaskTreeNode
+
+func NewCollection(nodes ...*TaskTreeNode) Collection {
+	return Collection(nodes)
+}

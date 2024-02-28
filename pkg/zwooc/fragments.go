@@ -26,38 +26,21 @@ func CreateFragmentCommand() *cli.Command {
 	}
 }
 
-func execFragment(config config.Config, c *cli.Context) error {
+func execFragment(conf config.Config, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(config, c, "exec")
+		return graphTaskList(conf, c, "exec")
 	}
 
-	viewOptions := ui.ViewOptions{
-		DisableTUI:     c.Bool("no-tty"),
-		QuiteMode:      c.Bool("quite"),
-		InlineOutput:   c.Bool("inline-output"),
-		CombineOutput:  c.Bool("combine-output"),
-		DisablePrefix:  c.Bool("no-prefix"),
-		MaxConcurrency: c.Int("max-concurrency"),
-	}
-
-	if c.Bool("serial") {
-		viewOptions.MaxConcurrency = 1
-	}
-
-	if isCI() && !c.Bool("no-ci") {
-		viewOptions.DisableTUI = true
-		viewOptions.InlineOutput = true
-	}
-
-	args := c.Args().Tail()
+	viewOptions := getViewOptions(c)
+	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	fragmentKey := c.Args().First()
-	task, err := config.ResolvedFragment(fragmentKey, args)
+	task, err := conf.LoadFragment(fragmentKey, ctx)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
 	list := task.Flatten()
 	list.RemoveEmptyStagesAndTasks()
-	ui.NewRunner(*list, viewOptions)
+	ui.NewRunner(list, viewOptions)
 	return nil
 }

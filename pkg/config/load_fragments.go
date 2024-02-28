@@ -20,15 +20,19 @@ func normalizeFragmentKey(fullKey string) (key, mode, profile string) {
 	return
 }
 
-func (c Config) ResolvedFragment(key string, extraArgs []string) (*tasks.TaskTreeNode, error) {
+func combineFragmentKey(key, mode, profile string) string {
+	return fmt.Sprintf("%s:%s:%s", key, mode, profile)
+}
+
+func (c Config) LoadFragment(key string, ctx loadingContext) (*tasks.TaskTreeNode, error) {
 	key, mode, profile := normalizeFragmentKey(key)
 	fragment, err := c.resolveFragment(key, mode, profile)
 	if err != nil {
 		return nil, err
 	}
 
-	node := tasks.NewTaskTree(fragment.Name, fragment.GetTask(extraArgs), false)
-	err = c.resolveHooks(fragment, node, mode, profile)
+	node := tasks.NewTaskTree(fragment.Name, fragment.GetTask(ctx.getArgs()), false)
+	err = c.loadAllHooks(fragment, node, mode, profile, ctx.withCaller(fragment.Name))
 	if err != nil {
 		return nil, err
 	}
@@ -43,5 +47,5 @@ func (c Config) resolveFragment(key, mode, profile string) (ResolvedFragment, er
 		return ResolvedFragment{}, fmt.Errorf("fragment '%s' not found", key)
 	}
 
-	return target.GetConfig(mode, profile)
+	return target.ResolveConfig(mode, profile)
 }

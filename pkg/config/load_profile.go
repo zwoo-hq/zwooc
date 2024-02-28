@@ -8,19 +8,19 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-func (c Config) ResolveProfile(key, mode string, extraArgs []string) (*tasks.TaskTreeNode, error) {
+func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collection, error) {
 	if key == "" {
 		key = KeyDefault
 	}
 
-	config, err := c.resolveRunConfig(key, mode)
+	config, err := c.resolveProfile(key, mode)
 	if err != nil {
 		return nil, err
 	}
 	opts := config.GetBaseOptions()
 	for opts.Base != "" {
 		// load aliased profile
-		newProfile, err := c.resolveRunConfig(opts.Base, mode)
+		newProfile, err := c.resolveProfile(opts.Base, mode)
 		if err != nil {
 			return nil, err
 		}
@@ -39,28 +39,33 @@ func (c Config) ResolveProfile(key, mode string, extraArgs []string) (*tasks.Tas
 	}
 
 	name := helper.BuildName(key, mode)
-	preStage, err := c.resolveHook(config.GetPreHooks(), config, config.Mode, config.Name)
+	ctx = ctx.withCaller(name)
+	mainTask, err := config.GetTask(ctx.getArgs())
+	if err != nil {
+		return nil, err
+	}
+	treeNode := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
+	err = c.loadAllHooks(config, treeNode, mode, key, ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	postStage, err := c.resolveHook(config.GetPostHooks(), config, config.Mode, config.Name)
-	if err != nil {
-		return nil, err
+	allTasks := tasks.NewCollection(treeNode)
+	for _, fragmentKey := range opts.IncludeFragments {
+		fragment, err := c.LoadFragment(combineFragmentKey(fragmentKey, mode, key), ctx.withCaller("includes"))
+		if err != nil {
+			return nil, err
+		}
+		if mode == ModeWatch || mode == ModeRun {
+			fragment.IsLongRunning = true
+		}
+		allTasks = append(allTasks, fragment)
 	}
 
-	mainTask, err := config.GetTask(extraArgs)
-	if err != nil {
-		return nil, err
-	}
-	list := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
-
-	list.AddPreChild(preStage...)
-	list.AddPostChild(postStage...)
-	return list, nil
+	return allTasks, nil
 }
 
-func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
+func (c Config) resolveProfile(key, mode string) (ResolvedProfile, error) {
 	target, found := helper.FindBy(c.profiles, func(p Profile) bool {
 		return p.Name() == key
 	})
@@ -68,7 +73,7 @@ func (c Config) resolveRunConfig(key, mode string) (ResolvedProfile, error) {
 		return ResolvedProfile{}, fmt.Errorf("profile '%s' not found", key)
 	}
 
-	config, err := target.GetConfig(mode)
+	config, err := target.ResolveConfig(mode)
 	if err != nil {
 		return ResolvedProfile{}, err
 	}

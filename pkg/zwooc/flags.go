@@ -41,11 +41,16 @@ func CreateGlobalFlags() []cli.Flag {
 			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
-			// TODO: implement
 			Name:     "skip-hooks",
 			Aliases:  []string{"n"},
 			Usage:    "ignore all $pre and $post hooks",
 			Value:    false,
+			Category: CategoryGeneral,
+		},
+		&cli.StringSliceFlag{
+			Name:     "exclude",
+			Aliases:  []string{"e"},
+			Usage:    "excludes certain keys (fragments/profiles) from being executed",
 			Category: CategoryGeneral,
 		},
 
@@ -89,15 +94,6 @@ func CreateGlobalFlags() []cli.Flag {
 			Usage:    "inlines the interactive view ",
 			Value:    false,
 			Category: CategoryInteractive,
-		},
-
-		// Fragments
-		&cli.StringSliceFlag{
-			// TODO: implement
-			Name:     "exclude",
-			Aliases:  []string{"e"},
-			Usage:    "excludes certain fragments from being executed",
-			Category: CategoryFragments,
 		},
 
 		// Other

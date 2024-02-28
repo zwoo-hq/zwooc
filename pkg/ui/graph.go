@@ -7,10 +7,13 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func GraphDependencies(tasks *tasks.TaskTreeNode) {
-	fmt.Printf("viewing %s\n", tasks.Name)
-	tasks.RemoveEmptyNodes()
-	printNode(tasks, "", true)
+func GraphDependencies(collection tasks.Collection) {
+	for _, tasks := range collection {
+		fmt.Printf("task %s ", graphHeaderStyle.Render(tasks.Name))
+		fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total stages)", tasks.CountStages())))
+		tasks.RemoveEmptyNodes()
+		printNode(tasks, "", true)
+	}
 }
 
 func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
@@ -45,9 +48,13 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 	}
 
 	if len(node.Post) > 0 {
-		fmt.Printf("%s  └─┬%s %s\n", prefix, graphPostStyle.Render(config.KeyPost), graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Post))))
+		postPrefix := "│ "
+		if isLast {
+			postPrefix = "  "
+		}
+		fmt.Printf("%s%s└─┬%s %s\n", prefix, postPrefix, graphPostStyle.Render(config.KeyPost), graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Post))))
 		for i, child := range node.Post {
-			printNode(child, prefix+"    ", i == len(node.Post)-1)
+			printNode(child, prefix+postPrefix+"  ", i == len(node.Post)-1)
 		}
 	}
 }

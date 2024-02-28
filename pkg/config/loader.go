@@ -107,7 +107,7 @@ func (c Config) loadFragments() ([]Fragment, error) {
 			newFragment := Fragment{
 				name:      fragmentKey,
 				directory: c.baseDir,
-				raw:       fragmentValue.(map[string]interface{}),
+				raw:       fragmentValue,
 			}
 			fragments = append(fragments, newFragment)
 		}
@@ -125,7 +125,11 @@ func (c Config) loadCompounds() ([]Compound, error) {
 
 	if compoundDefinitions, ok := c.raw[KeyCompound]; ok {
 		for compoundKey, compoundValue := range compoundDefinitions.(map[string]interface{}) {
-			newCompound := newCompound(compoundKey, compoundValue.(map[string]interface{}))
+			newCompound := Compound{
+				name:      compoundKey,
+				directory: c.baseDir,
+				raw:       compoundValue.(map[string]interface{}),
+			}
 			compounds = append(compounds, newCompound)
 		}
 	}

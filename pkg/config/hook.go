@@ -2,17 +2,7 @@ package config
 
 import (
 	"github.com/zwoo-hq/zwooc/pkg/helper"
-	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
-
-type ResolvedHook struct {
-	Kind      string
-	Command   string
-	Fragments []string
-	Profiles  map[string]string
-	Base      string
-	Directory string
-}
 
 func (h HookOptions) ResolveWithProfile(callingProfile ResolvedProfile, kind string) ResolvedHook {
 	return ResolvedHook{
@@ -36,9 +26,13 @@ func (h HookOptions) ResolveWithFragment(callingFragment ResolvedFragment, kind 
 	}
 }
 
-func (r ResolvedHook) GetTask() tasks.Task {
-	if r.Command == "" {
-		return tasks.Empty()
+func (h HookOptions) ResolveWithCompound(callingCompound ResolvedCompound, kind string) ResolvedHook {
+	return ResolvedHook{
+		Kind:      kind,
+		Command:   h.Command,
+		Fragments: h.Fragments,
+		Profiles:  h.Profiles,
+		Base:      callingCompound.Name,
+		Directory: callingCompound.Directory,
 	}
-	return tasks.NewBasicCommandTask(helper.BuildName(r.Base, r.Kind), r.Command, r.Directory, []string{})
 }

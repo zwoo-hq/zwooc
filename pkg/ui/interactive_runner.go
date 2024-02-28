@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
+	"github.com/zwoo-hq/zwooc/pkg/ui/textinput"
 )
 
 type PreTaskStatus struct {
@@ -28,6 +33,15 @@ type ScheduledTask struct {
 	postStage tasks.TaskList
 }
 
+type ActiveView int
+
+const (
+	ViewDefault ActiveView = iota
+	ViewHelp
+	ViewFullScreen
+	ViewAddTask
+)
+
 type Model struct {
 	err               error
 	wasCanceled       bool
@@ -40,11 +54,11 @@ type Model struct {
 	preCurrentStage  int
 	preCurrentList   tasks.TaskList
 	preCurrentRunner *tasks.TaskRunner
+	preSpinner       spinner.Model
 
 	viewportReady bool
 	activeTasks   []ActiveTask
-	activeNotify  *notifyWriter
-	taskToShow    string
+	activeIndex   int
 	scheduler     *tasks.Scheduler
 	logsView      viewport.Model
 
@@ -54,44 +68,97 @@ type Model struct {
 	postCurrentStage  int
 	postCurrentList   tasks.TaskList
 	postCurrentRunner *tasks.TaskRunner
+	postSpinner       spinner.Model
+
+	input textinput.Model
+
+	activeView   ActiveView
+	windowWidth  int
+	windowHeight int
 }
 
-type ContentUpdateMsg string                // fired when the current logs content changes
-type PreRunnerUpdateMsg tasks.RunnerStatus  //fired when a $pre tasks updates
-type PostRunnerUpdateMsg tasks.RunnerStatus //fired when a $post tasks updates
-type ScheduledStageFinishedMsg int          // fired whe a pre action of a scheduled task finished
-type PostStageFinishedMsg int               // fired whe a post action of a scheduled task finished
+// fired when the current logs content changes
+type ContentUpdateMsg struct {
+	tabId   int
+	content string
+}
+type PreRunnerUpdateMsg tasks.RunnerStatus  // fired when a $pre tasks updates
+type PostRunnerUpdateMsg tasks.RunnerStatus // fired when a $post tasks updates
+type ScheduledStageFinishedMsg int          // fired when a pre action of a scheduled task finished
+type PostStageFinishedMsg int               // fired when a post action of a scheduled task finished
 type ScheduledErroredMsg struct{ error }    // fired when a scheduled task errored
 type PostErroredMsg struct{ error }         // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
-func NewInteractiveRunner(list tasks.TaskList, opts ViewOptions, conf config.Config) error {
+func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config.Config) error {
 	m := &Model{
 		opts:           opts,
 		scheduledTasks: []ScheduledTask{},
 		activeTasks:    []ActiveTask{},
 		scheduler:      tasks.NewScheduler(),
 		scheduledPost:  make(map[string]tasks.TaskList),
+		activeIndex:    -1,
+		activeView:     ViewDefault,
+		input:          textinput.New(),
+		preSpinner:     spinner.New(),
+		postSpinner:    spinner.New(),
 	}
 
-	m.schedule(list)
+	m.preSpinner.Spinner = pendingTabSpinner
+	m.preSpinner.Style = pendingStyle
+
+	m.postSpinner.Spinner = shutdownTabSpinner
+	m.postSpinner.Style = errorStyle
+
+	m.input.Placeholder = "Enter a task key"
+	m.input.Cursor.Style = interactiveActiveTabStyle
+	m.input.Width = 30
+	m.input.ShowSuggestions = true
+	m.input.SetSuggestions([]string{"test", "test2", "test3"})
+
+	execStart := time.Now()
+	for _, tree := range forest {
+		list := tree.Flatten()
+		m.schedule(list)
+	}
 	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	if _, err := p.Run(); err != nil {
 		return err
 	}
+	execEnd := time.Now()
+
+	if m.err != nil {
+		fmt.Println(m.err)
+	}
+	if m.preError != nil {
+		fmt.Println(m.preError)
+	}
+	if m.postError != nil {
+		fmt.Println(m.postError)
+	}
+
+	if m.wasCancelCanceled {
+		fmt.Printf("  %s canceled - stopping execution\n", canceledStyle.Render("-"))
+		return nil
+	}
+	fmt.Printf(" %s completed successfully in %s\n", successStyle.Render("✓"), execEnd.Sub(execStart))
+
 	return nil
 }
 
 func (m *Model) Init() tea.Cmd {
+	tea.SetWindowTitle("zwooc")
+
 	hasScheduledStage := m.prepareNextScheduled()
 	if hasScheduledStage {
-		return tea.Batch(tea.EnterAltScreen, m.startScheduledStage, m.listenToPreRunner)
+		return tea.Batch(m.startScheduledStage, m.listenToPreRunner, m.preSpinner.Tick, m.postSpinner.Tick)
 	}
-	if m.activeNotify != nil {
-		return tea.Batch(tea.EnterAltScreen, m.listenToWriterUpdates)
+	if len(m.activeTasks) > 0 {
+		m.activeIndex = 0
+		return tea.Batch(m.listenToWriterUpdates, m.preSpinner.Tick, m.postSpinner.Tick)
 	}
-	return tea.Batch(tea.EnterAltScreen)
+	return tea.Batch(m.preSpinner.Tick, m.postSpinner.Tick)
 }
 
 func (m *Model) schedule(t tasks.TaskList) {
@@ -160,10 +227,16 @@ func (m *Model) initPostStage(stage int) {
 }
 
 func (m *Model) listenToPreRunner() tea.Msg {
+	if m.preCurrentRunner == nil {
+		return func() {}
+	}
 	return PreRunnerUpdateMsg(<-m.preCurrentRunner.Updates())
 }
 
 func (m *Model) listenToPostRunner() tea.Msg {
+	if m.postCurrentRunner == nil {
+		return func() {}
+	}
 	return PostRunnerUpdateMsg(<-m.postCurrentRunner.Updates())
 }
 
@@ -180,7 +253,7 @@ func (m *Model) startPostStage() tea.Msg {
 	if err != nil {
 		return PostErroredMsg{err}
 	}
-	return PostStageFinishedMsg(m.preCurrentStage)
+	return PostStageFinishedMsg(m.postCurrentStage)
 }
 
 func (m *Model) transitionCurrentScheduledIntoActive() {
@@ -195,10 +268,9 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 		task.Pipe(notify)
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.scheduler.Schedule(task)
-		if m.taskToShow == "" {
-			// this is the first long running task
-			m.taskToShow = current.mainTasks.Name
-			m.activeNotify = notify
+		if m.activeIndex < 0 {
+			// set this as current tab
+			m.activeIndex = len(m.activeTasks) - 1
 		}
 	}
 
@@ -206,13 +278,27 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 }
 
 func (m *Model) listenToWriterUpdates() tea.Msg {
-	return ContentUpdateMsg(<-m.activeNotify.updates)
+	currentId := m.activeIndex
+	if currentId < 0 || currentId >= len(m.activeTasks) {
+		return func() {}
+	}
+	return ContentUpdateMsg{
+		tabId:   currentId,
+		content: <-m.activeTasks[currentId].writer.updates,
+	}
 }
 
-func (m *Model) cancelAllRunning() tea.Msg {
+func (m *Model) updateCurrentLogsView() tea.Msg {
+	return ContentUpdateMsg{
+		tabId:   m.activeIndex,
+		content: m.activeTasks[m.activeIndex].writer.String(),
+	}
+}
+
+func (m *Model) cancelAllRunning() bool {
 	if m.wasCanceled {
 		m.wasCancelCanceled = true
-		return func() {}
+		return false
 	}
 
 	m.wasCanceled = true
@@ -223,6 +309,8 @@ func (m *Model) cancelAllRunning() tea.Msg {
 
 	// reset active state
 	m.activeTasks = []ActiveTask{}
+	m.activeIndex = -1
+	m.logsView.SetContent("Shutting down...\n")
 
 	// start executing post tasks
 	list := tasks.TaskList{
@@ -234,13 +322,13 @@ func (m *Model) cancelAllRunning() tea.Msg {
 	list.RemoveEmptyStagesAndTasks()
 
 	if list.IsEmpty() {
-		return tea.Quit()
+		return false
 	}
 
 	m.postCurrentStage = 0
 	m.postCurrentList = list
 	m.initPostStage(0)
-	return m.startPostStage()
+	return true
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -253,7 +341,48 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			return m, m.cancelAllRunning
+			if m.cancelAllRunning() {
+				return m, tea.Batch(m.startPostStage, m.listenToPostRunner)
+			} else {
+				return m, tea.Quit
+			}
+		case "h":
+			if m.activeView == ViewHelp {
+				m.activeView = ViewDefault
+				m.setLogsViewDefaultPosition()
+			} else {
+				m.activeView = ViewHelp
+			}
+		case "f":
+			if m.activeView == ViewFullScreen {
+				m.activeView = ViewDefault
+				m.setLogsViewDefaultPosition()
+			} else {
+				m.activeView = ViewFullScreen
+				m.setLogsViewFullScreenPosition()
+			}
+		case "a":
+			if m.activeView == ViewAddTask {
+				m.activeView = ViewDefault
+				m.setLogsViewDefaultPosition()
+			} else {
+				m.activeView = ViewAddTask
+				m.input.Focus()
+				cmds = append(cmds, textinput.Blink)
+			}
+		case "esc":
+			m.activeView = ViewDefault
+			m.setLogsViewDefaultPosition()
+		case "tab":
+			if len(m.activeTasks) > 0 {
+				m.activeIndex = (m.activeIndex + 1) % len(m.activeTasks)
+				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
+			}
+		case "shift+tab":
+			if len(m.activeTasks) > 0 {
+				m.activeIndex = (m.activeIndex - 1 + len(m.activeTasks)) % len(m.activeTasks)
+				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
+			}
 		}
 	case PreRunnerUpdateMsg:
 		m.convertPreRunnerState(tasks.RunnerStatus(msg))
@@ -278,7 +407,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if hasNext && !m.wasCanceled {
 				cmds = append(cmds, m.startScheduledStage, m.listenToPreRunner)
 			}
-			if m.activeNotify != nil {
+			if m.activeIndex >= 0 {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
 		} else if !m.wasCanceled {
@@ -298,44 +427,58 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ScheduledErroredMsg:
 		// TODO: what to do here?
 		m.preError = msg.error
+		return m, tea.Quit
 
 	case PostErroredMsg:
 		// TODO: what to do here?
 		m.postError = msg.error
+		return m, tea.Quit
 
 	case ContentUpdateMsg:
-		m.logsView.SetContent(string(msg))
-		m.logsView.GotoBottom()
-		if m.activeNotify != nil {
-			cmds = append(cmds, m.listenToWriterUpdates)
+		// this is to ignore old (pending) updates from other tabs after the tab changed
+		if msg.tabId == m.activeIndex {
+			m.logsView.SetContent(string(msg.content))
+			m.logsView.GotoBottom()
+			if m.activeIndex >= 0 {
+				cmds = append(cmds, m.listenToWriterUpdates)
+			}
+		}
+
+	case spinner.TickMsg:
+		if m.preSpinner.ID() == msg.ID {
+			m.preSpinner, cmd = m.preSpinner.Update(msg)
+			cmds = append(cmds, cmd)
+		} else if m.postSpinner.ID() == msg.ID {
+			m.postSpinner, cmd = m.postSpinner.Update(msg)
+			cmds = append(cmds, cmd)
+		}
+
+	case tea.MouseMsg:
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 4 && msg.Y < 8 && m.activeView == ViewDefault {
+			clickedIdx := m.determineTabClicked(msg.X)
+			if clickedIdx >= 0 {
+				m.activeIndex = clickedIdx
+				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
+			}
 		}
 
 	case tea.WindowSizeMsg:
-		// headerHeight := lipgloss.Height(m.headerView())
-		// footerHeight := lipgloss.Height(m.footerView())
-		verticalMarginHeight := 8 // headerHeight + footerHeight
+		m.windowWidth = msg.Width
+		m.windowHeight = msg.Height
 
 		if !m.viewportReady {
-			// Since this program is using the full size of the viewport we
-			// need to wait until we've received the window dimensions before
-			// we can initialize the viewport. The initial dimensions come in
-			// quickly, though asynchronously, which is why we wait for them
-			// here.
-			m.logsView = viewport.New(msg.Width, msg.Height-verticalMarginHeight)
-			m.logsView.YPosition = 8
-			m.logsView.HighPerformanceRendering = false // useHighPerformanceRenderer
-			// m.logsView.SetContent(m.writer.String())
+			m.logsView = viewport.New(msg.Width, msg.Height)
+			m.logsView.HighPerformanceRendering = false
+			// m.logsView.YPosition = 10 (use only with high performance rendering)
 			m.viewportReady = true
 			m.logsView.SetContent("== empty ==")
-
-			// // This is only necessary for high performance rendering, which in
-			// // most cases you won't need.
-			// //
-			// // Render the viewport one line below the header.
-			// m.logsView.YPosition = headerHeight + 1
+			m.setLogsViewDefaultPosition()
 		} else {
-			m.logsView.Width = msg.Width
-			m.logsView.Height = msg.Height - verticalMarginHeight
+			if m.activeView == ViewFullScreen {
+				m.setLogsViewFullScreenPosition()
+			} else {
+				m.setLogsViewDefaultPosition()
+			}
 		}
 
 		// if useHighPerformanceRenderer {
@@ -350,8 +493,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Handle keyboard and mouse events in the viewport
 	m.logsView, cmd = m.logsView.Update(msg)
 	cmds = append(cmds, cmd)
+	m.input, cmd = m.input.Update(msg)
+	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) setLogsViewDefaultPosition() {
+	m.logsView.Width = m.windowWidth
+	m.logsView.Height = m.windowHeight - 9
+}
+
+func (m *Model) setLogsViewFullScreenPosition() {
+	m.logsView.Width = m.windowWidth
+	m.logsView.Height = m.windowHeight - 1
 }
 
 func (m *Model) convertPreRunnerState(state tasks.RunnerStatus) {
@@ -371,6 +526,18 @@ func (m *Model) convertPostRunnerState(state tasks.RunnerStatus) {
 }
 
 func (m *Model) View() (s string) {
+	if m.activeView == ViewHelp {
+		return m.ViewHelp()
+	}
+
+	if m.activeView == ViewFullScreen {
+		return m.ViewFullScreen()
+	}
+
+	if m.activeView == ViewAddTask {
+		return m.ViewAddTask()
+	}
+
 	header := fmt.Sprintf("zwooc running in interactive mode (%d scheduled tasks)\n", len(m.scheduledTasks))
 
 	var currentTasks string
@@ -381,7 +548,7 @@ func (m *Model) View() (s string) {
 				currentlyRunning = append(currentlyRunning, task.name)
 			}
 		}
-		currentTasks = fmt.Sprintf("preparing %s [] running (%s)", m.scheduledTasks[0].mainTasks.Name, strings.Join(currentlyRunning, ", "))
+		currentTasks = fmt.Sprintf("%s preparing %s running [%s]", m.preSpinner.View(), interactiveTaskStyle.Render(m.scheduledTasks[0].mainTasks.Name), strings.Join(currentlyRunning, ", "))
 	} else {
 		currentTasks = "There are no tasks scheduled"
 	}
@@ -394,7 +561,7 @@ func (m *Model) View() (s string) {
 				currentlyRunning = append(currentlyRunning, task.name)
 			}
 		}
-		postTasks = fmt.Sprintf("shutting down %s [] running (%s)", m.postCurrentList.Name, strings.Join(currentlyRunning, ", "))
+		postTasks = fmt.Sprintf("%s shutting down %s running [%s]", m.postSpinner.View(), interactiveTaskStyle.Render(m.postCurrentList.Name), strings.Join(currentlyRunning, ", "))
 	} else {
 		postTasks = "There are no tasks shutting down"
 	}
@@ -404,14 +571,114 @@ func (m *Model) View() (s string) {
 	s += currentTasks
 	s += "\n\n"
 	s += postTasks
-	s += "\n\n"
+	s += "\n"
+
+	s += m.RenderTabs()
 
 	if !m.viewportReady {
-		s += "Initializing..."
-	} else if m.wasCanceled {
-		s += "Shutting down..."
+		s += "Initializing...\n"
 	} else {
-		s += m.logsView.View()
+		s += m.logsView.View() + "\n"
+	}
+	help := interactiveKeyStyle.Render("h") + interactiveHelpStyle.Render(" • show help")
+	s += fmt.Sprintf("╾%s┤ %s", helper.Repeat("─", m.logsView.Width-lipgloss.Width(help)-3), help)
+	return
+}
+
+func (m *Model) ViewHelp() (s string) {
+	s += "zwooc interactive runner - help\n\n"
+	align := lipgloss.NewStyle().Width(12).Align(lipgloss.Right).MarginRight(1).MarginLeft(2)
+
+	s += align.Render(interactiveKeyStyle.Render("q/ctrl+c")) + interactiveHelpStyle.Render(" quit the runner") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("h")) + interactiveHelpStyle.Render(" show/hide this help") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("f")) + interactiveHelpStyle.Render(" toggle full screen mode") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("esc")) + interactiveHelpStyle.Render(" close the alt (help) screen") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("tab")) + interactiveHelpStyle.Render(" switch to next tab") + "\n\n"
+	s += align.Render(interactiveKeyStyle.Render("shift+tab")) + interactiveHelpStyle.Render(" switch to previous tab") + "\n\n"
+	return
+}
+
+func (m *Model) ViewFullScreen() (s string) {
+	if m.activeIndex < 0 || len(m.activeTasks) == 0 {
+		return "there is no active tab"
+	}
+	name := interactiveFullScreenTabStyle.Render(" " + m.activeTasks[m.activeIndex].name + " ")
+	help := interactiveKeyStyle.Render("h") + interactiveHelpStyle.Render(" • show help")
+	fs := interactiveKeyStyle.Render("f") + interactiveHelpStyle.Render(" • toggle fullscreen")
+
+	start := fmt.Sprintf("╾─┤%s├", name)
+	end := fmt.Sprintf(" %s │ %s ", fs, help)
+	middle := helper.Repeat("─", m.logsView.Width-lipgloss.Width(start)-lipgloss.Width(end)-2)
+
+	s += start + middle + "─╼" + end + "\n"
+	s += m.logsView.View()
+	return
+}
+
+func (m *Model) ViewAddTask() (s string) {
+	s += "zwooc interactive runner - add task\n\n"
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1).Width(m.windowWidth - 2)
+	truncatedContent := lipgloss.NewStyle().MaxWidth(m.windowWidth - 2).Render(m.input.View())
+	s += border.Render(truncatedContent)
+	s += "\n"
+
+	suggestions := m.input.MatchedSuggestions()
+	if len(suggestions) == 0 {
+		suggestions = m.input.AvailableSuggestions()
+	}
+	for _, suggestion := range suggestions {
+		if m.input.CurrentSuggestion() == suggestion {
+			s += "  ◦ " + interactiveActiveTabStyle.Render(suggestion) + "\n"
+		} else {
+			s += "  ◦ " + suggestion + "\n"
+		}
 	}
 	return
+}
+
+func (m *Model) RenderTabs() string {
+	tabsTop := "╭─"
+	tabs := "│ "
+	tabsBorder := "┵─"
+
+	for i, task := range m.activeTasks {
+		var currentName string
+		if i == m.activeIndex {
+			currentName = interactiveActiveTabStyle.Render(task.name)
+		} else {
+			currentName = interactiveTabStyle.Render(task.name)
+		}
+		tabs += currentName + " │ "
+		tabsBorder += helper.Repeat("─", lipgloss.Width(currentName)) + "─┴─"
+		tabsTop += helper.Repeat("─", lipgloss.Width(currentName)) + "─"
+		if i == len(m.activeTasks)-1 {
+			tabsTop += "╮"
+		} else {
+			tabsTop += "┬─"
+		}
+	}
+
+	if len(m.activeTasks) == 0 {
+		tabsTop = "╭───────────────────╮"
+		tabs = "│ (no active tasks) │"
+		tabsBorder = "┵───────────────────┴"
+	}
+	help := interactiveKeyStyle.Render("tab") + interactiveHelpStyle.Render(" • switch tab")
+	tabsBorder += helper.Repeat("─", m.logsView.Width-3-lipgloss.Width(tabsBorder)-lipgloss.Width(help))
+	tabsBorder += "┤ " + help
+
+	return tabsTop + "\n" + tabs + "\n" + tabsBorder + "\n"
+}
+
+func (m *Model) determineTabClicked(x int) int {
+	var current = 0
+	for i, task := range m.activeTasks {
+		tabWidth := len(task.name) + 2
+		if x > current && x < current+tabWidth+1 {
+			return i
+		}
+		current += tabWidth + 1
+	}
+
+	return -1
 }
