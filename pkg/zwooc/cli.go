@@ -54,6 +54,14 @@ func completeFragments(c config.Config) {
 	}
 }
 
+func completeCompounds(c config.Config) {
+	for _, compound := range c.GetCompounds() {
+		if compound.Name() != config.KeyDefault {
+			fmt.Print(compound.Name())
+		}
+	}
+}
+
 // func executeWithConfig(handler func(conf config.Config, c *cli.Context) error) func(c *cli.Context) error {
 // 	return func(c *cli.Context) error {
 // 		conf := loadConfig()

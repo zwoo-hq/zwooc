@@ -23,14 +23,15 @@ func CreateCompoundCommand() *cli.Command {
 				return
 			}
 			conf := loadConfig()
-			completeFragments(conf)
+			completeCompounds(conf)
 		},
 	}
 }
 
 func execCompound(conf config.Config, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return fmt.Errorf("--dry-run is currently not supported for compounds")
+		err := fmt.Errorf("--dry-run is currently not supported for compounds")
+		ui.HandleError(err)
 	}
 
 	viewOptions := getViewOptions(c)
