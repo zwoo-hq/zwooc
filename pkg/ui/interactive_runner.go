@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -52,6 +53,7 @@ type Model struct {
 	preCurrentStage  int
 	preCurrentList   tasks.TaskList
 	preCurrentRunner *tasks.TaskRunner
+	preSpinner       spinner.Model
 
 	viewportReady bool
 	activeTasks   []ActiveTask
@@ -65,6 +67,7 @@ type Model struct {
 	postCurrentStage  int
 	postCurrentList   tasks.TaskList
 	postCurrentRunner *tasks.TaskRunner
+	postSpinner       spinner.Model
 
 	input textinput.Model
 
@@ -96,7 +99,15 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 		activeIndex:    -1,
 		activeView:     ViewDefault,
 		input:          textinput.New(),
+		preSpinner:     spinner.New(),
+		postSpinner:    spinner.New(),
 	}
+
+	m.preSpinner.Spinner = pendingTabSpinner
+	m.preSpinner.Style = pendingStyle
+
+	m.postSpinner.Spinner = shutdownTabSpinner
+	m.postSpinner.Style = errorStyle
 
 	m.input.Placeholder = "Enter a task key"
 	m.input.Cursor.Style = interactiveActiveTabStyle
@@ -117,15 +128,17 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 }
 
 func (m *Model) Init() tea.Cmd {
+	tea.SetWindowTitle("zwooc")
+
 	hasScheduledStage := m.prepareNextScheduled()
 	if hasScheduledStage {
-		return tea.Batch(m.startScheduledStage, m.listenToPreRunner, tea.SetWindowTitle("zwooc"))
+		return tea.Batch(m.startScheduledStage, m.listenToPreRunner, m.preSpinner.Tick, m.postSpinner.Tick)
 	}
 	if len(m.activeTasks) > 0 {
 		m.activeIndex = 0
-		return tea.Batch(m.listenToWriterUpdates, tea.SetWindowTitle("zwooc"))
+		return tea.Batch(m.listenToWriterUpdates, m.preSpinner.Tick, m.postSpinner.Tick)
 	}
-	return tea.Batch(tea.SetWindowTitle("zwooc"))
+	return tea.Batch(m.preSpinner.Tick, m.postSpinner.Tick)
 }
 
 func (m *Model) schedule(t tasks.TaskList) {
@@ -201,6 +214,9 @@ func (m *Model) listenToPreRunner() tea.Msg {
 }
 
 func (m *Model) listenToPostRunner() tea.Msg {
+	if m.postCurrentRunner == nil {
+		return func() {}
+	}
 	return PostRunnerUpdateMsg(<-m.postCurrentRunner.Updates())
 }
 
@@ -217,7 +233,7 @@ func (m *Model) startPostStage() tea.Msg {
 	if err != nil {
 		return PostErroredMsg{err}
 	}
-	return PostStageFinishedMsg(m.preCurrentStage)
+	return PostStageFinishedMsg(m.postCurrentStage)
 }
 
 func (m *Model) transitionCurrentScheduledIntoActive() {
@@ -259,10 +275,10 @@ func (m *Model) updateCurrentLogsView() tea.Msg {
 	}
 }
 
-func (m *Model) cancelAllRunning() tea.Msg {
+func (m *Model) cancelAllRunning() bool {
 	if m.wasCanceled {
 		m.wasCancelCanceled = true
-		return func() {}
+		return false
 	}
 
 	m.wasCanceled = true
@@ -274,6 +290,7 @@ func (m *Model) cancelAllRunning() tea.Msg {
 	// reset active state
 	m.activeTasks = []ActiveTask{}
 	m.activeIndex = -1
+	m.logsView.SetContent("Shutting down...\n")
 
 	// start executing post tasks
 	list := tasks.TaskList{
@@ -285,13 +302,13 @@ func (m *Model) cancelAllRunning() tea.Msg {
 	list.RemoveEmptyStagesAndTasks()
 
 	if list.IsEmpty() {
-		return tea.Quit()
+		return false
 	}
 
 	m.postCurrentStage = 0
 	m.postCurrentList = list
 	m.initPostStage(0)
-	return m.startPostStage()
+	return true
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -304,7 +321,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
-			return m, m.cancelAllRunning
+			if m.cancelAllRunning() {
+				return m, tea.Batch(m.startPostStage, m.listenToPostRunner)
+			} else {
+				return m, tea.Quit
+			}
 		case "h":
 			if m.activeView == ViewHelp {
 				m.activeView = ViewDefault
@@ -399,6 +420,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.activeIndex >= 0 {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
+		}
+
+	case spinner.TickMsg:
+		if m.preSpinner.ID() == msg.ID {
+			m.preSpinner, cmd = m.preSpinner.Update(msg)
+			cmds = append(cmds, cmd)
+		} else if m.postSpinner.ID() == msg.ID {
+			m.postSpinner, cmd = m.postSpinner.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 
 	case tea.MouseMsg:
@@ -496,7 +526,7 @@ func (m *Model) View() (s string) {
 				currentlyRunning = append(currentlyRunning, task.name)
 			}
 		}
-		currentTasks = fmt.Sprintf("preparing %s [] running (%s)", m.scheduledTasks[0].mainTasks.Name, strings.Join(currentlyRunning, ", "))
+		currentTasks = fmt.Sprintf("%s preparing %s running [%s]", m.preSpinner.View(), interactiveTaskStyle.Render(m.scheduledTasks[0].mainTasks.Name), strings.Join(currentlyRunning, ", "))
 	} else {
 		currentTasks = "There are no tasks scheduled"
 	}
@@ -509,7 +539,7 @@ func (m *Model) View() (s string) {
 				currentlyRunning = append(currentlyRunning, task.name)
 			}
 		}
-		postTasks = fmt.Sprintf("shutting down %s [] running (%s)", m.postCurrentList.Name, strings.Join(currentlyRunning, ", "))
+		postTasks = fmt.Sprintf("%s shutting down %s running [%s]", m.postSpinner.View(), interactiveTaskStyle.Render(m.postCurrentList.Name), strings.Join(currentlyRunning, ", "))
 	} else {
 		postTasks = "There are no tasks shutting down"
 	}
@@ -525,8 +555,6 @@ func (m *Model) View() (s string) {
 
 	if !m.viewportReady {
 		s += "Initializing...\n"
-	} else if m.wasCanceled {
-		s += "Shutting down...\n"
 	} else {
 		s += m.logsView.View() + "\n"
 	}

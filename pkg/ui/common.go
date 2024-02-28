@@ -109,6 +109,7 @@ var (
 	interactiveActiveTabStyle     = runningStyle.Copy()
 	interactiveFullScreenTabStyle = runningStyle.Copy().Background(lipgloss.Color("237"))
 	interactiveHelpStyle          = graphInfoStyle.Copy()
+	interactiveTaskStyle          = stepStyle.Copy()
 )
 
 func HandleError(err error) {
