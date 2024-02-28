@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -115,6 +116,7 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 	m.input.ShowSuggestions = true
 	m.input.SetSuggestions([]string{"test", "test2", "test3"})
 
+	execStart := time.Now()
 	for _, tree := range forest {
 		list := tree.Flatten()
 		m.schedule(list)
@@ -124,6 +126,24 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 	if _, err := p.Run(); err != nil {
 		return err
 	}
+	execEnd := time.Now()
+
+	if m.err != nil {
+		fmt.Println(m.err)
+	}
+	if m.preError != nil {
+		fmt.Println(m.preError)
+	}
+	if m.postError != nil {
+		fmt.Println(m.postError)
+	}
+
+	if m.wasCancelCanceled {
+		fmt.Printf("  %s canceled - stopping execution\n", canceledStyle.Render("-"))
+		return nil
+	}
+	fmt.Printf(" %s completed successfully in %s\n", successStyle.Render("✓"), execEnd.Sub(execStart))
+
 	return nil
 }
 
@@ -407,10 +427,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case ScheduledErroredMsg:
 		// TODO: what to do here?
 		m.preError = msg.error
+		return m, tea.Quit
 
 	case PostErroredMsg:
 		// TODO: what to do here?
 		m.postError = msg.error
+		return m, tea.Quit
 
 	case ContentUpdateMsg:
 		// this is to ignore old (pending) updates from other tabs after the tab changed
