@@ -28,10 +28,18 @@ func (p Profile) ResolveConfig(mode string) (ResolvedProfile, error) {
 		Adapter:   p.adapter,
 		Directory: p.directory,
 		Mode:      mode,
+		Options:   map[string]interface{}{},
 	}
 
 	if optionsMap, ok := options.(map[string]interface{}); ok {
 		config.Options = optionsMap
+	}
+
+	// hoist "global" options
+	for optionKey, optionValue := range p.raw {
+		if _, ok := config.Options[optionKey]; !ok && !IsValidRunMode(optionKey) {
+			config.Options[optionKey] = optionValue
+		}
 	}
 
 	return config, nil
