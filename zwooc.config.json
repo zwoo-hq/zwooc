@@ -54,7 +54,8 @@
     "$default": {
       "build": {
         "base": "dev"
-      }
+      },
+      "watch": false
     }
   },
   "example2": {

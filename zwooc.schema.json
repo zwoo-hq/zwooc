@@ -115,15 +115,36 @@
       "properties": {
         "build": {
           "description": "The build definition for a profile.",
-          "$ref": "#/$defs/runDefinition"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/runDefinition"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "run": {
           "description": "The run definition for a profile.",
-          "$ref": "#/$defs/runDefinition"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/runDefinition"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "watch": {
           "description": "The watch definition for a profile.",
-          "$ref": "#/$defs/runDefinition"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/runDefinition"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         }
       }
     },
