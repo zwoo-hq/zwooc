@@ -41,11 +41,16 @@
       }
     },
     "dev2": {
-      "base": "dev",
       "args": {
         "port": "6000"
       },
+      "$pre": {
+        "fragments": ["print"]
+      },
       "build": {
+        "$pre": {
+          "fragments": ["print2"]
+        },
         "args": {
           "outDir": "dist2"
         }

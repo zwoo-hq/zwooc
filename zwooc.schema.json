@@ -32,33 +32,74 @@
   "$defs": {
     "project": {
       "type": "object",
-      "description": "A project definition.",
-      "properties": {
-        "$adapter": {
-          "description": "The adapter to use for this profile.",
-          "type": "string",
-          "enum": ["vite-yarn", "dotnet"]
+      "oneOf": [
+        {
+          "if": {
+            "properties": {
+              "$adapter": {
+                "const": "vite-yarn"
+              }
+            }
+          },
+          "then": {
+            "description": "A vite project definition.",
+            "properties": {
+              "$adapter": {
+                "description": "The adapter to use for this profile.",
+                "const": "vite-yarn"
+              },
+              "$fragments": {
+                "description": "A collection of local fragment definitions.",
+                "type": "object",
+                "additionalProperties": {
+                  "description": "A local fragment definition.",
+                  "$ref": "#/$defs/fragment"
+                }
+              }
+            },
+            "additionalProperties": {
+              "description": "A vite profile definition.",
+              "$ref": "#/$defs/viteProfile"
+            }
+          },
+          "else": {
+            "additionalProperties": false
+          }
         },
-        "$fragments": {
-          "description": "A collection of local fragment definitions.",
-          "type": "object",
-          "additionalProperties": {
-            "description": "A local fragment definition.",
-            "$ref": "#/$defs/fragment"
+        {
+          "if": {
+            "properties": {
+              "$adapter": {
+                "const": "dotnet"
+              }
+            }
+          },
+          "then": {
+            "description": "A dotnet project definition.",
+            "properties": {
+              "$adapter": {
+                "description": "The adapter to use for this profile.",
+                "const": "dotnet"
+              },
+              "$fragments": {
+                "description": "A collection of local fragment definitions.",
+                "type": "object",
+                "additionalProperties": {
+                  "description": "A local fragment definition.",
+                  "$ref": "#/$defs/fragment"
+                }
+              }
+            },
+            "additionalProperties": {
+              "description": "A dotnet profile definition.",
+              "$ref": "#/$defs/dotnetProfile"
+            }
+          },
+          "else": {
+            "additionalProperties": false
           }
         }
-      },
-      "additionalProperties": {
-        "description": "A profile definition.",
-        "oneOf": [
-          {
-            "$ref": "#/$defs/viteProfile"
-          },
-          {
-            "$ref": "#/$defs/dotnetProfile"
-          }
-        ]
-      }
+      ]
     },
     "hook": {
       "type": "object",
@@ -151,6 +192,7 @@
     "viteProfile": {
       "allOf": [
         { "$ref": "#/$defs/baseProfile" },
+        { "$ref": "#/$defs/runDefinition" },
         {
           "properties": {
             "mode": {
@@ -165,6 +207,7 @@
     "dotnetProfile": {
       "allOf": [
         { "$ref": "#/$defs/baseProfile" },
+        { "$ref": "#/$defs/runDefinition" },
         {
           "properties": {
             "project": {
