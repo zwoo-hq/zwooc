@@ -1,6 +1,10 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/zwoo-hq/zwooc/pkg/helper"
+)
 
 type Profile struct {
 	name      string
@@ -36,11 +40,13 @@ func (p Profile) ResolveConfig(mode string) (ResolvedProfile, error) {
 	}
 
 	// hoist "global" options
+	var allowedHoistedOptions = map[string]interface{}{}
 	for optionKey, optionValue := range p.raw {
-		if _, ok := config.Options[optionKey]; !ok && !IsValidRunMode(optionKey) {
-			config.Options[optionKey] = optionValue
+		if !IsValidRunMode(optionKey) {
+			allowedHoistedOptions[optionKey] = optionValue
 		}
 	}
+	config.Options = helper.MergeDeep(allowedHoistedOptions, config.Options)
 
 	return config, nil
 }
