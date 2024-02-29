@@ -32,9 +32,11 @@ func (c Config) LoadFragment(key string, ctx loadingContext) (*tasks.TaskTreeNod
 	}
 
 	node := tasks.NewTaskTree(fragment.Name, fragment.GetTask(ctx.getArgs()), false)
-	err = c.loadAllHooks(fragment, node, mode, profile, ctx.withCaller(fragment.Name))
-	if err != nil {
-		return nil, err
+	if !ctx.skipHooks {
+		err = c.loadAllHooks(fragment, node, mode, profile, ctx.withCaller(fragment.Name))
+		if err != nil {
+			return nil, err
+		}
 	}
 	return node, nil
 }
