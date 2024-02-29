@@ -71,7 +71,7 @@ All runnable entities can define pre and post actions via `$pre` and `$post`
         },
         "profile1": {
             "run": true, // use the default command
-            "watch": "", // use a custom command
+            "watch": "", // use a custom command (TODO)
             "build": false // since build is set to false set, there is no build command
         },
         "profile2": {

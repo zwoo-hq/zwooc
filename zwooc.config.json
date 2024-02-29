@@ -41,23 +41,26 @@
       }
     },
     "dev2": {
+      "args": {
+        "port": "6000"
+      },
+      "$pre": {
+        "fragments": ["print"]
+      },
       "build": {
-        "base": "dev",
+        "$pre": {
+          "fragments": ["print2"]
+        },
         "args": {
           "outDir": "dist2"
-        }
-      },
-      "watch": {
-        "base": "dev",
-        "args": {
-          "port": "6000"
         }
       }
     },
     "$default": {
       "build": {
         "base": "dev"
-      }
+      },
+      "watch": false
     }
   },
   "example2": {
