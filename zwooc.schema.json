@@ -267,6 +267,19 @@
             "type": "string",
             "enum": ["build", "run", "watch"]
           }
+        },
+        "$pre": {
+          "$ref": "#/$defs/hook"
+        },
+        "$post": {
+          "$ref": "#/$defs/hook"
+        },
+        "includeFragments": {
+          "description": "Fragments included with the profile.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }

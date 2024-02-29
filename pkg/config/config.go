@@ -53,7 +53,8 @@ type (
 	}
 
 	CompoundOptions struct {
-		Profiles map[string]string `json:"profiles"`
+		Profiles         map[string]string `json:"profiles"`
+		IncludeFragments []string          `json:"includeFragments"`
 	}
 )
 

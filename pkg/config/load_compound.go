@@ -14,12 +14,30 @@ func (c Config) LoadCompound(key string, ctx loadingContext) (tasks.Collection, 
 	}
 
 	nodes := tasks.NewCollection()
+	compoundNode := tasks.NewTaskTree(key, tasks.Empty(), false)
+	if !ctx.skipHooks {
+		// sue the compound key as profile here
+		err = c.loadAllHooks(compound, compoundNode, "", key, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	nodes = append(nodes, compoundNode)
+
 	for profileKey, mode := range compound.Profiles {
 		resolved, err := c.LoadProfile(profileKey, mode, ctx.withCaller(key))
 		if err != nil {
 			return []*tasks.TaskTreeNode{}, err
 		}
 		nodes = append(nodes, resolved...)
+	}
+
+	for _, fragmentKey := range compound.IncludeFragments {
+		fragment, err := c.LoadFragment(combineFragmentKey(fragmentKey, "", key), ctx.withCaller("includes"))
+		if err != nil {
+			return nil, err
+		}
+		nodes = append(nodes, fragment)
 	}
 
 	return nodes, nil
