@@ -17,12 +17,13 @@ const (
 )
 
 const (
-	KeyDefault  = "$default"
-	KeyAdapter  = "$adapter"
-	KeyFragment = "$fragments"
-	KeyCompound = "$compounds"
-	KeyPre      = "$pre"
-	KeyPost     = "$post"
+	KeyDefault   = "$default"
+	KeyAdapter   = "$adapter"
+	KeyDirectory = "$dir"
+	KeyFragment  = "$fragments"
+	KeyCompound  = "$compounds"
+	KeyPre       = "$pre"
+	KeyPost      = "$post"
 )
 
 type (
@@ -81,6 +82,8 @@ type (
 func IsReservedKey(key string) bool {
 	switch key {
 	case KeyAdapter:
+		return true
+	case KeyDirectory:
 		return true
 	case KeyFragment:
 		return true

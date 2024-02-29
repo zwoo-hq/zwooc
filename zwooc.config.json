@@ -1,6 +1,7 @@
 {
   "$schema": "./zwooc.schema.json",
-  "example": {
+  "example__": {
+    "$dir": "example",
     "$adapter": "vite-yarn",
     "$fragments": {
       "foo": {

@@ -61,13 +61,17 @@ func (c Config) loadProfiles() ([]Profile, error) {
 			} else {
 				return []Profile{}, fmt.Errorf("project '%s' is missing adapter", projectKey)
 			}
+			projectDirectory := projectKey
+			if directory, ok := project[KeyDirectory]; ok {
+				projectDirectory = directory.(string)
+			}
 
 			for profileKey, profileValue := range project {
 				if !IsReservedKey(profileKey) {
 					newProfile := Profile{
 						name:      profileKey,
 						adapter:   projectAdapter,
-						directory: filepath.Join(c.baseDir, projectKey),
+						directory: filepath.Join(c.baseDir, projectDirectory),
 						raw:       profileValue.(map[string]interface{}),
 					}
 					profiles = append(profiles, newProfile)
@@ -91,9 +95,14 @@ func (c Config) loadFragments() ([]Fragment, error) {
 			project := projectValue.(map[string]interface{})
 			if fragmentDefinitions, ok := project[KeyFragment]; ok {
 				for fragmentKey, fragmentValue := range fragmentDefinitions.(map[string]interface{}) {
+					projectDirectory := projectKey
+					if directory, ok := project[KeyDirectory]; ok {
+						projectDirectory = directory.(string)
+					}
+
 					newFragment := Fragment{
 						name:      fragmentKey,
-						directory: filepath.Join(c.baseDir, projectKey),
+						directory: filepath.Join(c.baseDir, projectDirectory),
 						raw:       fragmentValue,
 					}
 					fragments = append(fragments, newFragment)
