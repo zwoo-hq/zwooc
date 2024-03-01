@@ -92,7 +92,7 @@ When executing a profile in run or watch mode, a more complex and feature-fuller
 
 Fragments are custom commands without any relation to profiles. Thus, fragments can use and run any tool or commands they like. Fragments may be dependencies of profiles. Fragments may have dependencies in the form of commands or other fragments on their own, these dependencies can't be cyclic.
 
-The key of a fragment shall not contain any `$COMP_WORDBREAKS` characters nor colons `:` because these would break shell completion and internal fragment resolution.
+The key of a fragment shall not contain any `$COMP_WORDBREAKS` characters except colons `:` because these would break shell completion.
 
 Fragments must have at least one definition. The `$default` is executed whenever there is no more specific version to be found. Fragments may define a more specific version of the command based on the current run mode or calling profile if it's executed as a dependency. These can be defined via `<run mode>`,  `<profile>` or `<run mode>:<profile>`. When resolving a more specific version of a fragment, the profile takes precedence over the run mode and run mode and profile takes precedence over one of them only.
 

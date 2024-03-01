@@ -11,11 +11,15 @@ import (
 func normalizeFragmentKey(fullKey string) (key, mode, profile string) {
 	parts := strings.Split(fullKey, ":")
 	key = parts[0]
-	if len(parts) >= 2 {
+	if len(parts) == 2 {
 		mode = parts[1]
-	}
-	if len(parts) >= 3 {
+	} else if len(parts) == 3 {
+		mode = parts[1]
 		profile = parts[2]
+	} else if len(parts) > 3 {
+		key = strings.Join(parts[:len(parts)-2], ":")
+		mode = parts[len(parts)-2]
+		profile = parts[len(parts)-1]
 	}
 	return
 }
