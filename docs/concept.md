@@ -15,7 +15,7 @@ Projects may define a `$default` profile which will be execute if no specific pr
 | concept                  |       status       |
 | ------------------------ | :----------------: |
 | define projects          | :white_check_mark: |
-| custom project directory |        :x:         |
+| custom project directory | :white_check_mark: |
 | `vite-yarn` adapter      | :white_check_mark: |
 | `dotnet` adapter         | :white_check_mark: |
 
@@ -53,7 +53,7 @@ Hooks may define a command or reference a list of fragments or event profiles. D
 | define hooks with commands  | :white_check_mark: |
 | define hooks with fragments | :white_check_mark: |
 | define hooks with profiles  | :white_check_mark: |
-| check if hooks are cyclic   |        :x:         |
+| check if hooks are cyclic   | :white_check_mark: |
 
 ### Build Mode
 
@@ -66,7 +66,7 @@ When executing a profile in build mode, a simpler task runner UI is used.
 | execute build mode               | :white_check_mark: |
 | execute build mode (interactive) | :white_check_mark: |
 | execute hooks                    | :white_check_mark: |
-| execute included fragments       |     :question:     |
+| execute included fragments       | :white_check_mark: |
 
 ### Run & Watch Mode
 
@@ -85,7 +85,7 @@ When executing a profile in run or watch mode, a more complex and feature-fuller
 | execute watch mode                      | :white_check_mark: |
 | execute watch mode (interactive)        | :white_check_mark: |
 | execute hooks                           | :white_check_mark: |
-| execute included fragments              |     :question:     |
+| execute included fragments              | :white_check_mark: |
 | seamlessly switch between run and watch |        :x:         |
 
 ## Custom Tasks (Fragments)
@@ -108,7 +108,7 @@ When executing fragments via `exec` will execute the `$default` version, because
 | execute with command dependencies              | :white_check_mark: |
 | execute with fragment dependencies             | :white_check_mark: |
 | execute with profile dependencies              | :white_check_mark: |
-| detect cyclic dependencies                     |        :x:         |
+| detect cyclic dependencies                     | :white_check_mark: |
 | specific version based on run mode             | :white_check_mark: |
 | specific version based on profile              | :white_check_mark: |
 | specific version based on run mode and profile | :white_check_mark: |
@@ -125,10 +125,9 @@ Compounds shall contain at least one profile or fragments. To configure a compou
 | ------------------------------- | :----------------: |
 | define compounds                | :white_check_mark: |
 | execute compounds               |        :x:         |
-| execute compounds (interactive) |        :x:         |
-| execute compounds (interactive) |        :x:         |
-| execute hooks                   |        :x:         |
-| execute included fragments      |        :x:         |
+| execute compounds (interactive) | :white_check_mark: |
+| execute hooks                   |     :question:     |
+| execute included fragments      | :white_check_mark: |
 
 ## Utilities and options
 
@@ -150,7 +149,7 @@ Furthermore, `zwooc` should provide global options in order to provide flexibili
 | serial execution mode             | :white_check_mark: |
 | set a max concurrency             | :white_check_mark: |
 | loose (tolerant errors)           |        :x:         |
-| skip hooks                        |        :x:         |
+| skip hooks                        | :white_check_mark: |
 | exclude fragments                 |        :x:         |
 | force disable TTY                 | :white_check_mark: |
 | inline output (static mode)       | :white_check_mark: |
@@ -162,15 +161,15 @@ The hearth of the command line tool is the interactive task runner for TTYs. The
 
 Since this UI is currently under heavy construction the following table only outlines future want-to-have features.
 
-| concept                            |   status   |
-| ---------------------------------- | :--------: |
-| run tasks in parallel              | :question: |
-| run decencies and hooks            | :question: |
-| show task output in tabs           | :question: |
-| combine the output of tasks        | :question: |
-| allow scheduling tasks dynamically | :question: |
-| kill tasks                         | :question: |
-| handle errors in tasks             | :question: |
+| concept                            |       status       |
+| ---------------------------------- | :----------------: |
+| run tasks in parallel              | :white_check_mark: |
+| run depencies and hooks            | :white_check_mark: |
+| show task output in tabs           | :white_check_mark: |
+| combine the output of tasks        |        :x:         |
+| allow scheduling tasks dynamically |     :question:     |
+| kill tasks                         |     :question:     |
+| handle errors in tasks             |     :question:     |
 
 
 # TODOs:
