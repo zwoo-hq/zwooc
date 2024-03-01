@@ -81,6 +81,8 @@ type (
 
 func IsReservedKey(key string) bool {
 	switch key {
+	case KeyDefault:
+		return true
 	case KeyAdapter:
 		return true
 	case KeyDirectory:

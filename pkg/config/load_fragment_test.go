@@ -57,3 +57,43 @@ func TestNormalizeFragmentKey(t *testing.T) {
 		})
 	}
 }
+
+func TestCombineFragmentKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		key     string
+		mode    string
+		profile string
+		want    string
+	}{
+		{
+			name:    "Test with empty strings",
+			key:     "",
+			mode:    "",
+			profile: "",
+			want:    "::",
+		},
+		{
+			name:    "Test with non-empty strings",
+			key:     "key",
+			mode:    "mode",
+			profile: "profile",
+			want:    "key:mode:profile",
+		},
+		{
+			name:    "Test with mixed empty and non-empty strings",
+			key:     "key",
+			mode:    "",
+			profile: "profile",
+			want:    "key::profile",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := combineFragmentKey(tt.key, tt.mode, tt.profile); got != tt.want {
+				t.Errorf("combineFragmentKey() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
