@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: go mod download
       - name: Build
-        run: go build -v ./cmd/zwooc/main.go -o zwooc
+        run: go build -v -o zwooc ./cmd/zwooc/main.go
       - name: Run tests
         run: go test -race -json -v -coverprofile=coverage.txt ./... 2>&1 | tee /tmp/gotest.log | gotestfmt
       - name: Smoke test
