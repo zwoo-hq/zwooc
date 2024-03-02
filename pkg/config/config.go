@@ -17,12 +17,13 @@ const (
 )
 
 const (
-	KeyDefault  = "$default"
-	KeyAdapter  = "$adapter"
-	KeyFragment = "$fragments"
-	KeyCompound = "$compounds"
-	KeyPre      = "$pre"
-	KeyPost     = "$post"
+	KeyDefault   = "$default"
+	KeyAdapter   = "$adapter"
+	KeyDirectory = "$dir"
+	KeyFragment  = "$fragments"
+	KeyCompound  = "$compounds"
+	KeyPre       = "$pre"
+	KeyPost      = "$post"
 )
 
 type (
@@ -53,7 +54,8 @@ type (
 	}
 
 	CompoundOptions struct {
-		Profiles map[string]string `json:"profiles"`
+		Profiles         map[string]string `json:"profiles"`
+		IncludeFragments []string          `json:"includeFragments"`
 	}
 )
 
@@ -79,7 +81,11 @@ type (
 
 func IsReservedKey(key string) bool {
 	switch key {
+	case KeyDefault:
+		return true
 	case KeyAdapter:
+		return true
+	case KeyDirectory:
 		return true
 	case KeyFragment:
 		return true

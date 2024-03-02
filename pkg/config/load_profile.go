@@ -45,9 +45,12 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collect
 		return nil, err
 	}
 	treeNode := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
-	err = c.loadAllHooks(config, treeNode, mode, key, ctx)
-	if err != nil {
-		return nil, err
+
+	if !ctx.skipHooks {
+		err = c.loadAllHooks(config, treeNode, mode, key, ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	allTasks := tasks.NewCollection(treeNode)

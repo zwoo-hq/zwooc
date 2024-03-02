@@ -3,10 +3,11 @@ package config
 import "github.com/zwoo-hq/zwooc/pkg/helper"
 
 type ResolvedCompound struct {
-	Name      string
-	Directory string
-	Profiles  map[string]string
-	Options   map[string]interface{}
+	Name             string
+	Directory        string
+	Profiles         map[string]string
+	IncludeFragments []string
+	Options          map[string]interface{}
 }
 
 var _ Hookable = (*ResolvedCompound)(nil)

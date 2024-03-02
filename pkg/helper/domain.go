@@ -6,7 +6,7 @@ func BuildName(parts ...string) string {
 		name = parts[0]
 	}
 	for i := 1; i < len(parts); i++ {
-		name += "/" + parts[1]
+		name += "/" + parts[i]
 	}
 	return name
 }

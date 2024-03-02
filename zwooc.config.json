@@ -1,11 +1,17 @@
 {
   "$schema": "./zwooc.schema.json",
-  "example": {
+  "example__": {
+    "$dir": "example",
     "$adapter": "vite-yarn",
     "$fragments": {
       "foo": {
         "$default": "echo $PWD && sleep 7",
         "dev": "echo 'BAR'"
+      },
+      "test:a": {
+        "$default": "echo 'default'",
+        "dev": "echo 'test:a'",
+        "build:dev": "echo 'correct'"
       },
       "print": {
         "$default": "echo $PWD && sleep 7",
@@ -18,9 +24,8 @@
     "dev": {
       "mode": "test",
       "build": {
-        "project": "",
         "$pre": {
-          "fragments": ["print", "print2", "foo"]
+          "fragments": ["print", "print2", "test:a"]
         },
         "env": ["VITE_APP_TEST=build1"],
         "args": {

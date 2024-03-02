@@ -37,12 +37,5 @@ func CreateInitCommand() *cli.Command {
 			ui.PrintSuccess("successfully created a zwooc.config.json in the current directory")
 			return nil
 		},
-		BashComplete: func(c *cli.Context) {
-			if c.NArg() > 0 {
-				return
-			}
-			conf := loadConfig()
-			completeCompounds(conf)
-		},
 	}
 }

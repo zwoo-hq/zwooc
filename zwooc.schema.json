@@ -48,6 +48,10 @@
                 "description": "The adapter to use for this profile.",
                 "const": "vite-yarn"
               },
+              "$dir": {
+                "description": "The directory for the project.",
+                "type": "string"
+              },
               "$fragments": {
                 "description": "A collection of local fragment definitions.",
                 "type": "object",
@@ -57,6 +61,7 @@
                 }
               }
             },
+            "required": ["$adapter"],
             "additionalProperties": {
               "description": "A vite profile definition.",
               "$ref": "#/$defs/viteProfile"
@@ -81,6 +86,10 @@
                 "description": "The adapter to use for this profile.",
                 "const": "dotnet"
               },
+              "$dir": {
+                "description": "The directory for the project.",
+                "type": "string"
+              },
               "$fragments": {
                 "description": "A collection of local fragment definitions.",
                 "type": "object",
@@ -90,6 +99,7 @@
                 }
               }
             },
+            "required": ["$adapter"],
             "additionalProperties": {
               "description": "A dotnet profile definition.",
               "$ref": "#/$defs/dotnetProfile"
@@ -266,6 +276,19 @@
             "description": "A reference to a profile.",
             "type": "string",
             "enum": ["build", "run", "watch"]
+          }
+        },
+        "$pre": {
+          "$ref": "#/$defs/hook"
+        },
+        "$post": {
+          "$ref": "#/$defs/hook"
+        },
+        "includeFragments": {
+          "description": "Fragments included with the profile.",
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         }
       }

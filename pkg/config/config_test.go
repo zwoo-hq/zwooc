@@ -16,9 +16,11 @@ func TestIsReserved(t *testing.T) {
 		{"$fragment should be true", KeyFragment, true},
 		{"$post should be true", KeyPost, true},
 		{"$pre should be true", KeyPre, true},
-		{"deafult should be false", "default", false},
+		{"default should be false", "default", false},
 		{"foo should be false", "foo", false},
 		{"x$default should be false", "x$default", false},
+		{"$schema should be true", "$schema", true},
+		{"$dir should be true", "$dir", true},
 	}
 	for _, tt := range tests {
 		t.Run("", func(t *testing.T) {

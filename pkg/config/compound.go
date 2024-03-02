@@ -17,9 +17,10 @@ func (c Compound) Name() string {
 func (c Compound) ResolveConfig() ResolvedCompound {
 	options := helper.MapToStruct(c.raw, CompoundOptions{})
 	return ResolvedCompound{
-		Name:      c.name,
-		Directory: c.directory,
-		Profiles:  options.Profiles,
-		Options:   c.raw,
+		Name:             c.name,
+		Directory:        c.directory,
+		Profiles:         options.Profiles,
+		IncludeFragments: options.IncludeFragments,
+		Options:          c.raw,
 	}
 }
