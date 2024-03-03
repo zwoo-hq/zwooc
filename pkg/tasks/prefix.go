@@ -38,13 +38,17 @@ func (r *CommandPrefixer) Write(p []byte) (n int, err error) {
 			r.isMidLine = false
 		} else {
 			line = append(r.prefix, line...)
-			line = append(line, []byte("\n")...)
 		}
 
 		if i == len(lines)-1 {
 			// if the last line does not end with \n
 			// we need to remember that we are in the middle of a line
-			r.isMidLine = !bytes.HasSuffix(line, []byte("\n"))
+			r.isMidLine = !bytes.HasSuffix(p, []byte("\n"))
+			if !r.isMidLine {
+				line = append(line, []byte("\n")...)
+			}
+		} else {
+			line = append(line, []byte("\n")...)
 		}
 
 		// write the line
