@@ -28,11 +28,15 @@ func combineFragmentKey(key, mode, profile string) string {
 	return fmt.Sprintf("%s:%s:%s", key, mode, profile)
 }
 
-func (c Config) LoadFragment(key string, ctx loadingContext) (*tasks.TaskTreeNode, error) {
-	key, mode, profile := normalizeFragmentKey(key)
+func (c Config) LoadFragment(rawKey string, ctx loadingContext) (*tasks.TaskTreeNode, error) {
+	key, mode, profile := normalizeFragmentKey(rawKey)
 	fragment, err := c.resolveFragment(key, mode, profile)
 	if err != nil {
-		return nil, err
+		// try with raw key
+		fragment, err = c.resolveFragment(rawKey, "", "")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	node := tasks.NewTaskTree(fragment.Name, fragment.GetTask(ctx.getArgs()), false)
