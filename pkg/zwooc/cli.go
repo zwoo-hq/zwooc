@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	VERSION = "1.0.0-beta.3"
+	VERSION = "1.0.0-beta.4"
 )
 
 var (
@@ -41,7 +41,7 @@ func isCI() bool {
 func completeProfiles(c config.Config) {
 	for _, profile := range c.GetProfiles() {
 		if profile.Name() != config.KeyDefault {
-			fmt.Print(profile.Name())
+			fmt.Println(profile.Name())
 		}
 	}
 }
@@ -49,7 +49,7 @@ func completeProfiles(c config.Config) {
 func completeFragments(c config.Config) {
 	for _, fragment := range c.GetFragments() {
 		if fragment.Name() != config.KeyDefault {
-			fmt.Print(fragment.Name())
+			fmt.Println(fragment.Name())
 		}
 	}
 }
@@ -57,7 +57,7 @@ func completeFragments(c config.Config) {
 func completeCompounds(c config.Config) {
 	for _, compound := range c.GetCompounds() {
 		if compound.Name() != config.KeyDefault {
-			fmt.Print(compound.Name())
+			fmt.Println(compound.Name())
 		}
 	}
 }
