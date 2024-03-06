@@ -37,6 +37,9 @@ func (c Config) loadHook(hook ResolvedHook, mode, profile string, ctx loadingCon
 	}
 
 	for _, fragment := range hook.Fragments {
+		if ctx.excludes(fragment) {
+			continue
+		}
 		if ctx.hasCaller(fragment) {
 			return []*tasks.TaskTreeNode{}, CircularDependencyError{fragment, ctx.callStack}
 		}
@@ -48,6 +51,9 @@ func (c Config) loadHook(hook ResolvedHook, mode, profile string, ctx loadingCon
 	}
 
 	for profile, mode := range hook.Profiles {
+		if ctx.excludes(profile) || ctx.excludes(helper.BuildName(profile, mode)) {
+			continue
+		}
 		if ctx.hasCaller(helper.BuildName(profile, mode)) {
 			return []*tasks.TaskTreeNode{}, CircularDependencyError{helper.BuildName(profile, mode), ctx.callStack}
 		}

@@ -30,6 +30,10 @@ func combineFragmentKey(key, mode, profile string) string {
 
 func (c Config) LoadFragment(rawKey string, ctx loadingContext) (*tasks.TaskTreeNode, error) {
 	key, mode, profile := normalizeFragmentKey(rawKey)
+	if ctx.excludes(key) || ctx.excludes(rawKey) {
+		return nil, ErrTargetExcluded
+	}
+
 	fragment, err := c.resolveFragment(key, mode, profile)
 	if err != nil {
 		// try with raw key

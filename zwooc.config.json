@@ -30,8 +30,7 @@
           "fragments": [
             "print",
             "print2",
-            "test:a",
-            "recurse"
+            "test:a"
           ]
         },
         "env": [

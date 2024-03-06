@@ -9,6 +9,10 @@ import (
 )
 
 func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collection, error) {
+	if ctx.excludes(key) || ctx.excludes(helper.BuildName(key, mode)) {
+		return nil, ErrTargetExcluded
+	}
+
 	if key == "" {
 		key = KeyDefault
 	}

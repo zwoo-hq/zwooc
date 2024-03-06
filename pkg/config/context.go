@@ -1,5 +1,9 @@
 package config
 
+import (
+	"slices"
+)
+
 type (
 	LoadOptions struct {
 		SkipHooks bool
@@ -8,19 +12,19 @@ type (
 	}
 
 	loadingContext struct {
-		skipHooks bool
-		exclude   []string
-		extraArgs []string
-		callStack []string
+		skipHooks    bool
+		excludedKeys []string
+		extraArgs    []string
+		callStack    []string
 	}
 )
 
 func NewContext(opts LoadOptions) loadingContext {
 	return loadingContext{
-		skipHooks: opts.SkipHooks,
-		exclude:   opts.Exclude,
-		extraArgs: opts.ExtraArgs,
-		callStack: []string{},
+		skipHooks:    opts.SkipHooks,
+		excludedKeys: opts.Exclude,
+		extraArgs:    opts.ExtraArgs,
+		callStack:    []string{},
 	}
 }
 
@@ -43,4 +47,10 @@ func (c loadingContext) hasCaller(caller string) bool {
 		}
 	}
 	return false
+}
+
+func (c loadingContext) excludes(target string) bool {
+	return slices.ContainsFunc(c.excludedKeys, func(s string) bool {
+		return s == target
+	})
 }
