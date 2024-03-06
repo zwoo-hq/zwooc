@@ -30,3 +30,23 @@ func TestIsReserved(t *testing.T) {
 		})
 	}
 }
+
+func TestIsValidRunMode(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  bool
+	}{
+		{"run should be true", "run", true},
+		{"build should be true", "build", true},
+		{"watch should be false", "watch", false},
+		{"xxx should be false", "xxx", false},
+	}
+	for _, tt := range tests {
+		t.Run("", func(t *testing.T) {
+			if got := IsValidRunMode(tt.value); got != tt.want {
+				t.Errorf("IsValidRunMode(%s) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
