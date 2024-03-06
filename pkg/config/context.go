@@ -20,12 +20,21 @@ type (
 )
 
 func NewContext(opts LoadOptions) loadingContext {
-	return loadingContext{
+	ctx := loadingContext{
 		skipHooks:    opts.SkipHooks,
 		excludedKeys: opts.Exclude,
 		extraArgs:    opts.ExtraArgs,
 		callStack:    []string{},
 	}
+
+	if ctx.excludedKeys == nil {
+		ctx.excludedKeys = []string{}
+	}
+	if ctx.extraArgs == nil {
+		ctx.extraArgs = []string{}
+	}
+
+	return ctx
 }
 
 func (c loadingContext) getArgs() []string {
