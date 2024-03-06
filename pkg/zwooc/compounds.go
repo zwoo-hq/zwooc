@@ -1,8 +1,6 @@
 package zwooc
 
 import (
-	"fmt"
-
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
@@ -30,8 +28,7 @@ func CreateCompoundCommand() *cli.Command {
 
 func execCompound(conf config.Config, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		err := fmt.Errorf("--dry-run is currently not supported for compounds")
-		ui.HandleError(err)
+		return graphTaskList(conf, c, "launch")
 	}
 
 	viewOptions := getViewOptions(c)

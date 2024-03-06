@@ -13,7 +13,7 @@ func CreateGraphCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "graph",
 		Usage:     "display a graph of tasks",
-		ArgsUsage: "[run|watch|build|exec] [profile or fragment]",
+		ArgsUsage: "[run|watch|build|exec|launch] [profile or fragment]",
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
@@ -57,6 +57,8 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 		var task *tasks.TaskTreeNode
 		task, err = conf.LoadFragment(target, ctx)
 		forest = tasks.NewCollection(task)
+	} else if mode == "launch" {
+		forest, err = conf.LoadCompound(target, ctx)
 	} else if mode == "run" || mode == "watch" || mode == "build" {
 		forest, err = conf.LoadProfile(target, mode, ctx)
 	} else {
