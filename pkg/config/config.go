@@ -5,6 +5,31 @@ import (
 	"strings"
 )
 
+type Config struct {
+	baseDir   string
+	raw       map[string]interface{}
+	profiles  []Profile
+	fragments []Fragment
+	compounds []Compound
+}
+
+func New(dir string, content map[string]interface{}) (Config, error) {
+	c := Config{
+		baseDir: dir,
+		raw:     content,
+	}
+	err := c.init()
+	return c, err
+}
+
+func NewLoaded(profiles []Profile, fragments []Fragment, compounds []Compound) Config {
+	return Config{
+		profiles:  profiles,
+		fragments: fragments,
+		compounds: compounds,
+	}
+}
+
 const (
 	ModeRun   = "run"
 	ModeBuild = "build"

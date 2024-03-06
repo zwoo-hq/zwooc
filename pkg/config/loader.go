@@ -7,14 +7,6 @@ import (
 	"path/filepath"
 )
 
-type Config struct {
-	baseDir   string
-	raw       map[string]interface{}
-	profiles  []Profile
-	fragments []Fragment
-	compounds []Compound
-}
-
 func Load(path string) (Config, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -31,18 +23,24 @@ func Load(path string) (Config, error) {
 		baseDir: filepath.Dir(path),
 		raw:     data,
 	}
+	err = c.init()
+	return c, err
+}
+
+func (c *Config) init() error {
+	var err error
 	c.profiles, err = c.loadProfiles()
 	if err != nil {
-		return Config{}, err
+		return err
 	}
 
 	c.fragments, err = c.loadFragments()
 	if err != nil {
-		return Config{}, err
+		return err
 	}
 
 	c.compounds, err = c.loadCompounds()
-	return c, err
+	return err
 }
 
 func (c Config) GetProfiles() []Profile {
