@@ -40,10 +40,28 @@ func main() {
 			zwooc.CreateInitCommand(),
 			{
 				// TODO: when cliv3 comes out this is no longer needed
-				Name:  "completion-script",
+				Name:  "complete-bash",
 				Usage: "generate shell completion script",
 				Action: func(c *cli.Context) error {
 					f, err := autocompletion.Open("autocomplete/bash_autocomplete")
+					if err != nil {
+						return err
+					}
+
+					content, err := io.ReadAll(f)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(content))
+					return nil
+				},
+			},
+			{
+				// TODO: when cliv3 comes out this is no longer needed
+				Name:  "complete-zsh",
+				Usage: "generate shell completion script",
+				Action: func(c *cli.Context) error {
+					f, err := autocompletion.Open("autocomplete/zsh_autocomplete")
 					if err != nil {
 						return err
 					}
