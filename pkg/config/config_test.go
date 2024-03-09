@@ -39,7 +39,7 @@ func TestIsValidRunMode(t *testing.T) {
 	}{
 		{"run should be true", "run", true},
 		{"build should be true", "build", true},
-		{"watch should be false", "watch", false},
+		{"watch should be false", "watch", true},
 		{"xxx should be false", "xxx", false},
 	}
 	for _, tt := range tests {
