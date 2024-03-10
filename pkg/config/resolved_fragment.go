@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -18,7 +19,7 @@ var _ Hookable = (*ResolvedFragment)(nil)
 
 func (r ResolvedFragment) ResolvePreHook() ResolvedHook {
 	if options, ok := r.Options[KeyPre]; ok {
-		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
+		options := helper.MapToStruct(options.(map[string]interface{}), model.HookOptions{})
 		return options.ResolveWithFragment(r, KeyPre)
 	}
 	return ResolvedHook{}
@@ -26,7 +27,7 @@ func (r ResolvedFragment) ResolvePreHook() ResolvedHook {
 
 func (r ResolvedFragment) ResolvePostHook() ResolvedHook {
 	if options, ok := r.Options[KeyPost]; ok {
-		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
+		options := helper.MapToStruct(options.(map[string]interface{}), model.HookOptions{})
 		return options.ResolveWithFragment(r, KeyPost)
 	}
 	return ResolvedHook{}
