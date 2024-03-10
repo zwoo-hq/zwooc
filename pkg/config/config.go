@@ -32,8 +32,9 @@ const (
 )
 
 const (
-	AdapterViteYarn = "vite-yarn"
-	AdapterDotnet   = "dotnet"
+	AdapterViteYarn  = "vite-yarn"
+	AdapterTauriYarn = "tauri-yarn"
+	AdapterDotnet    = "dotnet"
 )
 
 const (
