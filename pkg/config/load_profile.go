@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"golang.org/x/exp/maps"
 )
@@ -14,7 +15,7 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collect
 	}
 
 	if key == "" {
-		key = KeyDefault
+		key = model.KeyDefault
 	}
 
 	config, err := c.resolveProfile(key, mode)
@@ -48,7 +49,7 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collect
 	if err != nil {
 		return nil, err
 	}
-	treeNode := tasks.NewTaskTree(name, mainTask, mode == ModeWatch || mode == ModeRun)
+	treeNode := tasks.NewTaskTree(name, mainTask, mode == model.ModeWatch || mode == model.ModeRun)
 
 	if !ctx.skipHooks {
 		err = c.loadAllHooks(config, treeNode, mode, key, ctx)
@@ -63,7 +64,7 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collect
 		if err != nil {
 			return nil, err
 		}
-		if mode == ModeWatch || mode == ModeRun {
+		if mode == model.ModeWatch || mode == model.ModeRun {
 			fragment.IsLongRunning = true
 		}
 		allTasks = append(allTasks, fragment)

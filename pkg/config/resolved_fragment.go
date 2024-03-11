@@ -18,17 +18,17 @@ type ResolvedFragment struct {
 var _ Hookable = (*ResolvedFragment)(nil)
 
 func (r ResolvedFragment) ResolvePreHook() ResolvedHook {
-	if options, ok := r.Options[KeyPre]; ok {
-		options := helper.MapToStruct(options.(map[string]interface{}), model.HookOptions{})
-		return options.ResolveWithFragment(r, KeyPre)
+	if options, ok := r.Options[model.KeyPre]; ok {
+		hook := Hook{options.(map[string]interface{})}
+		return hook.ResolveWithFragment(r, model.KeyPre)
 	}
 	return ResolvedHook{}
 }
 
 func (r ResolvedFragment) ResolvePostHook() ResolvedHook {
-	if options, ok := r.Options[KeyPost]; ok {
-		options := helper.MapToStruct(options.(map[string]interface{}), model.HookOptions{})
-		return options.ResolveWithFragment(r, KeyPost)
+	if options, ok := r.Options[model.KeyPost]; ok {
+		hook := Hook{options.(map[string]interface{})}
+		return hook.ResolveWithFragment(r, model.KeyPost)
 	}
 	return ResolvedHook{}
 }

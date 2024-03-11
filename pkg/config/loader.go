@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/zwoo-hq/zwooc/pkg/model"
 )
 
 func Load(path string) (Config, error) {
@@ -54,13 +56,13 @@ func (c Config) loadProfiles() ([]Profile, error) {
 		if !IsReservedKey(projectKey) {
 			project := projectValue.(map[string]interface{})
 			var projectAdapter string
-			if adapter, ok := project[KeyAdapter]; ok {
+			if adapter, ok := project[model.KeyAdapter]; ok {
 				projectAdapter = adapter.(string)
 			} else {
 				return []Profile{}, fmt.Errorf("project '%s' is missing adapter", projectKey)
 			}
 			projectDirectory := projectKey
-			if directory, ok := project[KeyDirectory]; ok {
+			if directory, ok := project[model.KeyDirectory]; ok {
 				projectDirectory = directory.(string)
 			}
 
@@ -91,10 +93,10 @@ func (c Config) loadFragments() ([]Fragment, error) {
 	for projectKey, projectValue := range c.raw {
 		if !IsReservedKey(projectKey) {
 			project := projectValue.(map[string]interface{})
-			if fragmentDefinitions, ok := project[KeyFragment]; ok {
+			if fragmentDefinitions, ok := project[model.KeyFragment]; ok {
 				for fragmentKey, fragmentValue := range fragmentDefinitions.(map[string]interface{}) {
 					projectDirectory := projectKey
-					if directory, ok := project[KeyDirectory]; ok {
+					if directory, ok := project[model.KeyDirectory]; ok {
 						projectDirectory = directory.(string)
 					}
 
@@ -109,7 +111,7 @@ func (c Config) loadFragments() ([]Fragment, error) {
 		}
 	}
 
-	if fragmentDefinitions, ok := c.raw[KeyFragment]; ok {
+	if fragmentDefinitions, ok := c.raw[model.KeyFragment]; ok {
 		for fragmentKey, fragmentValue := range fragmentDefinitions.(map[string]interface{}) {
 			newFragment := Fragment{
 				name:      fragmentKey,
@@ -130,7 +132,7 @@ func (c Config) GetCompounds() []Compound {
 func (c Config) loadCompounds() ([]Compound, error) {
 	compounds := []Compound{}
 
-	if compoundDefinitions, ok := c.raw[KeyCompound]; ok {
+	if compoundDefinitions, ok := c.raw[model.KeyCompound]; ok {
 		for compoundKey, compoundValue := range compoundDefinitions.(map[string]interface{}) {
 			newCompound := Compound{
 				name:      compoundKey,

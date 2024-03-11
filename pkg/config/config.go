@@ -1,5 +1,7 @@
 package config
 
+import "github.com/zwoo-hq/zwooc/pkg/model"
+
 type Config struct {
 	baseDir   string
 	raw       map[string]interface{}
@@ -25,28 +27,6 @@ func NewLoaded(profiles []Profile, fragments []Fragment, compounds []Compound) C
 	}
 }
 
-const (
-	ModeRun   = "run"
-	ModeBuild = "build"
-	ModeWatch = "watch"
-)
-
-const (
-	AdapterViteYarn  = "vite-yarn"
-	AdapterTauriYarn = "tauri-yarn"
-	AdapterDotnet    = "dotnet"
-)
-
-const (
-	KeyDefault   = "$default"
-	KeyAdapter   = "$adapter"
-	KeyDirectory = "$dir"
-	KeyFragment  = "$fragments"
-	KeyCompound  = "$compounds"
-	KeyPre       = "$pre"
-	KeyPost      = "$post"
-)
-
 type (
 	Hookable interface {
 		ResolvePreHook() ResolvedHook
@@ -56,19 +36,19 @@ type (
 
 func IsReservedKey(key string) bool {
 	switch key {
-	case KeyDefault:
+	case model.KeyDefault:
 		return true
-	case KeyAdapter:
+	case model.KeyAdapter:
 		return true
-	case KeyDirectory:
+	case model.KeyDirectory:
 		return true
-	case KeyFragment:
+	case model.KeyFragment:
 		return true
-	case KeyCompound:
+	case model.KeyCompound:
 		return true
-	case KeyPre:
+	case model.KeyPre:
 		return true
-	case KeyPost:
+	case model.KeyPost:
 		return true
 	case "$schema":
 		return true
@@ -78,11 +58,11 @@ func IsReservedKey(key string) bool {
 
 func IsValidRunMode(key string) bool {
 	switch key {
-	case ModeRun:
+	case model.ModeRun:
 		return true
-	case ModeBuild:
+	case model.ModeBuild:
 		return true
-	case ModeWatch:
+	case model.ModeWatch:
 		return true
 	}
 	return false

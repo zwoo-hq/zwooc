@@ -1,6 +1,10 @@
 package config
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/zwoo-hq/zwooc/pkg/model"
+)
 
 type Fragment struct {
 	name      string
@@ -33,7 +37,7 @@ func (f Fragment) ResolveConfig(mode string, callingProfile string) (ResolvedFra
 		fmt.Sprintf("%s:%s", mode, callingProfile),
 		callingProfile,
 		mode,
-		KeyDefault,
+		model.KeyDefault,
 	}
 
 	if options, ok := f.raw.(map[string]interface{}); ok {

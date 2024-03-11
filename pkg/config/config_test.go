@@ -2,6 +2,8 @@ package config
 
 import (
 	"testing"
+
+	"github.com/zwoo-hq/zwooc/pkg/model"
 )
 
 func TestIsReserved(t *testing.T) {
@@ -10,12 +12,12 @@ func TestIsReserved(t *testing.T) {
 		value string
 		want  bool
 	}{
-		{"$default should be true", KeyDefault, true},
-		{"$adapter should be true", KeyAdapter, true},
-		{"$compound should be true", KeyCompound, true},
-		{"$fragment should be true", KeyFragment, true},
-		{"$post should be true", KeyPost, true},
-		{"$pre should be true", KeyPre, true},
+		{"$default should be true", model.KeyDefault, true},
+		{"$adapter should be true", model.KeyAdapter, true},
+		{"$compound should be true", model.KeyCompound, true},
+		{"$fragment should be true", model.KeyFragment, true},
+		{"$post should be true", model.KeyPost, true},
+		{"$pre should be true", model.KeyPre, true},
 		{"default should be false", "default", false},
 		{"foo should be false", "foo", false},
 		{"x$default should be false", "x$default", false},

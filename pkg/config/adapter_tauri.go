@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -32,11 +33,11 @@ func CreateTauriTask(c ResolvedProfile, extraArgs []string) tasks.Task {
 
 func convertModeToTauri(mode string) string {
 	switch mode {
-	case ModeBuild:
+	case model.ModeBuild:
 		return "build"
-	case ModeWatch:
+	case model.ModeWatch:
 		return "dev"
-	case ModeRun:
+	case model.ModeRun:
 		return "dev"
 	}
 	return ""

@@ -7,6 +7,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
@@ -40,7 +41,7 @@ func isCI() bool {
 
 func completeProfiles(c config.Config) {
 	for _, profile := range c.GetProfiles() {
-		if profile.Name() != config.KeyDefault {
+		if profile.Name() != model.KeyDefault {
 			fmt.Println(profile.Name())
 		}
 	}
@@ -48,7 +49,7 @@ func completeProfiles(c config.Config) {
 
 func completeFragments(c config.Config) {
 	for _, fragment := range c.GetFragments() {
-		if fragment.Name() != config.KeyDefault {
+		if fragment.Name() != model.KeyDefault {
 			fmt.Println(fragment.Name())
 		}
 	}
@@ -56,7 +57,7 @@ func completeFragments(c config.Config) {
 
 func completeCompounds(c config.Config) {
 	for _, compound := range c.GetCompounds() {
-		if compound.Name() != config.KeyDefault {
+		if compound.Name() != model.KeyDefault {
 			fmt.Println(compound.Name())
 		}
 	}

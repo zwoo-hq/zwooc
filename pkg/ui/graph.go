@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 
-	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -33,7 +33,7 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 		if isLast {
 			prePrefix = "  "
 		}
-		name := graphPreStyle.Render(config.KeyPre)
+		name := graphPreStyle.Render(model.KeyPre)
 		info := graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Pre)))
 		if len(node.Post) == 0 {
 			newPrefix = "  "
@@ -52,7 +52,7 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 		if isLast {
 			postPrefix = "  "
 		}
-		fmt.Printf("%s%s└─┬%s %s\n", prefix, postPrefix, graphPostStyle.Render(config.KeyPost), graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Post))))
+		fmt.Printf("%s%s└─┬%s %s\n", prefix, postPrefix, graphPostStyle.Render(model.KeyPost), graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Post))))
 		for i, child := range node.Post {
 			printNode(child, prefix+postPrefix+"  ", i == len(node.Post)-1)
 		}

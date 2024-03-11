@@ -5,6 +5,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
@@ -25,7 +26,7 @@ func CreateGraphCommand() *cli.Command {
 			}
 			// complete first argument
 			if c.NArg() == 0 {
-				for _, mode := range []string{config.ModeBuild, config.ModeRun, config.ModeWatch, "exec"} {
+				for _, mode := range []string{model.ModeBuild, model.ModeRun, model.ModeWatch, "exec"} {
 					fmt.Println(mode)
 				}
 				return

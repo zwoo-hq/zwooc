@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/urfave/cli/v2"
-	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 	"github.com/zwoo-hq/zwooc/pkg/zwooc"
 )
@@ -31,9 +31,9 @@ func main() {
 		UseShortOptionHandling: true,
 		EnableBashCompletion:   true,
 		Commands: []*cli.Command{
-			zwooc.CreateProfileCommand(config.ModeRun, "run a profile"),
-			zwooc.CreateProfileCommand(config.ModeWatch, "run a profile with live reload enabled"),
-			zwooc.CreateProfileCommand(config.ModeBuild, "build a profile"),
+			zwooc.CreateProfileCommand(model.ModeRun, "run a profile"),
+			zwooc.CreateProfileCommand(model.ModeWatch, "run a profile with live reload enabled"),
+			zwooc.CreateProfileCommand(model.ModeBuild, "build a profile"),
 			zwooc.CreateFragmentCommand(),
 			zwooc.CreateCompoundCommand(),
 			zwooc.CreateGraphCommand(),
