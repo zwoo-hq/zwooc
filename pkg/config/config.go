@@ -1,99 +1,59 @@
 package config
 
 import (
-	"fmt"
-	"strings"
+	"github.com/zwoo-hq/zwooc/pkg/adapter/dotnet"
+	"github.com/zwoo-hq/zwooc/pkg/adapter/tauri"
+	"github.com/zwoo-hq/zwooc/pkg/adapter/vite"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 )
 
-const (
-	ModeRun   = "run"
-	ModeBuild = "build"
-	ModeWatch = "watch"
-)
+type Config struct {
+	baseDir   string
+	raw       map[string]interface{}
+	profiles  []Profile
+	fragments []Fragment
+	compounds []Compound
+}
 
-const (
-	AdapterViteYarn = "vite-yarn"
-	AdapterDotnet   = "dotnet"
-)
-
-const (
-	KeyDefault   = "$default"
-	KeyAdapter   = "$adapter"
-	KeyDirectory = "$dir"
-	KeyFragment  = "$fragments"
-	KeyCompound  = "$compounds"
-	KeyPre       = "$pre"
-	KeyPost      = "$post"
-)
-
-type (
-	FragmentOptions map[string]interface{}
-
-	HookOptions struct {
-		Command   string            `json:"command"`
-		Fragments []string          `json:"fragments"`
-		Profiles  map[string]string `json:"profiles"`
+func New(dir string, content map[string]interface{}) (Config, error) {
+	c := Config{
+		baseDir: dir,
+		raw:     content,
 	}
+	err := c.init()
+	return c, err
+}
 
-	BaseOptions struct {
-		Base             string   `json:"base"`
-		IncludeFragments []string `json:"includeFragments"`
+func NewLoaded(profiles []Profile, fragments []Fragment, compounds []Compound) Config {
+	return Config{
+		profiles:  profiles,
+		fragments: fragments,
+		compounds: compounds,
 	}
-
-	ProfileOptions struct {
-		Args map[string]string `json:"args"`
-		Env  []string          `json:"env"`
-	}
-
-	ViteOptions struct {
-		Mode string `json:"mode"`
-	}
-
-	DotNetOptions struct {
-		Project string `json:"project"`
-	}
-
-	CompoundOptions struct {
-		Profiles         map[string]string `json:"profiles"`
-		IncludeFragments []string          `json:"includeFragments"`
-	}
-)
+}
 
 type (
 	Hookable interface {
 		ResolvePreHook() ResolvedHook
 		ResolvePostHook() ResolvedHook
 	}
-
-	LoadOptions struct {
-		SkipHooks bool
-		Exclude   []string
-		ExtraArgs []string
-	}
-
-	loadingContext struct {
-		skipHooks bool
-		exclude   []string
-		extraArgs []string
-		callStack []string
-	}
 )
 
 func IsReservedKey(key string) bool {
 	switch key {
-	case KeyDefault:
+	case model.KeyDefault:
 		return true
-	case KeyAdapter:
+	case model.KeyAdapter:
 		return true
-	case KeyDirectory:
+	case model.KeyDirectory:
 		return true
-	case KeyFragment:
+	case model.KeyFragment:
 		return true
-	case KeyCompound:
+	case model.KeyCompound:
 		return true
-	case KeyPre:
+	case model.KeyPre:
 		return true
-	case KeyPost:
+	case model.KeyPost:
 		return true
 	case "$schema":
 		return true
@@ -103,46 +63,32 @@ func IsReservedKey(key string) bool {
 
 func IsValidRunMode(key string) bool {
 	switch key {
-	case ModeRun:
+	case model.ModeRun:
 		return true
-	case ModeBuild:
+	case model.ModeBuild:
 		return true
-	case ModeWatch:
+	case model.ModeWatch:
 		return true
 	}
 	return false
 }
 
-func NewContext(opts LoadOptions) loadingContext {
-	return loadingContext{
-		skipHooks: opts.SkipHooks,
-		exclude:   opts.Exclude,
-		extraArgs: opts.ExtraArgs,
-		callStack: []string{},
+func GetAdapter(adapter string) model.Adapter {
+	switch adapter {
+	case model.AdapterViteYarn:
+		return vite.NewYarnAdapter()
+	case model.AdapterViteNpm:
+		return vite.NewNpmAdapter()
+	case model.AdapterVitePnpm:
+		return vite.NewPnpmAdapter()
+	case model.AdapterTauriYarn:
+		return tauri.NewYarnAdapter()
+	case model.AdapterTauriNpm:
+		return tauri.NewNpmAdapter()
+	case model.AdapterTauriPnpm:
+		return tauri.NewPnpmAdapter()
+	case model.AdapterDotnet:
+		return dotnet.NewCliAdapter()
 	}
-}
-
-func (c loadingContext) getArgs() []string {
-	if len(c.callStack) == 0 {
-		return c.extraArgs
-	}
-	return []string{}
-}
-
-func (c loadingContext) withCaller(caller string) loadingContext {
-	c.callStack = append(c.callStack, caller)
-	return c
-}
-
-func (c loadingContext) hasCaller(caller string) bool {
-	for _, c := range c.callStack {
-		if c == caller {
-			return true
-		}
-	}
-	return false
-}
-
-func createCircularDependencyError(caller []string, target string) error {
-	return fmt.Errorf("circular dependency detected: '%s' from %s", target, strings.Join(caller, " -> "))
+	return nil
 }

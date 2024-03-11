@@ -8,6 +8,10 @@ import (
 )
 
 func (c Config) LoadCompound(key string, ctx loadingContext) (tasks.Collection, error) {
+	if ctx.excludes(key) {
+		return nil, ErrTargetExcluded
+	}
+
 	compound, err := c.resolveCompound(key)
 	if err != nil {
 		return []*tasks.TaskTreeNode{}, err

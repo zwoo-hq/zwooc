@@ -1,6 +1,6 @@
 package config
 
-import "github.com/zwoo-hq/zwooc/pkg/helper"
+import "github.com/zwoo-hq/zwooc/pkg/model"
 
 type ResolvedCompound struct {
 	Name             string
@@ -13,17 +13,17 @@ type ResolvedCompound struct {
 var _ Hookable = (*ResolvedCompound)(nil)
 
 func (c ResolvedCompound) ResolvePreHook() ResolvedHook {
-	if options, ok := c.Options[KeyPre]; ok {
-		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
-		return options.ResolveWithCompound(c, KeyPre)
+	if options, ok := c.Options[model.KeyPre]; ok {
+		hook := Hook{options.(map[string]interface{})}
+		return hook.ResolveWithCompound(c, model.KeyPre)
 	}
 	return ResolvedHook{}
 }
 
 func (c ResolvedCompound) ResolvePostHook() ResolvedHook {
-	if options, ok := c.Options[KeyPost]; ok {
-		options := helper.MapToStruct(options.(map[string]interface{}), HookOptions{})
-		return options.ResolveWithCompound(c, KeyPost)
+	if options, ok := c.Options[model.KeyPost]; ok {
+		hook := Hook{options.(map[string]interface{})}
+		return hook.ResolveWithCompound(c, model.KeyPost)
 	}
 	return ResolvedHook{}
 }

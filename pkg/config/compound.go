@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 )
 
 type Compound struct {
@@ -15,7 +16,7 @@ func (c Compound) Name() string {
 }
 
 func (c Compound) ResolveConfig() ResolvedCompound {
-	options := helper.MapToStruct(c.raw, CompoundOptions{})
+	options := helper.MapToStruct(c.raw, model.CompoundOptions{})
 	return ResolvedCompound{
 		Name:             c.name,
 		Directory:        c.directory,

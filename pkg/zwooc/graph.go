@@ -5,6 +5,7 @@ import (
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
@@ -13,7 +14,7 @@ func CreateGraphCommand() *cli.Command {
 	return &cli.Command{
 		Name:      "graph",
 		Usage:     "display a graph of tasks",
-		ArgsUsage: "[run|watch|build|exec] [profile or fragment]",
+		ArgsUsage: "[run|watch|build|exec|launch] [profile or fragment]",
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
@@ -25,7 +26,7 @@ func CreateGraphCommand() *cli.Command {
 			}
 			// complete first argument
 			if c.NArg() == 0 {
-				for _, mode := range []string{config.ModeBuild, config.ModeRun, config.ModeWatch, "exec"} {
+				for _, mode := range []string{model.ModeBuild, model.ModeRun, model.ModeWatch, "exec"} {
 					fmt.Println(mode)
 				}
 				return
@@ -57,6 +58,8 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 		var task *tasks.TaskTreeNode
 		task, err = conf.LoadFragment(target, ctx)
 		forest = tasks.NewCollection(task)
+	} else if mode == "launch" {
+		forest, err = conf.LoadCompound(target, ctx)
 	} else if mode == "run" || mode == "watch" || mode == "build" {
 		forest, err = conf.LoadProfile(target, mode, ctx)
 	} else {

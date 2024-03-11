@@ -8,7 +8,7 @@ import (
 	"sort"
 
 	"github.com/urfave/cli/v2"
-	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 	"github.com/zwoo-hq/zwooc/pkg/zwooc"
 )
@@ -31,19 +31,37 @@ func main() {
 		UseShortOptionHandling: true,
 		EnableBashCompletion:   true,
 		Commands: []*cli.Command{
-			zwooc.CreateProfileCommand(config.ModeRun, "run a profile"),
-			zwooc.CreateProfileCommand(config.ModeWatch, "run a profile with live reload enabled"),
-			zwooc.CreateProfileCommand(config.ModeBuild, "build a profile"),
+			zwooc.CreateProfileCommand(model.ModeRun, "run a profile"),
+			zwooc.CreateProfileCommand(model.ModeWatch, "run a profile with live reload enabled"),
+			zwooc.CreateProfileCommand(model.ModeBuild, "build a profile"),
 			zwooc.CreateFragmentCommand(),
 			zwooc.CreateCompoundCommand(),
 			zwooc.CreateGraphCommand(),
 			zwooc.CreateInitCommand(),
 			{
 				// TODO: when cliv3 comes out this is no longer needed
-				Name:  "completion-script",
+				Name:  "complete-bash",
 				Usage: "generate shell completion script",
 				Action: func(c *cli.Context) error {
 					f, err := autocompletion.Open("autocomplete/bash_autocomplete")
+					if err != nil {
+						return err
+					}
+
+					content, err := io.ReadAll(f)
+					if err != nil {
+						return err
+					}
+					fmt.Println(string(content))
+					return nil
+				},
+			},
+			{
+				// TODO: when cliv3 comes out this is no longer needed
+				Name:  "complete-zsh",
+				Usage: "generate shell completion script",
+				Action: func(c *cli.Context) error {
+					f, err := autocompletion.Open("autocomplete/zsh_autocomplete")
 					if err != nil {
 						return err
 					}
