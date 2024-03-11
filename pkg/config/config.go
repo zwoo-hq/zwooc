@@ -1,6 +1,11 @@
 package config
 
-import "github.com/zwoo-hq/zwooc/pkg/model"
+import (
+	"github.com/zwoo-hq/zwooc/pkg/adapter/dotnet"
+	"github.com/zwoo-hq/zwooc/pkg/adapter/tauri"
+	"github.com/zwoo-hq/zwooc/pkg/adapter/vite"
+	"github.com/zwoo-hq/zwooc/pkg/model"
+)
 
 type Config struct {
 	baseDir   string
@@ -66,4 +71,24 @@ func IsValidRunMode(key string) bool {
 		return true
 	}
 	return false
+}
+
+func GetAdapter(adapter string) model.Adapter {
+	switch adapter {
+	case model.AdapterViteYarn:
+		return vite.NewYarnAdapter()
+	case model.AdapterViteNpm:
+		return vite.NewNpmAdapter()
+	case model.AdapterVitePnpm:
+		return vite.NewPnpmAdapter()
+	case model.AdapterTauriYarn:
+		return tauri.NewYarnAdapter()
+	case model.AdapterTauriNpm:
+		return tauri.NewNpmAdapter()
+	case model.AdapterTauriPnpm:
+		return tauri.NewPnpmAdapter()
+	case model.AdapterDotnet:
+		return dotnet.NewCliAdapter()
+	}
+	return nil
 }

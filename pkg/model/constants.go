@@ -8,7 +8,11 @@ const (
 
 const (
 	AdapterViteYarn  = "vite-yarn"
+	AdapterViteNpm   = "vite-npm"
+	AdapterVitePnpm  = "vite-pnpm"
 	AdapterTauriYarn = "tauri-yarn"
+	AdapterTauriNpm  = "tauri-npm"
+	AdapterTauriPnpm = "tauri-pnpm"
 	AdapterDotnet    = "dotnet"
 )
 

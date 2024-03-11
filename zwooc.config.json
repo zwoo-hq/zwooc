@@ -16,9 +16,7 @@
       "print": {
         "$default": "echo $PWD && sleep 7",
         "$pre": {
-          "fragments": [
-            "print2"
-          ],
+          "fragments": ["print2"],
           "command": "echo 'pre'"
         }
       }
@@ -27,15 +25,9 @@
       "mode": "test",
       "build": {
         "$pre": {
-          "fragments": [
-            "print",
-            "print2",
-            "test:a"
-          ]
+          "fragments": ["print", "print2", "test:a"]
         },
-        "env": [
-          "VITE_APP_TEST=build1"
-        ],
+        "env": ["VITE_APP_TEST=build1"],
         "args": {
           "outDir": "dist"
         },
@@ -45,15 +37,9 @@
       },
       "watch": {
         "$pre": {
-          "fragments": [
-            "print",
-            "print2"
-          ]
+          "fragments": ["print", "print2"]
         },
-        "includeFragments": [
-          "print3",
-          "recurse"
-        ],
+        "includeFragments": ["print3", "recurse"],
         "$post": {
           "command": "sleep 5"
         }
@@ -64,15 +50,11 @@
         "port": "6000"
       },
       "$pre": {
-        "fragments": [
-          "print"
-        ]
+        "fragments": ["print"]
       },
       "build": {
         "$pre": {
-          "fragments": [
-            "print2"
-          ]
+          "fragments": ["print2"]
         },
         "args": {
           "outDir": "dist2"

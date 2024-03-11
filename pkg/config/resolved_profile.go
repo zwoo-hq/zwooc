@@ -3,9 +3,6 @@ package config
 import (
 	"fmt"
 
-	"github.com/zwoo-hq/zwooc/pkg/adapter/dotnet"
-	"github.com/zwoo-hq/zwooc/pkg/adapter/tauri"
-	"github.com/zwoo-hq/zwooc/pkg/adapter/vite"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
@@ -75,13 +72,9 @@ func (r ResolvedProfile) ResolvePostHook() ResolvedHook {
 }
 
 func (r ResolvedProfile) GetTask(args []string) (tasks.Task, error) {
-	switch r.Adapter {
-	case model.AdapterViteYarn:
-		return vite.NewYarnAdapter().CreateTask(r, args), nil
-	case model.AdapterDotnet:
-		return dotnet.NewCliAdapter().CreateTask(r, args), nil
-	case model.AdapterTauriYarn:
-		return tauri.NewYarnAdapter().CreateTask(r, args), nil
+	adapter := GetAdapter(r.Adapter)
+	if adapter != nil {
+		return adapter.CreateTask(r, args), nil
 	}
 	return tasks.Empty(), fmt.Errorf("unknown adapter: '%s'", r.Adapter)
 }

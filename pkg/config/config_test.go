@@ -1,6 +1,7 @@
 package config
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/zwoo-hq/zwooc/pkg/model"
@@ -48,6 +49,36 @@ func TestIsValidRunMode(t *testing.T) {
 		t.Run("", func(t *testing.T) {
 			if got := IsValidRunMode(tt.value); got != tt.want {
 				t.Errorf("IsValidRunMode(%s) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetAdapter(t *testing.T) {
+	tests := []struct {
+		name     string
+		adapter  string
+		expected string
+	}{
+		{"Should return ViteYarnAdapter", model.AdapterViteYarn, "*vite.viteAdapter"},
+		{"Should return ViteNpmAdapter", model.AdapterViteNpm, "*vite.viteAdapter"},
+		{"Should return VitePnpmAdapter", model.AdapterVitePnpm, "*vite.viteAdapter"},
+		{"Should return TauriYarnAdapter", model.AdapterTauriYarn, "*tauri.tauriAdapter"},
+		{"Should return TauriNpmAdapter", model.AdapterTauriNpm, "*tauri.tauriAdapter"},
+		{"Should return TauriPnpmAdapter", model.AdapterTauriPnpm, "*tauri.tauriAdapter"},
+		{"Should return DotnetCliAdapter", model.AdapterDotnet, "*dotnet.dotnetAdapter"},
+		{"Should return nil for unknown adapter", "unknown", "<nil>"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := GetAdapter(tt.adapter)
+			if got == nil && tt.expected != "<nil>" {
+				t.Errorf("GetAdapter() = %v, want %v", got, tt.expected)
+				return
+			}
+			if got != nil && reflect.TypeOf(got).String() != tt.expected {
+				t.Errorf("GetAdapter() = %v, want %v", reflect.TypeOf(got), tt.expected)
 			}
 		})
 	}
