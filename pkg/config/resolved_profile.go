@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zwoo-hq/zwooc/pkg/adapter/dotnet"
+	"github.com/zwoo-hq/zwooc/pkg/adapter/tauri"
 	"github.com/zwoo-hq/zwooc/pkg/adapter/vite"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/model"
@@ -80,7 +81,7 @@ func (r ResolvedProfile) GetTask(args []string) (tasks.Task, error) {
 	case model.AdapterDotnet:
 		return dotnet.NewCliAdapter().CreateTask(r, args), nil
 	case model.AdapterTauriYarn:
-		return CreateTauriTask(r, args), nil
+		return tauri.NewYarnAdapter().CreateTask(r, args), nil
 	}
 	return tasks.Empty(), fmt.Errorf("unknown adapter: '%s'", r.Adapter)
 }
