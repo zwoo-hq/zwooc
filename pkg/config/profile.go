@@ -27,6 +27,11 @@ func (p Profile) ResolveConfig(mode string) (ResolvedProfile, error) {
 		return ResolvedProfile{}, fmt.Errorf("profile '%s' disabled mode '%s'", p.name, mode)
 	}
 
+	if command, ok := options.(string); ok {
+		// support custom profiles
+		options = map[string]interface{}{"command": command}
+	}
+
 	config := ResolvedProfile{
 		Name:      p.name,
 		Adapter:   p.adapter,

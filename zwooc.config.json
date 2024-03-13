@@ -78,10 +78,10 @@
     "$adapter": "custom",
     "$dir": ".",
     "ex3": {
-      "build": {
+      "run": {
         "command": "echo 'build'"
       },
-      "run": "echo 'run'"
+      "build": "echo 'run'"
     }
   },
   "$fragments": {
