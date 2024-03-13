@@ -146,6 +146,44 @@
           "else": {
             "additionalProperties": false
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "$adapter": {
+                "const": "custom"
+              }
+            }
+          },
+          "then": {
+            "description": "A custom project definition.",
+            "properties": {
+              "$adapter": {
+                "description": "The adapter to use for this profile.",
+                "const": "custom"
+              },
+              "$dir": {
+                "description": "The directory for the project.",
+                "type": "string"
+              },
+              "$fragments": {
+                "description": "A collection of local fragment definitions.",
+                "type": "object",
+                "additionalProperties": {
+                  "description": "A local fragment definition.",
+                  "$ref": "#/$defs/fragment"
+                }
+              }
+            },
+            "required": ["$adapter"],
+            "additionalProperties": {
+              "description": "A custom profile definition.",
+              "$ref": "#/$defs/customProject"
+            }
+          },
+          "else": {
+            "additionalProperties": false
+          }
         }
       ]
     },
@@ -308,6 +346,67 @@
           "description": "The base definition for the profile."
         }
       }
+    },
+    "customProject": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "build": {
+              "description": "The build definition for a profile.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/customRunDefinition"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "run": {
+              "description": "The run definition for a profile.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/customRunDefinition"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "watch": {
+              "description": "The watch definition for a profile.",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/customRunDefinition"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "$ref": "#/$defs/customRunDefinition"
+        }
+      ]
+    },
+    "customRunDefinition": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/runDefinition"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "command": {
+              "description": "The command to run for this profile.",
+              "type": "string"
+            }
+          }
+        }
+      ]
     },
     "compound": {
       "type": "object",

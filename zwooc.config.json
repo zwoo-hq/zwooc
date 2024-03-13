@@ -80,7 +80,8 @@
     "ex3": {
       "build": {
         "command": "echo 'build'"
-      }
+      },
+      "run": "echo 'run'"
     }
   },
   "$fragments": {
