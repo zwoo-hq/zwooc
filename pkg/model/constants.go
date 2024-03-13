@@ -14,6 +14,7 @@ const (
 	AdapterTauriNpm  = "tauri-npm"
 	AdapterTauriPnpm = "tauri-pnpm"
 	AdapterDotnet    = "dotnet"
+	AdapterCustom    = "custom"
 )
 
 const (

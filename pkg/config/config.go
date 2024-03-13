@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/zwoo-hq/zwooc/pkg/adapter/custom"
 	"github.com/zwoo-hq/zwooc/pkg/adapter/dotnet"
 	"github.com/zwoo-hq/zwooc/pkg/adapter/tauri"
 	"github.com/zwoo-hq/zwooc/pkg/adapter/vite"
@@ -89,6 +90,8 @@ func GetAdapter(adapter string) model.Adapter {
 		return tauri.NewPnpmAdapter()
 	case model.AdapterDotnet:
 		return dotnet.NewCliAdapter()
+	case model.AdapterCustom:
+		return custom.NewAdapter()
 	}
 	return nil
 }

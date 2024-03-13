@@ -29,6 +29,10 @@ type (
 		Project string `json:"project"`
 	}
 
+	CustomOptions struct {
+		Command string `json:"command"`
+	}
+
 	CompoundOptions struct {
 		Profiles         map[string]string `json:"profiles"`
 		IncludeFragments []string          `json:"includeFragments"`
