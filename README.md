@@ -2,15 +2,90 @@
 
 # zwooc
 
-The official build system for [zwoo](https://github.com/fabiankachlock/zwoo)!
+🚀 The official meta build tool for [zwoo](https://github.com/fabiankachlock/zwoo)!
+
+`zwooc` is a **_meta_** built tool, which means it only leverages and orchestrates exiting build tools in order to produce outputs. zwooc aims to unify and simplify build tool configuration tailored to the use cases of zwoo.
 
 ---
 
-## Install
+## Installation
 
-You can install zwooc from the  [GitHub Releases](https://github.com/zwoo-hq/zwooc/releases) or via `go install github.com/zwoo-hq/zwooc/cmd/zwooc@latest` (go 1.20 is needed).
+You can install zwooc from the 
+- [GitHub Releases](https://github.com/zwoo-hq/zwooc/releases) or 
+- via `go install github.com/zwoo-hq/zwooc/cmd/zwooc@latest` (go 1.21 is needed).
 
-## Concepts
+### Setting up auto completion
+
+zwooc currently supports auto completion for `bash` & `zsh`, just add:
+
+`source <(zwooc complete-bash)` into you `.bashrc` or
+
+`source <(zwooc complete-zsh)` into your `.zshrc`
+
+On bash completion on windows (for example in the git bash) will also provide completions for `zwooc.exe` 
+
+## Usage
+
+### Get Started
+
+`$ zwooc init` will initialize a new zwooc workspace. This creates a new `zwooc.config.json` with some example content. 
+
+### Basics
+
+Your every day use commands will be:
+
+`$ zwooc build|run|watch <key>` - execute a profile in the given run mode.
+
+`$ zwooc exec <key>` - executes a fragment
+
+`$ zwooc launch <key>` - launch a compound configuration.
+
+Often used options are:
+
+`$ zwooc exec -to` `-t` will disable TTY mode and `-o` will enable command output in static mode. These options are enable in CI by default.
+
+If you want to pass some extra arguments to an command you can do this always behind the key, like:
+
+`$ zwooc run dev --host` - in this case `dev` being a `vite-x` profile this will expose your dev server to the local network.
+
+The drawback of this it, that all arguments targeted at zwooc must be passed before the key of the configuration to execute:
+
+```diff
+- zwooc run dev -to // does not work
++ zwooc run -to dev // does work
+```
+
+### Debugging Configuration
+
+zwooc provides a handy tool for debugging the configuration.
+
+`$ zwooc graph exec|build|run|watch|launch <key>` will print a tree will all tasks and their dependencies into the terminal. Adding the `--dry-run` flag to on of those commands will do the same.
+
+
+### More Information
+
+`$ zwooc h|help|-h|--help` prints an overview of all available commands including a short description.
+
+`$ zwooc -v|--version` will print the version of zwooc.
+
+## Using The Interactive Runner
+
+> [!WARNING]  
+> The interactive runner is still in early stage of development and may contain bugs.
+
+The interactive runner as a TUI for running zwooc tasks.
+
+It currently supports:
+- a help view by pressing `h`
+- a full screen view by pressing `f`
+- multi tabs command output view
+- switching tabs via `tab` `shift+tab` or mouse click (yes it has mouse support!)
+- status indicator for pre and post tasks
+- `esc` will close the full screen or help view
+- `q` or `ctrl+c` will stop the runner gracefully (running al post tasks) pressing it a second time will cancel all running post tasks
+
+
+## Concepts & Configuration
 
 This is a rough overview about all concepts, for a full documentation see [`docs/concept.md`](https://github.com/zwoo-hq/zwooc/blob/main/docs/concept.md)
 
@@ -22,30 +97,29 @@ There a 3 available run modes: `run`, `watch`, `build`
 
 Define a sub-project with an adapter. The adapter will handle how commands are build. A project contains a number of profiles which can be run. The name of the project must equal the subpath.
 
+Available adapters are
+- `vite-yarn`, `vite-npm`, `vite-pnpm`
+- `tauri-yarn`, `tauri-npm`, `tauri-pnpm`
+- `dotnet`
+- `custom`
+
 #### Profiles
 
 A profile is a run configuration for running a project in a certain run mode.
-
-Profiles can be run via `zwoo <run|watch|build> <profile name>`
 
 ### Fragments
 
 Fragments are individual commands that can be run before/with/after profiles. They are not bound to the adapter und are run with the folder of the project they are defined in. Fragments can adapt teh current run mode and profile.
 
-Fragments can be run via `zwoo exec <fragment:configuration>`
-
 ### Compounds
 
 Compounds are a combination of profiles that can be run together. They are defined in root scope.
-
-Compounds can be started via `zwoo launch <compound name>`
 
 ### Genral Concepts
 
 All runnable entities can define pre and post actions via `$pre` and `$post`
 
-
-## Example
+## Example Configuration
 
 ```json
 {

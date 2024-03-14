@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 )
 
 type Profile struct {
@@ -25,6 +26,11 @@ func (p Profile) ResolveConfig(mode string) (ResolvedProfile, error) {
 	options := p.raw[mode]
 	if options == false {
 		return ResolvedProfile{}, fmt.Errorf("profile '%s' disabled mode '%s'", p.name, mode)
+	}
+
+	if command, ok := options.(string); ok && p.adapter == model.AdapterCustom {
+		// support custom profiles
+		options = map[string]interface{}{"command": command}
 	}
 
 	config := ResolvedProfile{

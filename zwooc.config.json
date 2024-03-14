@@ -74,6 +74,16 @@
       "project": "a.b"
     }
   },
+  "ex3": {
+    "$adapter": "custom",
+    "$dir": ".",
+    "ex3": {
+      "run": {
+        "command": "echo 'build'"
+      },
+      "build": "echo 'run'"
+    }
+  },
   "$fragments": {
     "print2": "echo $PWD && sleep 3",
     "print3": "git status",

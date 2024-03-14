@@ -121,13 +121,13 @@ The key of a compound shall not contain any `$COMP_WORDBREAKS` characters except
 
 Compounds shall contain at least one profile or fragments. To configure a compound an object `profiles` with the profile key as the key and run desired run mode as value. Other options from profiles, like `base` and `includeFragments` apply here too.
 
-| concept                         |       status       |
-| ------------------------------- | :----------------: |
-| define compounds                | :white_check_mark: |
-| execute compounds               |        :x:         |
-| execute compounds (interactive) | :white_check_mark: |
-| execute hooks                   |     :question:     |
-| execute included fragments      | :white_check_mark: |
+| concept                         |                       status                       |
+| ------------------------------- | :------------------------------------------------: |
+| define compounds                |                 :white_check_mark:                 |
+| execute compounds               |                 :white_check_mark:                 |
+| execute compounds (interactive) |                 :white_check_mark:                 |
+| execute hooks                   | :question: (hooks laufen, aber zu falschen Zeiten) |
+| execute included fragments      |                 :white_check_mark:                 |
 
 ## Utilities and options
 
@@ -138,7 +138,9 @@ Along the core functionality, `zwooc` should provide additional utilities.
 | version                              | :white_check_mark: |
 | help                                 | :white_check_mark: |
 | bash completion                      | :white_check_mark: |
+| zsh completion                       | :white_check_mark: |
 | dependency/execution graph (dry run) | :white_check_mark: |
+| init helper                          | :white_check_mark: |
 
 Furthermore, `zwooc` should provide global options in order to provide flexibility whilst executing tasks.
 
@@ -150,7 +152,7 @@ Furthermore, `zwooc` should provide global options in order to provide flexibili
 | set a max concurrency             | :white_check_mark: |
 | loose (tolerant errors)           |        :x:         |
 | skip hooks                        | :white_check_mark: |
-| exclude fragments                 |        :x:         |
+| exclude fragments                 | :white_check_mark: |
 | force disable TTY                 | :white_check_mark: |
 | inline output (static mode)       | :white_check_mark: |
 | disable output (interactive mode) |        :x:         |
@@ -170,8 +172,3 @@ Since this UI is currently under heavy construction the following table only out
 | allow scheduling tasks dynamically |     :question:     |
 | kill tasks                         |     :question:     |
 | handle errors in tasks             |     :question:     |
-
-
-# TODOs:
-
-- :x: handle colons in bash completion better (https://stackoverflow.com/questions/10528695/how-to-reset-comp-wordbreaks-without-affecting-other-completion-script)
