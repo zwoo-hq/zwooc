@@ -44,8 +44,8 @@ func (c Config) LoadProfile(key, mode string, ctx loadingContext) (tasks.Collect
 	}
 
 	name := helper.BuildName(key, mode)
-	ctx = ctx.withCaller(name)
 	mainTask, err := config.GetTask(ctx.getArgs())
+	ctx = ctx.withCaller(name)
 	if err != nil {
 		return nil, err
 	}
