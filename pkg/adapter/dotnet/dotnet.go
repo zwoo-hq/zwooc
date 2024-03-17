@@ -39,7 +39,7 @@ func (a *dotnetAdapter) CreateTask(c model.ProfileWrapper, extraArgs []string) t
 func convertModeToDotnet(mode string) string {
 	switch mode {
 	case model.ModeBuild:
-		return "build"
+		return "publish"
 	case model.ModeWatch:
 		return "watch"
 	case model.ModeRun:
