@@ -17,7 +17,7 @@ type TreeStatusNode struct {
 
 type TaskTreeRunner struct {
 	root           *tasks.TaskTreeNode
-	runningNodes   []*tasks.TaskTreeNode
+	scheduledNodes []*tasks.TaskTreeNode
 	status         *TreeStatusNode
 	updates        chan int
 	cancel         chan bool
@@ -35,7 +35,7 @@ func NewTaskTreeRunner(root *tasks.TaskTreeNode, maxConcurrency int) *TaskTreeRu
 
 	return &TaskTreeRunner{
 		root:           root,
-		runningNodes:   []*tasks.TaskTreeNode{},
+		scheduledNodes: []*tasks.TaskTreeNode{},
 		status:         status,
 		updates:        make(chan int, 1),
 		cancel:         make(chan bool),
@@ -43,6 +43,19 @@ func NewTaskTreeRunner(root *tasks.TaskTreeNode, maxConcurrency int) *TaskTreeRu
 		maxConcurrency: ticketAmount,
 		mutex:          sync.RWMutex{},
 	}
+}
+
+func getStartingNodes(root *tasks.TaskTreeNode) []*tasks.TaskTreeNode {
+	if len(root.Pre) == 0 {
+		return []*tasks.TaskTreeNode{root}
+	}
+
+	allNodes := []*tasks.TaskTreeNode{}
+	for _, pre := range root.Pre {
+		allNodes = append(allNodes, getStartingNodes(pre)...)
+	}
+
+	return allNodes
 }
 
 func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {

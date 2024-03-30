@@ -3,11 +3,12 @@ package runner
 import (
 	"testing"
 
+	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 func TestBuildStatus(t *testing.T) {
-	t.Run("TestbuildStatus", func(t *testing.T) {
+	t.Run("builds status tree from tasks", func(t *testing.T) {
 		tree := &tasks.TaskTreeNode{
 			Name: "root",
 			Pre: []*tasks.TaskTreeNode{
@@ -68,7 +69,7 @@ func TestBuildStatus(t *testing.T) {
 }
 
 func TestFindStatus(t *testing.T) {
-	t.Run("TestFindStatus", func(t *testing.T) {
+	t.Run("finds status node for task", func(t *testing.T) {
 		tree := &tasks.TaskTreeNode{
 			Name: "root",
 			Pre: []*tasks.TaskTreeNode{
@@ -123,5 +124,61 @@ func TestFindStatus(t *testing.T) {
 		if node.Name != "post1-1" {
 			t.Errorf("Expected post1-1, got %s", node.Name)
 		}
+	})
+}
+
+func TestGetStartingNodes(t *testing.T) {
+	t.Run("gets starting nodes from tree", func(t *testing.T) {
+		tree := &tasks.TaskTreeNode{
+			Name: "root",
+			Pre: []*tasks.TaskTreeNode{
+				{
+					Name: "pre1",
+				},
+				{
+					Name: "pre2",
+					Pre: []*tasks.TaskTreeNode{
+						{
+							Name: "pre2-1",
+						},
+						{
+							Name: "pre2-2",
+						},
+					},
+				},
+				{
+					Name: "pre3",
+					Pre: []*tasks.TaskTreeNode{
+						{
+							Name: "pre3-1",
+						},
+						{
+							Name: "pre3-2",
+							Pre: []*tasks.TaskTreeNode{
+								{
+									Name: "pre3-2-1",
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		startingNodes := getStartingNodes(tree)
+		expected := []string{"pre1", "pre2-1", "pre2-2", "pre3-1", "pre3-2-1"}
+
+		if len(expected) != len(startingNodes) {
+			t.Errorf("Expected len %d, got %d", len(expected), len(startingNodes))
+		}
+
+		for _, expectedName := range expected {
+			if _, found := helper.FindBy(startingNodes, func(node *tasks.TaskTreeNode) bool {
+				return node.Name == expectedName
+			}); !found {
+				t.Errorf("Expected %s, got <not found>", expectedName)
+			}
+		}
+
 	})
 }
