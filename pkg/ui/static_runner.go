@@ -9,12 +9,13 @@ import (
 	"time"
 
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
+	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 )
 
 type staticView struct {
 	tasks         tasks.TaskList
-	currentState  tasks.RunnerStatus
-	currentRunner *tasks.TaskRunner
+	currentState  runner.RunnerStatus
+	currentRunner *runner.TaskRunner
 	wasCanceled   bool
 	wg            sync.WaitGroup
 	mu            sync.RWMutex
@@ -47,8 +48,8 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 		}
 
 		// setup new runner
-		model.currentRunner = tasks.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
-		model.currentState = tasks.RunnerStatus{}
+		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
+		model.currentState = runner.RunnerStatus{}
 		model.wg = sync.WaitGroup{}
 		model.wg.Add(1)
 		go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")
@@ -64,7 +65,7 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 			// handle runner error
 			fmt.Printf("╰─── %s %s failed\n", errorStyle.Render("✗"), step.Name)
 			for key, status := range model.currentRunner.Status() {
-				if status == tasks.StatusError {
+				if status == runner.StatusError {
 					fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), key)
 					fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), err)
 					fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
@@ -92,22 +93,22 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), taskList.Name, execEnd.Sub(execStart))
 }
 
-func (m *staticView) ReceiveUpdates(c <-chan tasks.RunnerStatus, prefix string) {
+func (m *staticView) ReceiveUpdates(c <-chan runner.RunnerStatus, prefix string) {
 	for update := range c {
 		m.mu.Lock()
 		for name, status := range update {
 			if m.currentState[name] != status {
 				m.currentState[name] = status
 				switch status {
-				case tasks.StatusPending:
+				case runner.StatusPending:
 					fmt.Printf("%s %s %s\n", prefix, name, pendingStyle.Render("was scheduled"))
-				case tasks.StatusRunning:
+				case runner.StatusRunning:
 					fmt.Printf("%s %s %s\n", prefix, name, runningStyle.Render("started running"))
-				case tasks.StatusDone:
+				case runner.StatusDone:
 					fmt.Printf("%s %s %s\n", prefix, name, successStyle.Render("finished"))
-				case tasks.StatusError:
+				case runner.StatusError:
 					fmt.Printf("%s %s %s\n", prefix, name, errorStyle.Render("failed"))
-				case tasks.StatusCanceled:
+				case runner.StatusCanceled:
 					fmt.Printf("%s %s %s\n", prefix, name, canceledStyle.Render("was canceled"))
 				}
 			}

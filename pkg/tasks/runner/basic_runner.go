@@ -1,26 +1,19 @@
-package tasks
+package runner
 
 import (
 	"errors"
 	"sync"
 	"sync/atomic"
 
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"golang.org/x/exp/maps"
 )
 
-const (
-	StatusPending  = 1
-	StatusRunning  = 2
-	StatusDone     = 3
-	StatusError    = 4
-	StatusCanceled = 5
-)
-
-type RunnerStatus = map[string]int
+type RunnerStatus = map[string]TaskStatus
 
 type TaskRunner struct {
 	name           string
-	tasks          []Task
+	tasks          []tasks.Task
 	status         RunnerStatus
 	updates        chan RunnerStatus
 	cancel         chan bool
@@ -29,7 +22,7 @@ type TaskRunner struct {
 	maxConcurrency int
 }
 
-func NewRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
+func NewRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
 	status := make(RunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
@@ -51,11 +44,11 @@ func NewRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
 	}
 }
 
-func NewParallelRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
+func NewParallelRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
 	return NewRunner(name, tasks, maxConcurrency)
 }
 
-func NewSequentialRunner(name string, tasks []Task) *TaskRunner {
+func NewSequentialRunner(name string, tasks []tasks.Task) *TaskRunner {
 	return NewRunner(name, tasks, 1)
 }
 
@@ -86,7 +79,7 @@ func (tr *TaskRunner) Updates() <-chan RunnerStatus {
 	return tr.updates
 }
 
-func (tr *TaskRunner) updateTaskStatus(task Task, status int) {
+func (tr *TaskRunner) updateTaskStatus(task tasks.Task, status TaskStatus) {
 	tr.mutex.Lock()
 	tr.status[task.Name()] = status
 	tr.updates <- maps.Clone(tr.status)
@@ -194,7 +187,7 @@ func (tr *TaskRunner) runParallel() error {
 		taskCancel := make(chan bool, 1)
 		forwardCancel = append(forwardCancel, taskCancel)
 
-		go func(task Task, cancel <-chan bool) {
+		go func(task tasks.Task, cancel <-chan bool) {
 			// acquire a ticket to run the task
 			ticket := <-tickets
 			tr.updateTaskStatus(task, StatusRunning)

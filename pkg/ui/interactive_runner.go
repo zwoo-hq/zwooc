@@ -13,12 +13,13 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
+	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 	"github.com/zwoo-hq/zwooc/pkg/ui/textinput"
 )
 
 type PreTaskStatus struct {
 	name   string
-	status int
+	status runner.TaskStatus
 	out    *tasks.CommandCapturer
 }
 
@@ -53,13 +54,13 @@ type Model struct {
 	preError         error
 	preCurrentStage  int
 	preCurrentList   tasks.TaskList
-	preCurrentRunner *tasks.TaskRunner
+	preCurrentRunner *runner.TaskRunner
 	preSpinner       spinner.Model
 
 	viewportReady bool
 	activeTasks   []ActiveTask
 	activeIndex   int
-	scheduler     *tasks.Scheduler
+	scheduler     *runner.Scheduler
 	logsView      viewport.Model
 
 	scheduledPost     map[string]tasks.TaskList
@@ -67,7 +68,7 @@ type Model struct {
 	postTasks         []PreTaskStatus
 	postCurrentStage  int
 	postCurrentList   tasks.TaskList
-	postCurrentRunner *tasks.TaskRunner
+	postCurrentRunner *runner.TaskRunner
 	postSpinner       spinner.Model
 
 	input textinput.Model
@@ -82,12 +83,12 @@ type ContentUpdateMsg struct {
 	tabId   int
 	content string
 }
-type PreRunnerUpdateMsg tasks.RunnerStatus  // fired when a $pre tasks updates
-type PostRunnerUpdateMsg tasks.RunnerStatus // fired when a $post tasks updates
-type ScheduledStageFinishedMsg int          // fired when a pre action of a scheduled task finished
-type PostStageFinishedMsg int               // fired when a post action of a scheduled task finished
-type ScheduledErroredMsg struct{ error }    // fired when a scheduled task errored
-type PostErroredMsg struct{ error }         // fired when a post task errored
+type PreRunnerUpdateMsg runner.RunnerStatus  // fired when a $pre tasks updates
+type PostRunnerUpdateMsg runner.RunnerStatus // fired when a $post tasks updates
+type ScheduledStageFinishedMsg int           // fired when a pre action of a scheduled task finished
+type PostStageFinishedMsg int                // fired when a post action of a scheduled task finished
+type ScheduledErroredMsg struct{ error }     // fired when a scheduled task errored
+type PostErroredMsg struct{ error }          // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
 func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config.Config) error {
@@ -95,7 +96,7 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 		opts:           opts,
 		scheduledTasks: []ScheduledTask{},
 		activeTasks:    []ActiveTask{},
-		scheduler:      tasks.NewScheduler(),
+		scheduler:      runner.NewScheduler(),
 		scheduledPost:  make(map[string]tasks.TaskList),
 		activeIndex:    -1,
 		activeView:     ViewDefault,
@@ -206,7 +207,7 @@ func (m *Model) initScheduledStage(stage int) {
 
 	m.preCurrentStage = stage
 	m.preTasks = t
-	m.preCurrentRunner = tasks.NewRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
+	m.preCurrentRunner = runner.NewRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
 }
 
 func (m *Model) initPostStage(stage int) {
@@ -223,7 +224,7 @@ func (m *Model) initPostStage(stage int) {
 
 	m.postCurrentStage = stage
 	m.postTasks = t
-	m.postCurrentRunner = tasks.NewRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
+	m.postCurrentRunner = runner.NewRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
 }
 
 func (m *Model) listenToPreRunner() tea.Msg {
@@ -385,13 +386,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case PreRunnerUpdateMsg:
-		m.convertPreRunnerState(tasks.RunnerStatus(msg))
+		m.convertPreRunnerState(runner.RunnerStatus(msg))
 		if m.preCurrentRunner != nil {
 			cmds = append(cmds, m.listenToPreRunner)
 		}
 
 	case PostRunnerUpdateMsg:
-		m.convertPostRunnerState(tasks.RunnerStatus(msg))
+		m.convertPostRunnerState(runner.RunnerStatus(msg))
 		if m.postCurrentRunner != nil {
 			cmds = append(cmds, m.listenToPostRunner)
 		}
@@ -509,7 +510,7 @@ func (m *Model) setLogsViewFullScreenPosition() {
 	m.logsView.Height = m.windowHeight - 1
 }
 
-func (m *Model) convertPreRunnerState(state tasks.RunnerStatus) {
+func (m *Model) convertPreRunnerState(state runner.RunnerStatus) {
 	for i := 0; i < len(m.preTasks); i++ {
 		status := &m.preTasks[i]
 		newState := state[status.name]
@@ -517,7 +518,7 @@ func (m *Model) convertPreRunnerState(state tasks.RunnerStatus) {
 	}
 }
 
-func (m *Model) convertPostRunnerState(state tasks.RunnerStatus) {
+func (m *Model) convertPostRunnerState(state runner.RunnerStatus) {
 	for i := 0; i < len(m.postTasks); i++ {
 		status := &m.postTasks[i]
 		newState := state[status.name]
@@ -544,7 +545,7 @@ func (m *Model) View() (s string) {
 	if len(m.scheduledTasks) > 0 {
 		currentlyRunning := []string{}
 		for _, task := range m.preTasks {
-			if task.status == tasks.StatusRunning {
+			if task.status == runner.StatusRunning {
 				currentlyRunning = append(currentlyRunning, task.name)
 			}
 		}
@@ -557,7 +558,7 @@ func (m *Model) View() (s string) {
 	if !m.postCurrentList.IsEmpty() {
 		currentlyRunning := []string{}
 		for _, task := range m.postTasks {
-			if task.status == tasks.StatusRunning {
+			if task.status == runner.StatusRunning {
 				currentlyRunning = append(currentlyRunning, task.name)
 			}
 		}

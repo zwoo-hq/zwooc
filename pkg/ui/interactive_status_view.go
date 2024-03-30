@@ -10,11 +10,12 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
+	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 )
 
 type InteractiveTaskStatus struct {
 	name    string
-	status  int
+	status  runner.TaskStatus
 	out     *tasks.CommandCapturer
 	spinner spinner.Model
 }
@@ -23,15 +24,15 @@ type StatusModel struct {
 	currentIndex  int
 	tasks         tasks.TaskList
 	tasksState    []InteractiveTaskStatus
-	currentState  tasks.RunnerStatus
-	currentRunner *tasks.TaskRunner
+	currentState  runner.RunnerStatus
+	currentRunner *runner.TaskRunner
 	opts          ViewOptions
 	currentError  error
 	wasCanceled   bool
 	clear         bool
 }
 
-type StatusUpdateMsg tasks.RunnerStatus
+type StatusUpdateMsg runner.RunnerStatus
 type StatusStageFinishedMsg int
 type StatusErrorMsg struct{ error }
 
@@ -51,7 +52,7 @@ func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
 	execEnd := time.Now()
 	if model.currentError != nil {
 		for _, status := range model.tasksState {
-			if status.status == tasks.StatusError {
+			if status.status == runner.StatusError {
 				fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), status.name)
 				fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), model.currentError)
 				fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
@@ -97,7 +98,7 @@ func (m *StatusModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, cmd
 	case StatusUpdateMsg:
-		m.currentState = tasks.RunnerStatus(msg)
+		m.currentState = runner.RunnerStatus(msg)
 		m.convertRunnerState()
 
 		cmds := []tea.Cmd{m.listenToUpdates}
@@ -140,7 +141,7 @@ func (m *StatusModel) initStage(stage int) {
 
 	m.currentIndex = stage
 	m.tasksState = t
-	m.currentRunner = tasks.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.opts.MaxConcurrency)
+	m.currentRunner = runner.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.opts.MaxConcurrency)
 }
 
 func (m *StatusModel) startStage() tea.Msg {
@@ -165,28 +166,28 @@ func (m *StatusModel) View() (s string) {
 	for _, task := range m.tasksState {
 		if task.hasSpinner() {
 			s += fmt.Sprintf(" %s %s: %s\n", task.spinner.View(), task.name, convertState(task.status))
-		} else if task.status == tasks.StatusDone {
+		} else if task.status == runner.StatusDone {
 			s += fmt.Sprintf(" %s %s: %s\n", successStyle.Padding(0, 2).Render("✓"), task.name, convertState(task.status))
-		} else if task.status == tasks.StatusError {
+		} else if task.status == runner.StatusError {
 			s += fmt.Sprintf(" %s %s: %s\n", errorStyle.Padding(0, 2).Render("✗"), task.name, convertState(task.status))
-		} else if task.status == tasks.StatusCanceled {
+		} else if task.status == runner.StatusCanceled {
 			s += fmt.Sprintf(" %s %s: %s\n", canceledStyle.Padding(0, 2).Render("-"), task.name, convertState(task.status))
 		}
 	}
 	return
 }
 
-func convertState(state int) string {
+func convertState(state runner.TaskStatus) string {
 	switch state {
-	case tasks.StatusPending:
+	case runner.StatusPending:
 		return "pending"
-	case tasks.StatusRunning:
+	case runner.StatusRunning:
 		return "running"
-	case tasks.StatusDone:
+	case runner.StatusDone:
 		return "done"
-	case tasks.StatusError:
+	case runner.StatusError:
 		return "error"
-	case tasks.StatusCanceled:
+	case runner.StatusCanceled:
 		return "canceled"
 	}
 	return "unknown"
@@ -200,10 +201,10 @@ func (m *StatusModel) convertRunnerState() {
 			status.status = newState
 			status.spinner = spinner.New()
 			switch newState {
-			case tasks.StatusPending:
+			case runner.StatusPending:
 				status.spinner.Spinner = pendingSpinner
 				status.spinner.Style = pendingStyle
-			case tasks.StatusRunning:
+			case runner.StatusRunning:
 				status.spinner.Spinner = runningSpinner
 				status.spinner.Style = runningStyle
 			}
@@ -212,5 +213,5 @@ func (m *StatusModel) convertRunnerState() {
 }
 
 func (t InteractiveTaskStatus) hasSpinner() bool {
-	return t.status == tasks.StatusPending || t.status == tasks.StatusRunning
+	return t.status == runner.StatusPending || t.status == runner.StatusRunning
 }

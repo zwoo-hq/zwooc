@@ -7,12 +7,13 @@ import (
 	"time"
 
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
+	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 )
 
 type quiteView struct {
 	tasks         tasks.TaskList
-	currentState  tasks.RunnerStatus
-	currentRunner *tasks.TaskRunner
+	currentState  runner.RunnerStatus
+	currentRunner *runner.TaskRunner
 }
 
 // RunStatic runs a tasks.TaskList with a static ui suited for non TTY environments
@@ -25,8 +26,8 @@ func newQuiteRunner(taskList tasks.TaskList, opts ViewOptions) {
 	execStart := time.Now()
 
 	for _, step := range taskList.Steps {
-		model.currentRunner = tasks.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
-		model.currentState = tasks.RunnerStatus{}
+		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
+		model.currentState = runner.RunnerStatus{}
 		if err := model.currentRunner.Run(); err != nil {
 			HandleError(err)
 		}
