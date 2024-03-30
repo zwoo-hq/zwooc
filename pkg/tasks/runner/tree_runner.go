@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"runtime"
 	"sync"
 
@@ -71,24 +70,34 @@ func findStatus(status *TreeStatusNode, target *tasks.TaskTreeNode) *TreeStatusN
 		path = append([]string{target.Parent.Name}, path...)
 		target = target.Parent
 	}
-	fmt.Println(path)
+	if len(path) == 1 {
+		return status
+	}
+
 	current := status
-	for _, name := range path {
+outer:
+	for i, name := range path[1:] {
 		if current.Name == name {
 			return current
 		}
 
 		for _, pre := range current.PreNodes {
 			if pre.Name == name {
+				if i == len(path)-2 {
+					return pre
+				}
 				current = pre
-				continue
+				continue outer
 			}
 		}
 
 		for _, post := range current.PostNodes {
 			if post.Name == name {
+				if i == len(path)-2 {
+					return post
+				}
 				current = post
-				continue
+				continue outer
 			}
 		}
 		break

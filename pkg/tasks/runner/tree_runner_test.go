@@ -92,6 +92,10 @@ func TestFindStatus(t *testing.T) {
 				},
 			},
 		}
+		tree.Pre[0].Parent = tree
+		tree.Pre[0].Pre[0].Parent = tree.Pre[0]
+		tree.Post[0].Parent = tree
+		tree.Post[0].Post[0].Parent = tree.Post[0]
 
 		status := buildStatus(tree)
 
