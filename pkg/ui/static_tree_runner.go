@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"time"
 
@@ -27,6 +28,20 @@ func NewStaticTreeRunner(tree *tasks.TaskTreeNode, opts ViewOptions) {
 	model.setupInterruptHandler()
 	fmt.Printf("%s - %s\n", zwoocBranding, tree.Name)
 	execStart := time.Now()
+	outputs := map[string]*tasks.CommandCapturer{}
+
+	tree.Iterate(func(t *tasks.TaskTreeNode) {
+		cap := tasks.NewCapturer()
+		outputs[t.NodeID()] = cap
+		t.Main.Pipe(cap)
+		if opts.InlineOutput {
+			if opts.DisablePrefix {
+				t.Main.Pipe(tasks.NewPrefixer("│  ", os.Stdout))
+			} else {
+				t.Main.Pipe(tasks.NewPrefixer("│  "+t.Name+" ", os.Stdout))
+			}
+		}
+	})
 
 	// setup new runner
 	model.currentRunner = runner.NewTaskTreeRunner(tree, opts.MaxConcurrency)
@@ -45,7 +60,21 @@ func NewStaticTreeRunner(tree *tasks.TaskTreeNode, opts ViewOptions) {
 	if err != nil {
 		// handle runner error
 		fmt.Printf("╰─── %s failed\n", errorStyle.Render("✗"))
+		model.currentRunner.Status().Iterate(func(node *runner.TreeStatusNode) {
+			if node.Status() == runner.StatusError {
+				fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), node.Name())
+				fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), err)
+				fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
+				// ligloss does some messy things to the string and cant handle \r\n on windows...
+				wrapper := canceledStyle.Render("===")
+				parts := strings.Split(wrapper, "===")
+				fmt.Printf(parts[0])
+				fmt.Println(strings.TrimSpace(outputs[node.ID].String()))
+				fmt.Printf(parts[1])
+			}
+		})
 		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorStyle.Render("✗"), tree.Name, execEnd.Sub(execStart))
+		os.Exit(1)
 	} else if model.wasCanceled {
 		fmt.Printf("╰─── %s was canceled - stopping execution\n", canceledStyle.Render("-"))
 		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, canceledStyle.Render("-"), tree.Name, execEnd.Sub(execStart))

@@ -11,11 +11,13 @@ import (
 )
 
 type TreeStatusNode struct {
+	ID        string
 	name      string
 	status    TaskStatus
 	PreNodes  []*TreeStatusNode
 	PostNodes []*TreeStatusNode
 	Parent    *TreeStatusNode
+	Error     error
 }
 
 func (s *TreeStatusNode) Name() string {
@@ -24,6 +26,16 @@ func (s *TreeStatusNode) Name() string {
 
 func (s *TreeStatusNode) Status() TaskStatus {
 	return s.status
+}
+
+func (t *TreeStatusNode) Iterate(handler func(node *TreeStatusNode)) {
+	for _, pre := range t.PreNodes {
+		pre.Iterate(handler)
+	}
+	handler(t)
+	for _, post := range t.PostNodes {
+		post.Iterate(handler)
+	}
 }
 
 type TaskTreeRunner struct {
@@ -78,6 +90,13 @@ func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskS
 	r.mutex.Unlock()
 }
 
+func (r *TaskTreeRunner) setError(node *tasks.TaskTreeNode, err error) {
+	r.mutex.Lock()
+	statusNode := findStatus(r.status, node)
+	statusNode.Error = err
+	r.mutex.Unlock()
+}
+
 func (r *TaskTreeRunner) Start() error {
 	wasCanceled := atomic.Bool{}
 	forwardCancel := []chan bool{}
@@ -129,6 +148,7 @@ func (r *TaskTreeRunner) Start() error {
 					errMu.Lock()
 					errs = append(errs, err)
 					errMu.Unlock()
+					r.setError(task, err)
 					r.updateTaskStatus(task, StatusError)
 					close(r.scheduledNodes)
 				} else if wasCanceled.Load() {
@@ -235,6 +255,7 @@ func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {
 		status:    StatusPending,
 		PreNodes:  []*TreeStatusNode{},
 		PostNodes: []*TreeStatusNode{},
+		ID:        root.NodeID(),
 	}
 
 	for _, pre := range root.Pre {

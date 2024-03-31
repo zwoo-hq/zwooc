@@ -139,3 +139,20 @@ func (t *TaskTreeNode) IsLinear() bool {
 	}
 	return true
 }
+
+func (t *TaskTreeNode) NodeID() string {
+	if t.Parent == nil {
+		return t.Name
+	}
+	return helper.BuildName(t.Parent.NodeID(), t.Name)
+}
+
+func (t *TaskTreeNode) Iterate(handler func(node *TaskTreeNode)) {
+	for _, pre := range t.Pre {
+		pre.Iterate(handler)
+	}
+	handler(t)
+	for _, post := range t.Post {
+		post.Iterate(handler)
+	}
+}
