@@ -121,3 +121,21 @@ func (t *TaskTreeNode) CountStages() int {
 	}
 	return 1 + preCount + postCount
 }
+
+func (t *TaskTreeNode) IsLinear() bool {
+	if len(t.Pre) > 1 || len(t.Post) > 1 {
+		return false
+	}
+
+	for _, pre := range t.Pre {
+		if !pre.IsLinear() {
+			return false
+		}
+	}
+	for _, post := range t.Post {
+		if !post.IsLinear() {
+			return false
+		}
+	}
+	return true
+}

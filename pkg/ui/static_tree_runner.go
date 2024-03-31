@@ -25,7 +25,7 @@ func NewStaticTreeRunner(tree *tasks.TaskTreeNode, opts ViewOptions) {
 	}
 
 	model.setupInterruptHandler()
-	fmt.Printf("running %s (tree)\n", tree.Name)
+	fmt.Printf("%s - %s\n", zwoocBranding, tree.Name)
 	execStart := time.Now()
 
 	// setup new runner
@@ -35,24 +35,24 @@ func NewStaticTreeRunner(tree *tasks.TaskTreeNode, opts ViewOptions) {
 	go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")
 
 	start := time.Now()
-	fmt.Printf("╭─── running main tree\n")
+	fmt.Printf("╭─── running %s\n", stepStyle.Render(tree.Name))
 	err := model.currentRunner.Start()
 	end := time.Now()
 	// wait until everything is completed
 	model.wg.Wait()
+	execEnd := time.Now()
 
 	if err != nil {
 		// handle runner error
 		fmt.Printf("╰─── %s failed\n", errorStyle.Render("✗"))
-	}
-	if model.wasCanceled {
+		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorStyle.Render("✗"), tree.Name, execEnd.Sub(execStart))
+	} else if model.wasCanceled {
 		fmt.Printf("╰─── %s was canceled - stopping execution\n", canceledStyle.Render("-"))
-		return
+		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, canceledStyle.Render("-"), tree.Name, execEnd.Sub(execStart))
+	} else {
+		fmt.Printf("╰─── %s successfully ran %s\n", successStyle.Render("✓"), end.Sub(start))
+		fmt.Printf("%s %s %s completed in %s\n", zwoocBranding, successStyle.Render("✓"), tree.Name, execEnd.Sub(execStart))
 	}
-	fmt.Printf("╰─── %s successfully ran %s\n", successStyle.Render("✓"), end.Sub(start))
-
-	execEnd := time.Now()
-	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), tree.Name, execEnd.Sub(execStart))
 }
 
 func (m *staticTreeView) ReceiveUpdates(c <-chan *runner.TreeStatusNode, prefix string) {

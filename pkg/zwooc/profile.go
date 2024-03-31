@@ -40,6 +40,7 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
+	taskList[0].RemoveEmptyNodes()
 	ui.NewStaticTreeRunner(taskList[0], viewOptions)
 	return nil
 	if runMode == model.ModeWatch || runMode == model.ModeRun || len(taskList) > 1 {
