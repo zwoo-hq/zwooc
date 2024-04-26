@@ -7,10 +7,11 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func GraphDependencies(collection tasks.Collection) {
+func GraphDependencies(collection tasks.Collection, name string) {
+	fmt.Printf("%s - graphing dependency tree for %s\n", zwoocBranding, name)
 	for _, tasks := range collection {
 		fmt.Printf("task %s ", graphHeaderStyle.Render(tasks.Name))
-		fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total stages)", tasks.CountStages())))
+		fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total linear equivalent stages)", tasks.CountStages())))
 		tasks.RemoveEmptyNodes()
 		printNode(tasks, "", true)
 	}
@@ -34,7 +35,7 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 			prePrefix = "  "
 		}
 		name := graphPreStyle.Render(model.KeyPre)
-		info := graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Pre)))
+		info := graphInfoStyle.Render(fmt.Sprintf("(%d nodes)", len(node.Pre)))
 		if len(node.Post) == 0 {
 			newPrefix = "  "
 			fmt.Printf("%s%s└─┬%s %s\n", prefix, prePrefix, name, info)
