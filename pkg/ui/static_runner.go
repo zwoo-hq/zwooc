@@ -14,7 +14,7 @@ import (
 
 type staticView struct {
 	tasks         tasks.TaskList
-	currentState  runner.RunnerStatus
+	currentState  runner.TaskRunnerStatus
 	currentRunner *runner.TaskRunner
 	wasCanceled   bool
 	wg            sync.WaitGroup
@@ -49,7 +49,7 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 
 		// setup new runner
 		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
-		model.currentState = runner.RunnerStatus{}
+		model.currentState = runner.TaskRunnerStatus{}
 		model.wg = sync.WaitGroup{}
 		model.wg.Add(1)
 		go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")
@@ -93,7 +93,7 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), taskList.Name, execEnd.Sub(execStart))
 }
 
-func (m *staticView) ReceiveUpdates(c <-chan runner.RunnerStatus, prefix string) {
+func (m *staticView) ReceiveUpdates(c <-chan runner.TaskRunnerStatus, prefix string) {
 	for update := range c {
 		m.mu.Lock()
 		for name, status := range update {

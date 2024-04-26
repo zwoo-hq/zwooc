@@ -83,12 +83,12 @@ type ContentUpdateMsg struct {
 	tabId   int
 	content string
 }
-type PreRunnerUpdateMsg runner.RunnerStatus  // fired when a $pre tasks updates
-type PostRunnerUpdateMsg runner.RunnerStatus // fired when a $post tasks updates
-type ScheduledStageFinishedMsg int           // fired when a pre action of a scheduled task finished
-type PostStageFinishedMsg int                // fired when a post action of a scheduled task finished
-type ScheduledErroredMsg struct{ error }     // fired when a scheduled task errored
-type PostErroredMsg struct{ error }          // fired when a post task errored
+type PreRunnerUpdateMsg runner.TaskRunnerStatus  // fired when a $pre tasks updates
+type PostRunnerUpdateMsg runner.TaskRunnerStatus // fired when a $post tasks updates
+type ScheduledStageFinishedMsg int               // fired when a pre action of a scheduled task finished
+type PostStageFinishedMsg int                    // fired when a post action of a scheduled task finished
+type ScheduledErroredMsg struct{ error }         // fired when a scheduled task errored
+type PostErroredMsg struct{ error }              // fired when a post task errored
 
 // NewInteractiveRunner creates a new interactive runner for long running tasks
 func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config.Config) error {
@@ -386,13 +386,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case PreRunnerUpdateMsg:
-		m.convertPreRunnerState(runner.RunnerStatus(msg))
+		m.convertPreRunnerState(runner.TaskRunnerStatus(msg))
 		if m.preCurrentRunner != nil {
 			cmds = append(cmds, m.listenToPreRunner)
 		}
 
 	case PostRunnerUpdateMsg:
-		m.convertPostRunnerState(runner.RunnerStatus(msg))
+		m.convertPostRunnerState(runner.TaskRunnerStatus(msg))
 		if m.postCurrentRunner != nil {
 			cmds = append(cmds, m.listenToPostRunner)
 		}
@@ -510,7 +510,7 @@ func (m *Model) setLogsViewFullScreenPosition() {
 	m.logsView.Height = m.windowHeight - 1
 }
 
-func (m *Model) convertPreRunnerState(state runner.RunnerStatus) {
+func (m *Model) convertPreRunnerState(state runner.TaskRunnerStatus) {
 	for i := 0; i < len(m.preTasks); i++ {
 		status := &m.preTasks[i]
 		newState := state[status.name]
@@ -518,7 +518,7 @@ func (m *Model) convertPreRunnerState(state runner.RunnerStatus) {
 	}
 }
 
-func (m *Model) convertPostRunnerState(state runner.RunnerStatus) {
+func (m *Model) convertPostRunnerState(state runner.TaskRunnerStatus) {
 	for i := 0; i < len(m.postTasks); i++ {
 		status := &m.postTasks[i]
 		newState := state[status.name]

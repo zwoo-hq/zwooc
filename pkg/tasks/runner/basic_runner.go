@@ -9,13 +9,13 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-type RunnerStatus = map[string]TaskStatus
+type TaskRunnerStatus = map[string]TaskStatus
 
 type TaskRunner struct {
 	name           string
 	tasks          []tasks.Task
-	status         RunnerStatus
-	updates        chan RunnerStatus
+	status         TaskRunnerStatus
+	updates        chan TaskRunnerStatus
 	cancel         chan bool
 	cancelComplete chan error
 	mutex          sync.RWMutex
@@ -23,7 +23,7 @@ type TaskRunner struct {
 }
 
 func NewRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
-	status := make(RunnerStatus)
+	status := make(TaskRunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
 	}
@@ -37,7 +37,7 @@ func NewRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner 
 		name:           name,
 		tasks:          tasks,
 		status:         status,
-		updates:        make(chan RunnerStatus, len(tasks)*5),
+		updates:        make(chan TaskRunnerStatus, len(tasks)*5),
 		cancel:         make(chan bool),
 		cancelComplete: make(chan error),
 		maxConcurrency: ticketAmount,
@@ -69,13 +69,13 @@ func (tr *TaskRunner) Run() error {
 	return tr.runParallel()
 }
 
-func (tr *TaskRunner) Status() RunnerStatus {
+func (tr *TaskRunner) Status() TaskRunnerStatus {
 	tr.mutex.RLock()
 	defer tr.mutex.RUnlock()
 	return maps.Clone(tr.status)
 }
 
-func (tr *TaskRunner) Updates() <-chan RunnerStatus {
+func (tr *TaskRunner) Updates() <-chan TaskRunnerStatus {
 	return tr.updates
 }
 

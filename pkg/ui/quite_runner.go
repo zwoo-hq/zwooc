@@ -12,7 +12,7 @@ import (
 
 type quiteView struct {
 	tasks         tasks.TaskList
-	currentState  runner.RunnerStatus
+	currentState  runner.TaskRunnerStatus
 	currentRunner *runner.TaskRunner
 }
 
@@ -27,7 +27,7 @@ func newQuiteRunner(taskList tasks.TaskList, opts ViewOptions) {
 
 	for _, step := range taskList.Steps {
 		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
-		model.currentState = runner.RunnerStatus{}
+		model.currentState = runner.TaskRunnerStatus{}
 		if err := model.currentRunner.Run(); err != nil {
 			HandleError(err)
 		}

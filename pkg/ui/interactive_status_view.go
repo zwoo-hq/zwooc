@@ -24,7 +24,7 @@ type StatusModel struct {
 	currentIndex  int
 	tasks         tasks.TaskList
 	tasksState    []InteractiveTaskStatus
-	currentState  runner.RunnerStatus
+	currentState  runner.TaskRunnerStatus
 	currentRunner *runner.TaskRunner
 	opts          ViewOptions
 	currentError  error
@@ -32,7 +32,7 @@ type StatusModel struct {
 	clear         bool
 }
 
-type StatusUpdateMsg runner.RunnerStatus
+type StatusUpdateMsg runner.TaskRunnerStatus
 type StatusStageFinishedMsg int
 type StatusErrorMsg struct{ error }
 
@@ -98,7 +98,7 @@ func (m *StatusModel) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, cmd
 	case StatusUpdateMsg:
-		m.currentState = runner.RunnerStatus(msg)
+		m.currentState = runner.TaskRunnerStatus(msg)
 		m.convertRunnerState()
 
 		cmds := []tea.Cmd{m.listenToUpdates}
