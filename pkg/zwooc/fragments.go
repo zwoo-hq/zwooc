@@ -3,6 +3,7 @@ package zwooc
 import (
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
@@ -39,8 +40,7 @@ func execFragment(conf config.Config, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	list := task.Flatten()
-	list.RemoveEmptyStagesAndTasks()
-	ui.NewRunner(list, viewOptions)
+	task.RemoveEmptyNodes()
+	ui.NewRunner(tasks.NewCollection(task), viewOptions)
 	return nil
 }

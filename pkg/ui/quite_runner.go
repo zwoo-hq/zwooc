@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
@@ -11,30 +12,48 @@ import (
 )
 
 type quiteView struct {
-	tasks         tasks.TaskList
-	currentState  runner.TaskRunnerStatus
-	currentRunner *runner.TaskRunner
+	tasks   tasks.Collection
+	runners []*runner.TaskTreeRunner
+	errs    []error
+	mu      sync.Mutex
 }
 
 // RunStatic runs a tasks.TaskList with a static ui suited for non TTY environments
-func newQuiteRunner(taskList tasks.TaskList, opts ViewOptions) {
+func newQuiteRunner(forest tasks.Collection, opts ViewOptions) {
 	model := &quiteView{
-		tasks: taskList,
+		tasks: forest,
+		errs:  []error{},
+		mu:    sync.Mutex{},
 	}
 
 	model.setupInterruptHandler()
 	execStart := time.Now()
 
-	for _, step := range taskList.Steps {
-		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
-		model.currentState = runner.TaskRunnerStatus{}
-		if err := model.currentRunner.Run(); err != nil {
-			HandleError(err)
-		}
+	concurrencyProvider := runner.NewSharedProvider(opts.MaxConcurrency)
+	wg := sync.WaitGroup{}
+
+	for _, tree := range forest {
+		runner := runner.NewTaskTreeRunner(tree, concurrencyProvider)
+		model.runners = append(model.runners, runner)
+		wg.Add(1)
+		go func() {
+			if err := runner.Start(); err != nil {
+				model.mu.Lock()
+				model.errs = append(model.errs, err)
+				model.mu.Unlock()
+			}
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	for _, err := range model.errs {
+		HandleError(err)
 	}
 
 	execEnd := time.Now()
-	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), taskList.Name, execEnd.Sub(execStart))
+	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), forest.GetName(), execEnd.Sub(execStart))
 }
 
 func (m *quiteView) setupInterruptHandler() {
@@ -42,10 +61,13 @@ func (m *quiteView) setupInterruptHandler() {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		for range c {
-			if m.currentRunner != nil {
-				m.currentRunner.Cancel()
-				break
+			for _, runner := range m.runners {
+				err := runner.Cancel()
+				m.mu.Lock()
+				m.errs = append(m.errs, err)
+				m.mu.Unlock()
 			}
+			break
 		}
 	}()
 }

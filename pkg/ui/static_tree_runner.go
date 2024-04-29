@@ -44,7 +44,8 @@ func NewStaticTreeRunner(tree *tasks.TaskTreeNode, opts ViewOptions) {
 	})
 
 	// setup new runner
-	model.currentRunner = runner.NewTaskTreeRunner(tree, opts.MaxConcurrency)
+	provider := runner.NewSharedProvider(opts.MaxConcurrency)
+	model.currentRunner = runner.NewTaskTreeRunner(tree, provider)
 	model.wg = sync.WaitGroup{}
 	model.wg.Add(1)
 	go model.ReceiveUpdates(model.currentRunner.Updates(), "│ ")

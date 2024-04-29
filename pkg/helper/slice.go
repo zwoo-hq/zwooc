@@ -31,3 +31,11 @@ func Concat[T any](slices ...[]T) []T {
 	}
 	return result
 }
+
+func MapTo[TIn any, TOut any](slice []TIn, mapper func(TIn) TOut) []TOut {
+	out := make([]TOut, len(slice))
+	for i, item := range slice {
+		out[i] = mapper(item)
+	}
+	return out
+}

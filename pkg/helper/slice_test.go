@@ -78,3 +78,22 @@ func TestConcat(t *testing.T) {
 		})
 	}
 }
+
+func TestMapTo(t *testing.T) {
+	tests := []struct {
+		name   string
+		slice  []int
+		mapper func(int) int
+		result []int
+	}{
+		{"should map slices", []int{1, 3, 5}, func(in int) int { return in + 1 }, []int{2, 4, 6}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := MapTo(tt.slice, tt.mapper); !slicesAreEqual(got, tt.result) {
+				t.Errorf("MapTo() = %v, want %v", got, tt.result)
+			}
+		})
+	}
+}
