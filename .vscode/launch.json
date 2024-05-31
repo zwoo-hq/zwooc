@@ -16,7 +16,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "./cmd/zwooc/main.go",
-      "args": ["exec", "test:a"]
+      "args": ["build", "-to", "-q", "dev"]
     }
   ]
 }

@@ -2,6 +2,7 @@ package runner
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -33,6 +34,8 @@ type TaskTreeRunner struct {
 	cancel chan bool
 	// cancelComplete is a channel that is used to signal that the cancel operation has completed.
 	cancelComplete chan error
+	// hasError is a flag that indicates whether an error occurred during the execution of the task tree.
+	hasError atomic.Bool
 
 	// mutex is used to synchronize access to the status tree.
 	mutex sync.RWMutex
@@ -50,7 +53,7 @@ func NewTaskTreeRunner(root *tasks.TaskTreeNode, p ConcurrencyProvider) *TaskTre
 		forwardCancel:  map[string]chan bool{},
 		tickets:        p,
 
-		updates:        make(chan *TreeStatusNode, 1),
+		updates:        make(chan *TreeStatusNode, 1000),
 		wasCanceled:    atomic.Bool{},
 		cancel:         make(chan bool),
 		cancelComplete: make(chan error),
@@ -100,6 +103,7 @@ func (r *TaskTreeRunner) setError(node *tasks.TaskTreeNode, err error) {
 	r.mutex.Lock()
 	statusNode := findStatus(r.statusTree, node)
 	statusNode.Error = err
+	r.hasError.Store(true)
 	r.mutex.Unlock()
 }
 
@@ -136,19 +140,26 @@ func (r *TaskTreeRunner) Start() error {
 
 			wg.Add(1)
 			taskCancel := make(chan bool, 1)
+			r.mutex.Lock()
 			r.forwardCancel[scheduledNode.NodeID()] = taskCancel
-
+			r.mutex.Unlock()
 			go func(task *tasks.TaskTreeNode, cancel <-chan bool) {
 				// acquire a ticket to run the task
+				fmt.Println("wait", task.NodeID())
 				ticket := r.tickets.Acquire()
+				fmt.Println("start", task.NodeID())
 				r.updateTaskStatus(task, StatusRunning)
 				if err := task.Main.Run(cancel); err != nil {
+					fmt.Println("error", task.NodeID(), err)
 					errMu.Lock()
 					errs = append(errs, err)
-					errMu.Unlock()
+					if !r.hasError.Load() {
+						// first node erroring -> close the channel
+						close(r.scheduledNodes)
+					}
 					r.setError(task, err)
 					r.updateTaskStatus(task, StatusError)
-					close(r.scheduledNodes)
+					errMu.Unlock()
 				} else if r.wasCanceled.Load() {
 					r.updateTaskStatus(task, StatusCanceled)
 				} else {
@@ -158,7 +169,10 @@ func (r *TaskTreeRunner) Start() error {
 						r.scheduleNext(task)
 					}
 				}
+				r.mutex.Lock()
 				delete(r.forwardCancel, task.NodeID())
+				r.mutex.Unlock()
+				fmt.Println("release ticket", task.NodeID())
 				// release the ticket to be used by another channel
 				r.tickets.Release(ticket)
 				wg.Done()
@@ -174,8 +188,8 @@ func (r *TaskTreeRunner) Start() error {
 		case <-r.cancel:
 			// run was canceled - forward cancel to all tasks
 			r.wasCanceled.Store(true)
-			close(r.scheduledNodes)
-			for _, cancel := range r.forwardCancel {
+			for id, cancel := range r.forwardCancel {
+				fmt.Println("cancel", id)
 				cancel <- true
 			}
 			return
@@ -203,6 +217,10 @@ func (r *TaskTreeRunner) Start() error {
 }
 
 func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
+	if r.hasError.Load() || r.wasCanceled.Load() {
+		return // fail fast
+	}
+
 	statusNode := findStatus(r.statusTree, node)
 	if isPre(statusNode) && helper.All(statusNode.Parent.PreNodes, func(n *TreeStatusNode) bool {
 		return n.status == StatusDone
