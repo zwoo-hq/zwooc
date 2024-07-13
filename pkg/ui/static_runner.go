@@ -63,12 +63,12 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 
 		if err != nil {
 			// handle runner error
-			fmt.Printf("╰─── %s %s failed\n", errorStyle.Render("✗"), step.Name)
+			fmt.Printf("╰─── %s %s failed\n", errorIcon, step.Name)
 			for key, status := range model.currentRunner.Status() {
 				if status == runner.StatusError {
-					fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), key)
-					fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), err)
-					fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
+					fmt.Printf(" %s %s failed\n", errorIcon, key)
+					fmt.Printf(" %s error: %s\n", errorIcon, err)
+					fmt.Printf(" %s stdout:\n", errorIcon)
 					// ligloss does some messy things to the string and cant handle \r\n on windows...
 					wrapper := canceledStyle.Render("===")
 					parts := strings.Split(wrapper, "===")
@@ -82,15 +82,15 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 		}
 
 		if model.wasCanceled {
-			fmt.Printf("╰─── %s %s was canceled - stopping execution\n", canceledStyle.Render("-"), step.Name)
+			fmt.Printf("╰─── %s %s was canceled - stopping execution\n", cancelIcon, step.Name)
 			return
 		}
-		fmt.Printf("╰─── %s %s successfully ran %s\n", successStyle.Render("✓"), step.Name, end.Sub(start))
+		fmt.Printf("╰─── %s %s successfully ran %s\n", successIcon, step.Name, end.Sub(start))
 
 	}
 
 	execEnd := time.Now()
-	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), taskList.Name, execEnd.Sub(execStart))
+	fmt.Printf(" %s %s completed successfully in %s\n", successIcon, taskList.Name, execEnd.Sub(execStart))
 }
 
 func (m *staticView) ReceiveUpdates(c <-chan runner.TaskRunnerStatus, prefix string) {

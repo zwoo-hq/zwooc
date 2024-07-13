@@ -140,10 +140,10 @@ func NewInteractiveRunner(forest tasks.Collection, opts ViewOptions, conf config
 	}
 
 	if m.wasCancelCanceled {
-		fmt.Printf("  %s canceled - stopping execution\n", canceledStyle.Render("-"))
+		fmt.Printf("  %s canceled - stopping execution\n", cancelIcon)
 		return nil
 	}
-	fmt.Printf(" %s completed successfully in %s\n", successStyle.Render("✓"), execEnd.Sub(execStart))
+	fmt.Printf(" %s completed successfully in %s\n", successIcon, execEnd.Sub(execStart))
 
 	return nil
 }

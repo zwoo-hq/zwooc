@@ -53,7 +53,7 @@ func newQuiteRunner(forest tasks.Collection, opts ViewOptions) {
 	}
 
 	execEnd := time.Now()
-	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), forest.GetName(), execEnd.Sub(execStart))
+	fmt.Printf(" %s %s completed successfully in %s\n", successIcon, forest.GetName(), execEnd.Sub(execStart))
 }
 
 func (m *quiteView) setupInterruptHandler() {

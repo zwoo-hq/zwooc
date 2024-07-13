@@ -9,7 +9,7 @@ func NewRunner(forest tasks.Collection, options ViewOptions) {
 	}
 
 	if options.DisableTUI {
-		// NewStaticTreeRunner(forest, options)
+		newStaticTreeRunner(forest, options)
 		return
 	}
 

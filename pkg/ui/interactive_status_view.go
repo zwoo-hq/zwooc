@@ -53,9 +53,9 @@ func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
 	if model.currentError != nil {
 		for _, status := range model.tasksState {
 			if status.status == runner.StatusError {
-				fmt.Printf(" %s %s failed\n", errorStyle.Render("✗"), status.name)
-				fmt.Printf(" %s error: %s\n", errorStyle.Render("✗"), model.currentError)
-				fmt.Printf(" %s stdout:\n", errorStyle.Render("✗"))
+				fmt.Printf(" %s %s failed\n", errorIcon, status.name)
+				fmt.Printf(" %s error: %s\n", errorIcon, model.currentError)
+				fmt.Printf(" %s stdout:\n", errorIcon)
 				wrapper := canceledStyle.Render("===")
 				parts := strings.Split(wrapper, "===")
 				fmt.Printf(parts[0])
@@ -67,10 +67,10 @@ func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
 		return nil
 	}
 	if model.wasCanceled {
-		fmt.Printf("  %s %s canceled - stopping execution\n", canceledStyle.Render("-"), model.currentRunner.Name())
+		fmt.Printf("  %s %s canceled - stopping execution\n", cancelIcon, model.currentRunner.Name())
 		return nil
 	}
-	fmt.Printf(" %s %s completed successfully in %s\n", successStyle.Render("✓"), list.Name, execEnd.Sub(execStart))
+	fmt.Printf(" %s %s completed successfully in %s\n", successIcon, list.Name, execEnd.Sub(execStart))
 	return nil
 }
 
