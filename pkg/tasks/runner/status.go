@@ -52,9 +52,11 @@ type TreeStatusNode struct {
 	// ID is a unique identifier of the original node.
 	ID string
 	// name is the name of the node.
-	name string
+	Name string
 	// status is the status of the node.
-	status TaskStatus
+	Status TaskStatus
+	// Main is the status of the main task that should be executed
+	Main *TreeStatusNode
 	// PreNodes is a collection of nodes that should be executed before the main task.
 	PreNodes []*TreeStatusNode
 	// PostNodes is a collection of nodes that should be executed after the main task.
@@ -63,14 +65,6 @@ type TreeStatusNode struct {
 	Parent *TreeStatusNode
 	// Error is the error that occurred during the execution of the main task.
 	Error error
-}
-
-func (s *TreeStatusNode) Name() string {
-	return s.name
-}
-
-func (s *TreeStatusNode) Status() TaskStatus {
-	return s.status
 }
 
 func (t *TreeStatusNode) Iterate(handler func(node *TreeStatusNode)) {

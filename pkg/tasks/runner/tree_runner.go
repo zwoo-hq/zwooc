@@ -94,7 +94,7 @@ func (r *TaskTreeRunner) Cancel() error {
 func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskStatus) {
 	r.mutex.Lock()
 	statusNode := findStatus(r.statusTree, node)
-	statusNode.status = status
+	statusNode.Status = status
 	r.updates <- statusNode
 	r.mutex.Unlock()
 }
@@ -223,7 +223,7 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 
 	statusNode := findStatus(r.statusTree, node)
 	if isPre(statusNode) && helper.All(statusNode.Parent.PreNodes, func(n *TreeStatusNode) bool {
-		return n.status == StatusDone
+		return n.Status == StatusDone
 	}) {
 		r.scheduledNodes <- node.Parent
 	} else if isMain(statusNode) {
@@ -237,20 +237,24 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 	}
 }
 
+func isMain(node *TreeStatusNode) bool {
+	return node.Parent != nil && node.Parent.Main.Name == node.Name
+}
+
 func isPre(node *TreeStatusNode) bool {
 	return node.Parent != nil && helper.IncludesBy(node.Parent.PreNodes, func(n *TreeStatusNode) bool {
-		return n.name == node.name
+		return n.Name == node.Name
 	})
 }
 
 func isPost(node *TreeStatusNode) bool {
 	return node.Parent != nil && helper.IncludesBy(node.Parent.PostNodes, func(n *TreeStatusNode) bool {
-		return n.name == node.name
+		return n.Name == node.Name
 	})
 }
 
-func isMain(node *TreeStatusNode) bool {
-	return !isPre(node) && !isPost(node)
+func isWrapper(node *TreeStatusNode) bool {
+	return !isPre(node) && !isPost(node) && !isMain(node)
 }
 
 func getStartingNodes(root *tasks.TaskTreeNode) []*tasks.TaskTreeNode {
@@ -268,12 +272,20 @@ func getStartingNodes(root *tasks.TaskTreeNode) []*tasks.TaskTreeNode {
 
 func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {
 	status := &TreeStatusNode{
-		name:      root.Name,
-		status:    StatusPending,
+		Name:      root.Name,
+		Status:    StatusPending,
 		PreNodes:  []*TreeStatusNode{},
 		PostNodes: []*TreeStatusNode{},
 		ID:        root.NodeID(),
 	}
+
+	main := &TreeStatusNode{
+		ID:     helper.BuildName(root.NodeID(), "main"),
+		Name:   root.Main.Name(),
+		Status: StatusPending,
+	}
+	status.Main = main
+	main.Parent = status
 
 	for _, pre := range root.Pre {
 		preStatus := buildStatus(pre)
@@ -291,7 +303,7 @@ func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {
 }
 
 func allDone(status *TreeStatusNode) bool {
-	if status.status != StatusPending && status.status != StatusRunning {
+	if status.Status != StatusPending && status.Status != StatusRunning {
 		return false
 	}
 
@@ -323,12 +335,12 @@ func findStatus(status *TreeStatusNode, target *tasks.TaskTreeNode) *TreeStatusN
 	current := status
 outer:
 	for i, name := range path[1:] {
-		if current.name == name {
+		if current.Name == name {
 			return current
 		}
 
 		for _, pre := range current.PreNodes {
-			if pre.name == name {
+			if pre.Name == name {
 				if i == len(path)-2 {
 					return pre
 				}
@@ -338,7 +350,7 @@ outer:
 		}
 
 		for _, post := range current.PostNodes {
-			if post.name == name {
+			if post.Name == name {
 				if i == len(path)-2 {
 					return post
 				}
