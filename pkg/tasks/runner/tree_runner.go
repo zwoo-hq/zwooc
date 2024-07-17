@@ -70,21 +70,6 @@ func (r *TaskTreeRunner) Status() *TreeStatusNode {
 	return r.statusTree
 }
 
-// ShutdownGracefully cancels the execution of the task tree.
-func (r *TaskTreeRunner) ShutdownGracefully() {
-	// if r.status == RunnerIdle {
-	// 	return
-	// }
-
-	// if r.status == RunnerPreparing {
-	// 	r.wasCanceled.Store(true)
-	// }
-
-	// if cancel, ok := r.forwardCancel[r.root.NodeID()]; ok {
-	// 	cancel <- true
-	// }
-}
-
 func (r *TaskTreeRunner) Cancel() error {
 	r.cancel <- true
 	close(r.cancel)
@@ -95,6 +80,9 @@ func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskS
 	r.mutex.Lock()
 	statusNode := findStatus(r.statusTree, node)
 	statusNode.Status = status
+	if statusNode.Parent != nil {
+		statusNode.Parent.Update()
+	}
 	r.updates <- statusNode
 	r.mutex.Unlock()
 }
@@ -222,12 +210,10 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 	}
 
 	statusNode := findStatus(r.statusTree, node)
-	if isPre(statusNode) && helper.All(statusNode.Parent.PreNodes, func(n *TreeStatusNode) bool {
-		return n.Status == StatusDone
-	}) {
+	if statusNode.IsPre() && allChildrenWithStatus(statusNode.Parent.PreNodes, StatusDone) {
 		r.scheduledNodes <- node.Parent
-	} else if isMain(statusNode) {
-		for _, post := range node.Post {
+	} else if statusNode.IsMain() {
+		for _, post := range node.Parent.Post {
 			for _, scheduled := range getStartingNodes(post) {
 				r.scheduledNodes <- scheduled
 			}
@@ -235,26 +221,6 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 	} else if allDone(r.statusTree) {
 		close(r.scheduledNodes)
 	}
-}
-
-func isMain(node *TreeStatusNode) bool {
-	return node.Parent != nil && node.Parent.Main.Name == node.Name
-}
-
-func isPre(node *TreeStatusNode) bool {
-	return node.Parent != nil && helper.IncludesBy(node.Parent.PreNodes, func(n *TreeStatusNode) bool {
-		return n.Name == node.Name
-	})
-}
-
-func isPost(node *TreeStatusNode) bool {
-	return node.Parent != nil && helper.IncludesBy(node.Parent.PostNodes, func(n *TreeStatusNode) bool {
-		return n.Name == node.Name
-	})
-}
-
-func isWrapper(node *TreeStatusNode) bool {
-	return !isPre(node) && !isPost(node) && !isMain(node)
 }
 
 func getStartingNodes(root *tasks.TaskTreeNode) []*tasks.TaskTreeNode {

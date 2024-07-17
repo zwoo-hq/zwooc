@@ -1,5 +1,7 @@
 package runner
 
+import "github.com/zwoo-hq/zwooc/pkg/helper"
+
 // A TaskStatus represents the status of a task.
 type TaskStatus int
 
@@ -75,4 +77,67 @@ func (t *TreeStatusNode) Iterate(handler func(node *TreeStatusNode)) {
 	for _, post := range t.PostNodes {
 		post.Iterate(handler)
 	}
+}
+
+func (t *TreeStatusNode) GetDirectChildren() []*TreeStatusNode {
+	children := []*TreeStatusNode{}
+	children = append(children, t.PreNodes...)
+	children = append(children, t.PostNodes...)
+	if t.Main != nil {
+		children = append(children, t.Main)
+	}
+	return children
+}
+
+func (t *TreeStatusNode) IsDone() bool {
+	return t.Status == StatusDone || t.Status == StatusError || t.Status == StatusCanceled
+}
+
+func (t *TreeStatusNode) Update() {
+	children := t.GetDirectChildren()
+
+	// applies the status based on children by precedence -> the order of the if statements matters
+	if someChildWithStatus(children, StatusError) {
+		t.Status = StatusError
+	} else if someChildWithStatus(children, StatusCanceled) {
+		t.Status = StatusCanceled
+	} else if allChildrenWithStatus(children, StatusDone) {
+		t.Status = StatusRunning
+	} else if someChildWithStatus(children, StatusRunning) {
+		t.Status = StatusRunning
+	} else if someChildWithStatus(children, StatusScheduled) {
+		t.Status = StatusScheduled
+	}
+
+	if t.Parent != nil {
+		t.Parent.Update()
+	}
+}
+
+func (t *TreeStatusNode) IsMain() bool {
+	return t.Parent != nil && t.Parent.Main.ID == t.ID
+}
+
+func (t *TreeStatusNode) IsPre() bool {
+	return t.Parent != nil && helper.IncludesBy(t.Parent.PreNodes, func(n *TreeStatusNode) bool {
+		return n.ID == t.ID
+	})
+}
+
+func (t *TreeStatusNode) IsPost() bool {
+	return t.Parent != nil && helper.IncludesBy(t.Parent.PostNodes, func(n *TreeStatusNode) bool {
+		return n.ID == t.ID
+	})
+}
+
+func someChildWithStatus(children []*TreeStatusNode, status TaskStatus) bool {
+	return helper.Some(children, func(n *TreeStatusNode) bool {
+		return n.Status == status
+	})
+}
+
+func allChildrenWithStatus(children []*TreeStatusNode, status TaskStatus) bool {
+	return helper.All(children, func(n *TreeStatusNode) bool {
+		return n.Status == status
+	})
 }

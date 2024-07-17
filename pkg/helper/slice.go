@@ -21,7 +21,15 @@ func All[T any](slice []T, predicate func(T) bool) bool {
 		}
 	}
 	return true
+}
 
+func Some[T any](slice []T, predicate func(T) bool) bool {
+	for _, item := range slice {
+		if predicate(item) {
+			return true
+		}
+	}
+	return false
 }
 
 func Concat[T any](slices ...[]T) []T {
