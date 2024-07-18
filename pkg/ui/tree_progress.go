@@ -27,7 +27,7 @@ func NewTreeProgressView(forest tasks.Collection, opts ViewOptions) *TreeProgres
 	statuses := make([]*TreeStatusNode, len(forest))
 	concurrencyProvider := runner.NewSharedProvider(opts.MaxConcurrency)
 	for i, node := range forest {
-		statuses[i] = treeToStatus(node)
+		// statuses[i] = treeToStatus(node)
 		runners[i] = runner.NewTaskTreeRunner(node, concurrencyProvider)
 	}
 	return &TreeProgressView{

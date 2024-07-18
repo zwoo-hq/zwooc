@@ -67,8 +67,8 @@ func newStaticTreeRunner(forest tasks.Collection, opts ViewOptions) {
 			// handle runner error
 			fmt.Printf("╰─── %s failed\n", errorIcon)
 			model.currentRunner.Status().Iterate(func(node *runner.TreeStatusNode) {
-				if node.Status() == runner.StatusError {
-					fmt.Printf(" %s %s failed\n", errorIcon, node.Name())
+				if node.AggregatedStatus == runner.StatusError {
+					fmt.Printf(" %s %s failed\n", errorIcon, node.Name)
 					fmt.Printf(" %s error: %s\n", errorIcon, err)
 					fmt.Printf(" %s stdout:\n", errorIcon)
 					// ligloss does some messy things to the string and cant handle \r\n on windows...
@@ -101,17 +101,17 @@ func newStaticTreeRunner(forest tasks.Collection, opts ViewOptions) {
 
 func (m *staticTreeView) ReceiveUpdates(c <-chan *runner.TreeStatusNode, prefix string) {
 	for node := range c {
-		switch node.Status() {
+		switch node.AggregatedStatus {
 		case runner.StatusPending:
-			fmt.Printf("%s %s %s\n", prefix, node.Name(), pendingStyle.Render("was scheduled"))
+			fmt.Printf("%s %s %s\n", prefix, node.Name, pendingStyle.Render("was scheduled"))
 		case runner.StatusRunning:
-			fmt.Printf("%s %s %s\n", prefix, node.Name(), runningStyle.Render("started running"))
+			fmt.Printf("%s %s %s\n", prefix, node.Name, runningStyle.Render("started running"))
 		case runner.StatusDone:
-			fmt.Printf("%s %s %s\n", prefix, node.Name(), successStyle.Render("finished"))
+			fmt.Printf("%s %s %s\n", prefix, node.Name, successStyle.Render("finished"))
 		case runner.StatusError:
-			fmt.Printf("%s %s %s\n", prefix, node.Name(), errorStyle.Render("failed"))
+			fmt.Printf("%s %s %s\n", prefix, node.Name, errorStyle.Render("failed"))
 		case runner.StatusCanceled:
-			fmt.Printf("%s %s %s\n", prefix, node.Name(), canceledStyle.Render("was canceled"))
+			fmt.Printf("%s %s %s\n", prefix, node.Name, canceledStyle.Render("was canceled"))
 		}
 	}
 	m.wg.Done()

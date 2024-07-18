@@ -1,45 +1,59 @@
 package runner
 
 import (
+	"io"
 	"testing"
 
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
+var (
+	tree = &tasks.TaskTreeNode{
+		Name: "root",
+		Main: tasks.NewTask("main", func(cancel <-chan bool, out io.Writer) error { return nil }),
+		Pre: []*tasks.TaskTreeNode{
+			{
+				Name: "pre1",
+				Main: tasks.NewTask("pre1t", func(cancel <-chan bool, out io.Writer) error { return nil }),
+				Pre: []*tasks.TaskTreeNode{
+					{
+						Main: tasks.NewTask("pre1-1t", func(cancel <-chan bool, out io.Writer) error { return nil }),
+						Name: "pre1-1",
+					},
+				},
+			},
+		},
+		Post: []*tasks.TaskTreeNode{
+			{
+				Name: "post1",
+				Main: tasks.NewTask("post1t", func(cancel <-chan bool, out io.Writer) error { return nil }),
+				Post: []*tasks.TaskTreeNode{
+					{
+						Main: tasks.NewTask("post1-1t", func(cancel <-chan bool, out io.Writer) error { return nil }),
+						Name: "post1-1",
+					},
+				},
+			},
+		},
+	}
+)
+
 func TestBuildStatus(t *testing.T) {
 	t.Run("builds status tree from tasks", func(t *testing.T) {
-		tree := &tasks.TaskTreeNode{
-			Name: "root",
-			Pre: []*tasks.TaskTreeNode{
-				{
-					Name: "pre1",
-					Pre: []*tasks.TaskTreeNode{
-						{
-							Name: "pre1-1",
-						},
-					},
-				},
-			},
-			Post: []*tasks.TaskTreeNode{
-				{
-					Name: "post1",
-					Post: []*tasks.TaskTreeNode{
-						{
-							Name: "post1-1",
-						},
-					},
-				},
-			},
-		}
-
 		status := buildStatus(tree)
 
 		if status.Name != "root" {
 			t.Errorf("Expected root, got %s", status.Name)
 		}
+		if status.MainName != "main" {
+			t.Errorf("Expected root, got %s", status.Name)
+		}
+		if status.AggregatedStatus != StatusPending {
+			t.Errorf("Expected pending, got %d", status.AggregatedStatus)
+		}
 		if status.Status != StatusPending {
-			t.Errorf("Expected pending, got %d", status.Status)
+			t.Errorf("Expected pending, got %d", status.AggregatedStatus)
 		}
 		if len(status.PreNodes) != 1 {
 			t.Errorf("Expected 1, got %d", len(status.PreNodes))
@@ -70,29 +84,6 @@ func TestBuildStatus(t *testing.T) {
 
 func TestFindStatus(t *testing.T) {
 	t.Run("finds status node for task", func(t *testing.T) {
-		tree := &tasks.TaskTreeNode{
-			Name: "root",
-			Pre: []*tasks.TaskTreeNode{
-				{
-					Name: "pre1",
-					Pre: []*tasks.TaskTreeNode{
-						{
-							Name: "pre1-1",
-						},
-					},
-				},
-			},
-			Post: []*tasks.TaskTreeNode{
-				{
-					Name: "post1",
-					Post: []*tasks.TaskTreeNode{
-						{
-							Name: "post1-1",
-						},
-					},
-				},
-			},
-		}
 		tree.Pre[0].Parent = tree
 		tree.Pre[0].Pre[0].Parent = tree.Pre[0]
 		tree.Post[0].Parent = tree

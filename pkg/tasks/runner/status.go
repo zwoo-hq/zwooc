@@ -53,12 +53,14 @@ type RunnerUpdate struct {
 type TreeStatusNode struct {
 	// ID is a unique identifier of the original node.
 	ID string
-	// name is the name of the node.
+	// Name is the name of the node.
 	Name string
-	// status is the status of the node.
+	// AggregatedStatus is the status of the node.
+	AggregatedStatus TaskStatus
+	// MainName is the name of the main task
+	MainName string
+	// Status is the status of the main task
 	Status TaskStatus
-	// Main is the status of the main task that should be executed
-	Main *TreeStatusNode
 	// PreNodes is a collection of nodes that should be executed before the main task.
 	PreNodes []*TreeStatusNode
 	// PostNodes is a collection of nodes that should be executed after the main task.
@@ -83,14 +85,12 @@ func (t *TreeStatusNode) GetDirectChildren() []*TreeStatusNode {
 	children := []*TreeStatusNode{}
 	children = append(children, t.PreNodes...)
 	children = append(children, t.PostNodes...)
-	if t.Main != nil {
-		children = append(children, t.Main)
-	}
+	children = append(children, t)
 	return children
 }
 
 func (t *TreeStatusNode) IsDone() bool {
-	return t.Status == StatusDone || t.Status == StatusError || t.Status == StatusCanceled
+	return t.AggregatedStatus == StatusDone || t.AggregatedStatus == StatusError || t.AggregatedStatus == StatusCanceled
 }
 
 func (t *TreeStatusNode) Update() {
@@ -98,24 +98,20 @@ func (t *TreeStatusNode) Update() {
 
 	// applies the status based on children by precedence -> the order of the if statements matters
 	if someChildWithStatus(children, StatusError) {
-		t.Status = StatusError
+		t.AggregatedStatus = StatusError
 	} else if someChildWithStatus(children, StatusCanceled) {
-		t.Status = StatusCanceled
+		t.AggregatedStatus = StatusCanceled
 	} else if allChildrenWithStatus(children, StatusDone) {
-		t.Status = StatusRunning
+		t.AggregatedStatus = StatusRunning
 	} else if someChildWithStatus(children, StatusRunning) {
-		t.Status = StatusRunning
+		t.AggregatedStatus = StatusRunning
 	} else if someChildWithStatus(children, StatusScheduled) {
-		t.Status = StatusScheduled
+		t.AggregatedStatus = StatusScheduled
 	}
 
 	if t.Parent != nil {
 		t.Parent.Update()
 	}
-}
-
-func (t *TreeStatusNode) IsMain() bool {
-	return t.Parent != nil && t.Parent.Main.ID == t.ID
 }
 
 func (t *TreeStatusNode) IsPre() bool {
@@ -132,12 +128,12 @@ func (t *TreeStatusNode) IsPost() bool {
 
 func someChildWithStatus(children []*TreeStatusNode, status TaskStatus) bool {
 	return helper.Some(children, func(n *TreeStatusNode) bool {
-		return n.Status == status
+		return n.AggregatedStatus == status
 	})
 }
 
 func allChildrenWithStatus(children []*TreeStatusNode, status TaskStatus) bool {
 	return helper.All(children, func(n *TreeStatusNode) bool {
-		return n.Status == status
+		return n.AggregatedStatus == status
 	})
 }

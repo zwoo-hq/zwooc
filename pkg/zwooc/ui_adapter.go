@@ -7,8 +7,8 @@ import (
 
 func treeToStatus(node *runner.TreeStatusNode) *ui.TreeStatusNode {
 	status := &ui.TreeStatusNode{
-		Name:     node.Name(),
-		Status:   node.Status(),
+		Name:     node.Name,
+		Status:   node.AggregatedStatus,
 		Children: make([]*ui.TreeStatusNode, 0),
 	}
 
@@ -27,21 +27,21 @@ func treeToStatus(node *runner.TreeStatusNode) *ui.TreeStatusNode {
 	}
 
 	mainNode := &ui.TreeStatusNode{
-		name:   node.ID,
-		status: runner.StatusPending,
+		Name:   node.MainName,
+		Status: node.Status,
 	}
-	status.children = append(status.children, mainNode)
+	status.Children = append(status.Children, mainNode)
 
-	if len(node.Post) > 0 {
+	if len(node.PostNodes) > 0 {
 		postWrapper := &ui.TreeStatusNode{
-			name:     "Post",
-			status:   runner.StatusPending,
-			children: make([]*ui.TreeStatusNode, len(node.Post)),
+			Name:     "Post",
+			Status:   runner.StatusPending,
+			Children: make([]*ui.TreeStatusNode, len(node.PostNodes)),
 		}
-		for i, child := range node.Post {
-			status.children[i] = treeToStatus(child)
+		for i, child := range node.PostNodes {
+			status.Children[i] = treeToStatus(child)
 		}
-		status.children = append(status.children, postWrapper)
+		status.Children = append(status.Children, postWrapper)
 	}
 
 	return status

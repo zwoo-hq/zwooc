@@ -6,7 +6,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -79,10 +78,8 @@ func (r *TaskTreeRunner) Cancel() error {
 func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskStatus) {
 	r.mutex.Lock()
 	statusNode := findStatus(r.statusTree, node)
-	statusNode.Status = status
-	if statusNode.Parent != nil {
-		statusNode.Parent.Update()
-	}
+	statusNode.AggregatedStatus = status
+	statusNode.Update()
 	r.updates <- statusNode
 	r.mutex.Unlock()
 }
@@ -210,10 +207,10 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 	}
 
 	statusNode := findStatus(r.statusTree, node)
-	if statusNode.IsPre() && allChildrenWithStatus(statusNode.Parent.PreNodes, StatusDone) {
-		r.scheduledNodes <- node.Parent
-	} else if statusNode.IsMain() {
-		for _, post := range node.Parent.Post {
+	if statusNode.IsPre() && allChildrenWithStatus(statusNode.PreNodes, StatusDone) {
+		r.scheduledNodes <- node
+	} else if !statusNode.IsPost() {
+		for _, post := range node.Post {
 			for _, scheduled := range getStartingNodes(post) {
 				r.scheduledNodes <- scheduled
 			}
@@ -238,20 +235,14 @@ func getStartingNodes(root *tasks.TaskTreeNode) []*tasks.TaskTreeNode {
 
 func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {
 	status := &TreeStatusNode{
-		Name:      root.Name,
-		Status:    StatusPending,
-		PreNodes:  []*TreeStatusNode{},
-		PostNodes: []*TreeStatusNode{},
-		ID:        root.NodeID(),
+		Name:             root.Name,
+		AggregatedStatus: StatusPending,
+		MainName:         root.Main.Name(),
+		Status:           StatusPending,
+		PreNodes:         []*TreeStatusNode{},
+		PostNodes:        []*TreeStatusNode{},
+		ID:               root.NodeID(),
 	}
-
-	main := &TreeStatusNode{
-		ID:     helper.BuildName(root.NodeID(), "main"),
-		Name:   root.Main.Name(),
-		Status: StatusPending,
-	}
-	status.Main = main
-	main.Parent = status
 
 	for _, pre := range root.Pre {
 		preStatus := buildStatus(pre)
@@ -269,7 +260,7 @@ func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {
 }
 
 func allDone(status *TreeStatusNode) bool {
-	if status.Status != StatusPending && status.Status != StatusRunning {
+	if status.AggregatedStatus != StatusPending && status.AggregatedStatus != StatusRunning {
 		return false
 	}
 
