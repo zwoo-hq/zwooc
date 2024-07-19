@@ -12,8 +12,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
+	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
-	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 	"github.com/zwoo-hq/zwooc/pkg/ui/textinput"
 )
 

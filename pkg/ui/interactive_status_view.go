@@ -9,8 +9,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
-	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 )
 
 type InteractiveTaskStatus struct {

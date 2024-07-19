@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
-	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
 )
 
 type staticView struct {

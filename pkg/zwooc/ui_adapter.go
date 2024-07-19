@@ -1,7 +1,7 @@
 package zwooc
 
 import (
-	"github.com/zwoo-hq/zwooc/pkg/tasks/runner"
+	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 )
 
