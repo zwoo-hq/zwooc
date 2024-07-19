@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -10,28 +9,23 @@ type TreeStatusProvider interface {
 }
 
 type TreeProgressView struct {
-	runner []*runner.TaskTreeRunner
-	status []*TreeStatusNode
+	status  []*TreeStatusNode
+	opts    ViewOptions
+	outputs map[string]*tasks.CommandCapturer
 }
 
 type TreeStatusNode struct {
 	ID       string
 	Name     string
 	Error    error
-	Status   runner.TaskStatus
+	Status   TaskStatus
 	Children []*TreeStatusNode
+	Task     tasks.Task
 }
 
-func NewTreeProgressView(forest tasks.Collection, opts ViewOptions) *TreeProgressView {
-	runners := make([]*runner.TaskTreeRunner, len(forest))
-	statuses := make([]*TreeStatusNode, len(forest))
-	concurrencyProvider := runner.NewSharedProvider(opts.MaxConcurrency)
-	for i, node := range forest {
-		// statuses[i] = treeToStatus(node)
-		runners[i] = runner.NewTaskTreeRunner(node, concurrencyProvider)
-	}
+func NewTreeProgressView(status TreeStatusProvider, opts ViewOptions) *TreeProgressView {
 	return &TreeProgressView{
-		runner: runners,
-		status: statuses,
+		status: status.Status(),
+		opts:   opts,
 	}
 }
