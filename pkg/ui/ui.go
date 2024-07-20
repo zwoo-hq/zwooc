@@ -36,3 +36,13 @@ const (
 	// StatusCanceled indicates that the task has been canceled.
 	StatusCanceled
 )
+
+type StatusUpdate struct {
+	NodeID string
+	Status TaskStatus
+}
+
+type GenericStatusProvider interface {
+	Status() StatusUpdate
+	Cancel()
+}
