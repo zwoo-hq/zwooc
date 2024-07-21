@@ -77,7 +77,7 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *TreeProgressView) listenToUpdates() tea.Msg {
-	return TreeProgressUpdateMsg(m.provider.Status())
+	return TreeProgressUpdateMsg(<-m.provider.status)
 }
 
 func (m *TreeProgressView) View() (s string) {

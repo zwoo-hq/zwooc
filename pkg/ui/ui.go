@@ -40,9 +40,41 @@ const (
 type StatusUpdate struct {
 	NodeID string
 	Status TaskStatus
+	Error  error
 }
 
-type GenericStatusProvider interface {
-	Status() StatusUpdate
-	Cancel()
+type GenericStatusProvider struct {
+	status chan StatusUpdate
+	cancel chan struct{}
+	done   chan error
+}
+
+func (g GenericStatusProvider) Start() {
+	// TODO: implement
+}
+
+func (g GenericStatusProvider) Cancel() {
+	g.cancel <- struct{}{}
+	close(g.cancel)
+}
+
+func (g GenericStatusProvider) UpdateStatus(update StatusUpdate) {
+	g.status <- update
+}
+
+func (g GenericStatusProvider) Done(err error) {
+	g.done <- err
+	close(g.done)
+	close(g.status)
+}
+
+func NewGenericStatusProvider() (GenericStatusProvider, chan<- struct{}) {
+	status := make(chan StatusUpdate)
+	cancel := make(chan struct{})
+	done := make(chan error)
+	return GenericStatusProvider{
+		status: status,
+		cancel: cancel,
+		done:   done,
+	}, cancel
 }
