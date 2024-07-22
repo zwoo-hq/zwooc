@@ -15,14 +15,14 @@ type TreeProgressView struct {
 	opts        ViewOptions
 	outputs     map[string]*tasks.CommandCapturer
 	status      map[string]TaskStatus
-	provider    GenericStatusProvider
+	provider    SimpleStatusProvider
 	mu          sync.RWMutex
 	wasCanceled bool
 }
 
 type TreeProgressUpdateMsg StatusUpdate
 
-func NewTreeProgressView(forest tasks.Collection, status GenericStatusProvider, opts ViewOptions) error {
+func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, opts ViewOptions) error {
 	model := TreeProgressView{
 		opts:     opts,
 		tasks:    forest,
@@ -44,6 +44,7 @@ func NewTreeProgressView(forest tasks.Collection, status GenericStatusProvider, 
 }
 
 func (m *TreeProgressView) Init() tea.Cmd {
+	m.provider.Start()
 	return tea.Batch(m.listenToUpdates)
 }
 

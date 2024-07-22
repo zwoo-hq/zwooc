@@ -12,5 +12,5 @@ type ViewOptions struct {
 	MaxConcurrency int
 
 	Forest         tasks.Collection
-	StatusProvider GenericStatusProvider
+	StatusProvider SimpleStatusProvider
 }

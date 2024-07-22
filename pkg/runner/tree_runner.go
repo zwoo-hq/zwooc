@@ -130,12 +130,12 @@ func (r *TaskTreeRunner) Start() error {
 			r.mutex.Unlock()
 			go func(task *tasks.TaskTreeNode, cancel <-chan bool) {
 				// acquire a ticket to run the task
-				fmt.Println("wait", task.NodeID())
+				// fmt.Println("wait", task.NodeID())
 				ticket := r.tickets.Acquire()
-				fmt.Println("start", task.NodeID())
+				// fmt.Println("start", task.NodeID())
 				r.updateTaskStatus(task, StatusRunning)
 				if err := task.Main.Run(cancel); err != nil {
-					fmt.Println("error", task.NodeID(), err)
+					// fmt.Println("error", task.NodeID(), err)
 					errMu.Lock()
 					errs = append(errs, err)
 					if !r.hasError.Load() {
@@ -157,7 +157,7 @@ func (r *TaskTreeRunner) Start() error {
 				r.mutex.Lock()
 				delete(r.forwardCancel, task.NodeID())
 				r.mutex.Unlock()
-				fmt.Println("release ticket", task.NodeID())
+				// fmt.Println("release ticket", task.NodeID())
 				// release the ticket to be used by another channel
 				r.tickets.Release(ticket)
 				wg.Done()

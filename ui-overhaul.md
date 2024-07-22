@@ -29,3 +29,6 @@ full screen:
 Global Options:
 
 - Quite Mode (default: false) - don't output anything
+
+
+TODO: TaskTreeRunner: if cancel errors this error should also be returned from Start()

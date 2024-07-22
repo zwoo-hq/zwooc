@@ -41,6 +41,7 @@ func execFragment(conf config.Config, c *cli.Context) error {
 	}
 
 	task.RemoveEmptyNodes()
-	ui.NewRunner(tasks.NewCollection(task), viewOptions)
+	provider := createSimpleForestRunner(tasks.NewCollection(task), viewOptions.MaxConcurrency)
+	ui.NewTreeProgressView(tasks.NewCollection(task), provider, viewOptions)
 	return nil
 }

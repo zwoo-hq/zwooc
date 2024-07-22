@@ -43,38 +43,56 @@ type StatusUpdate struct {
 	Error  error
 }
 
-type GenericStatusProvider struct {
+type SimpleStatusProvider struct {
 	status chan StatusUpdate
 	cancel chan struct{}
+	start  chan struct{}
 	done   chan error
 }
 
-func (g GenericStatusProvider) Start() {
-	// TODO: implement
+func (g SimpleStatusProvider) Start() {
+	g.start <- struct{}{}
+	close(g.start)
 }
 
-func (g GenericStatusProvider) Cancel() {
+func (g SimpleStatusProvider) Cancel() {
 	g.cancel <- struct{}{}
 	close(g.cancel)
 }
 
-func (g GenericStatusProvider) UpdateStatus(update StatusUpdate) {
+func (g SimpleStatusProvider) UpdateStatus(update StatusUpdate) {
 	g.status <- update
 }
 
-func (g GenericStatusProvider) Done(err error) {
+func (g SimpleStatusProvider) Done(err error) {
 	g.done <- err
 	close(g.done)
 	close(g.status)
 }
 
-func NewGenericStatusProvider() (GenericStatusProvider, chan<- struct{}) {
+func (g SimpleStatusProvider) OnStart(handler func()) {
+	go func() {
+		<-g.start
+		handler()
+	}()
+}
+
+func (g SimpleStatusProvider) OnCancel(handler func()) {
+	go func() {
+		<-g.cancel
+		handler()
+	}()
+}
+
+func NewSimpleStatusProvider() SimpleStatusProvider {
 	status := make(chan StatusUpdate)
 	cancel := make(chan struct{})
 	done := make(chan error)
-	return GenericStatusProvider{
+	start := make(chan struct{})
+	return SimpleStatusProvider{
 		status: status,
 		cancel: cancel,
 		done:   done,
-	}, cancel
+		start:  start,
+	}
 }
