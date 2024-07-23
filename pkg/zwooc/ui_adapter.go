@@ -27,6 +27,12 @@ func createSimpleForestRunner(forest tasks.Collection, maxConcurrency int) ui.Si
 				return currentRunner.Start()
 			})
 		}
+
+		// collect done
+		go func() {
+			err := errs.Wait()
+			statusProvider.Done(err)
+		}()
 	})
 
 	// forward cancel
@@ -45,12 +51,6 @@ func createSimpleForestRunner(forest tasks.Collection, maxConcurrency int) ui.Si
 			}
 		}()
 	}
-
-	// collect done
-	go func() {
-		err := errs.Wait()
-		statusProvider.Done(err)
-	}()
 
 	return statusProvider
 }

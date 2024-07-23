@@ -2,7 +2,6 @@ package runner
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -78,7 +77,7 @@ func (r *TaskTreeRunner) Cancel() error {
 func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskStatus) {
 	r.mutex.Lock()
 	statusNode := findStatus(r.statusTree, node)
-	statusNode.AggregatedStatus = status
+	statusNode.Status = status
 	statusNode.Update()
 	r.updates <- statusNode
 	r.mutex.Unlock()
@@ -173,8 +172,8 @@ func (r *TaskTreeRunner) Start() error {
 		case <-r.cancel:
 			// run was canceled - forward cancel to all tasks
 			r.wasCanceled.Store(true)
-			for id, cancel := range r.forwardCancel {
-				fmt.Println("cancel", id)
+			for _, cancel := range r.forwardCancel {
+				// fmt.Println("cancel", id)
 				cancel <- true
 			}
 			return
@@ -186,6 +185,7 @@ func (r *TaskTreeRunner) Start() error {
 
 	// start scheduling
 	wg.Add(1)
+
 	startingNodes := getStartingNodes(r.root)
 	for _, node := range startingNodes {
 		r.scheduledNodes <- node
@@ -207,16 +207,16 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 	}
 
 	statusNode := findStatus(r.statusTree, node)
-	if statusNode.IsPre() && allChildrenWithStatus(statusNode.PreNodes, StatusDone) {
-		r.scheduledNodes <- node
-	} else if !statusNode.IsPost() {
+	if statusNode.IsPre() && allChildrenWithStatus(statusNode.Parent.PreNodes, StatusDone) {
+		r.scheduledNodes <- node.Parent
+	} else if allDone(r.statusTree) {
+		close(r.scheduledNodes)
+	} else if !statusNode.IsPre() && !statusNode.IsPost() {
 		for _, post := range node.Post {
 			for _, scheduled := range getStartingNodes(post) {
 				r.scheduledNodes <- scheduled
 			}
 		}
-	} else if allDone(r.statusTree) {
-		close(r.scheduledNodes)
 	}
 }
 
@@ -260,7 +260,7 @@ func buildStatus(root *tasks.TaskTreeNode) *TreeStatusNode {
 }
 
 func allDone(status *TreeStatusNode) bool {
-	if status.AggregatedStatus != StatusPending && status.AggregatedStatus != StatusRunning {
+	if status.Status == StatusPending || status.Status == StatusRunning || status.Status == StatusScheduled {
 		return false
 	}
 

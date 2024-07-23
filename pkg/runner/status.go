@@ -85,7 +85,6 @@ func (t *TreeStatusNode) GetDirectChildren() []*TreeStatusNode {
 	children := []*TreeStatusNode{}
 	children = append(children, t.PreNodes...)
 	children = append(children, t.PostNodes...)
-	children = append(children, t)
 	return children
 }
 
@@ -95,6 +94,10 @@ func (t *TreeStatusNode) IsDone() bool {
 
 func (t *TreeStatusNode) Update() {
 	children := t.GetDirectChildren()
+	if len(children) == 0 {
+		t.AggregatedStatus = t.Status
+		return
+	}
 
 	// applies the status based on children by precedence -> the order of the if statements matters
 	if someChildWithStatus(children, StatusError) {

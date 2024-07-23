@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -18,6 +19,8 @@ type TreeProgressView struct {
 	provider    SimpleStatusProvider
 	mu          sync.RWMutex
 	wasCanceled bool
+	c           int
+	ups         []TreeProgressUpdateMsg
 }
 
 type TreeProgressUpdateMsg StatusUpdate
@@ -29,6 +32,7 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 		provider: status,
 		status:   map[string]TaskStatus{},
 		outputs:  map[string]*tasks.CommandCapturer{},
+		ups:      []TreeProgressUpdateMsg{},
 	}
 
 	model.setupDefaultStatus()
@@ -45,6 +49,8 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 
 func (m *TreeProgressView) Init() tea.Cmd {
 	m.provider.Start()
+	// TODO: dispatch start as command
+	// TODO: dispatch wait for done as command
 	return tea.Batch(m.listenToUpdates)
 }
 
@@ -72,6 +78,9 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Lock()
 		m.status[msg.NodeID] = msg.Status
 		m.mu.Unlock()
+		m.c++
+		m.ups = append(m.ups, msg)
+		return m, m.listenToUpdates
 	}
 
 	return m, nil
@@ -81,8 +90,20 @@ func (m *TreeProgressView) listenToUpdates() tea.Msg {
 	return TreeProgressUpdateMsg(<-m.provider.status)
 }
 
+type X struct {
+	N string
+	S TaskStatus
+}
+
 func (m *TreeProgressView) View() (s string) {
 	s += zwoocBranding + "\n"
+	s += "Updates received: " + fmt.Sprint(m.c) + "\n"
+	s += "U:" + fmt.Sprintf("%+v", helper.MapTo(m.ups, func(in TreeProgressUpdateMsg) X {
+		return X{
+			N: in.NodeID,
+			S: in.Status,
+		}
+	})) + "\n"
 	for _, tree := range m.tasks {
 		s += tree.Name + "\n"
 		tree.Iterate(func(node *tasks.TaskTreeNode) {
