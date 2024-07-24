@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"sync"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -19,11 +19,12 @@ type TreeProgressView struct {
 	provider    SimpleStatusProvider
 	mu          sync.RWMutex
 	wasCanceled bool
-	c           int
-	ups         []TreeProgressUpdateMsg
+	err         error
+	isDone      bool
 }
 
 type TreeProgressUpdateMsg StatusUpdate
+type TreeProgressDoneMsg struct{ error }
 
 func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, opts ViewOptions) error {
 	model := TreeProgressView{
@@ -32,7 +33,6 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 		provider: status,
 		status:   map[string]TaskStatus{},
 		outputs:  map[string]*tasks.CommandCapturer{},
-		ups:      []TreeProgressUpdateMsg{},
 	}
 
 	model.setupDefaultStatus()
@@ -44,17 +44,20 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 	}
 
 	// TODO: done -display cancel or error or success
+
+	fmt.Println("done!!")
 	return nil
 }
 
 func (m *TreeProgressView) Init() tea.Cmd {
-	m.provider.Start()
-	// TODO: dispatch start as command
-	// TODO: dispatch wait for done as command
-	return tea.Batch(m.listenToUpdates)
+	return tea.Batch(m.listenToUpdates, m.start)
 }
 
 func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+	if m.isDone {
+		return m, tea.Quit
+	}
+
 	switch msg := message.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -78,9 +81,15 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Lock()
 		m.status[msg.NodeID] = msg.Status
 		m.mu.Unlock()
-		m.c++
-		m.ups = append(m.ups, msg)
 		return m, m.listenToUpdates
+	case TreeProgressDoneMsg:
+		m.mu.Lock()
+		m.err = msg.error
+		m.isDone = true
+		m.mu.Unlock()
+		return m, tea.Tick(1, func(t time.Time) tea.Msg {
+			return nil
+		})
 	}
 
 	return m, nil
@@ -90,20 +99,22 @@ func (m *TreeProgressView) listenToUpdates() tea.Msg {
 	return TreeProgressUpdateMsg(<-m.provider.status)
 }
 
+func (m *TreeProgressView) start() tea.Msg {
+	m.provider.Start()
+	return TreeProgressDoneMsg{<-m.provider.done}
+}
+
 type X struct {
 	N string
 	S TaskStatus
 }
 
 func (m *TreeProgressView) View() (s string) {
+	if m.isDone {
+		return
+	}
+
 	s += zwoocBranding + "\n"
-	s += "Updates received: " + fmt.Sprint(m.c) + "\n"
-	s += "U:" + fmt.Sprintf("%+v", helper.MapTo(m.ups, func(in TreeProgressUpdateMsg) X {
-		return X{
-			N: in.NodeID,
-			S: in.Status,
-		}
-	})) + "\n"
 	for _, tree := range m.tasks {
 		s += tree.Name + "\n"
 		tree.Iterate(func(node *tasks.TaskTreeNode) {

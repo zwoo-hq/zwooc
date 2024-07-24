@@ -67,7 +67,6 @@ func (g SimpleStatusProvider) UpdateStatus(update StatusUpdate) {
 func (g SimpleStatusProvider) Done(err error) {
 	g.done <- err
 	close(g.done)
-	close(g.status)
 }
 
 func (g SimpleStatusProvider) OnStart(handler func()) {
