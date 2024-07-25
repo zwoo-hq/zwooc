@@ -18,6 +18,9 @@
         "$pre": {
           "fragments": ["print2"],
           "command": "echo 'pre'"
+        },
+        "$post": {
+          "fragments": ["test:a"]
         }
       }
     },

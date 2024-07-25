@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
@@ -20,7 +20,7 @@ type TreeProgressView struct {
 	mu          sync.RWMutex
 	wasCanceled bool
 	err         error
-	isDone      bool
+	clear       bool
 }
 
 type TreeProgressUpdateMsg StatusUpdate
@@ -54,10 +54,6 @@ func (m *TreeProgressView) Init() tea.Cmd {
 }
 
 func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
-	if m.isDone {
-		return m, tea.Quit
-	}
-
 	switch msg := message.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -85,11 +81,9 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	case TreeProgressDoneMsg:
 		m.mu.Lock()
 		m.err = msg.error
-		m.isDone = true
+		m.clear = true
 		m.mu.Unlock()
-		return m, tea.Tick(1, func(t time.Time) tea.Msg {
-			return nil
-		})
+		return m, tea.Quit
 	}
 
 	return m, nil
@@ -110,16 +104,14 @@ type X struct {
 }
 
 func (m *TreeProgressView) View() (s string) {
-	if m.isDone {
+	if m.clear {
 		return
 	}
 
-	s += zwoocBranding + "\n"
-	for _, tree := range m.tasks {
-		s += tree.Name + "\n"
-		tree.Iterate(func(node *tasks.TaskTreeNode) {
-			s += fmt.Sprintf("  %s -> %d \n", node.Name, m.status[node.NodeID()])
-		})
+	s += zwoocBranding
+	s += "- executing " + m.tasks.GetName() + "\n"
+	for i, tree := range m.tasks {
+		s += m.printNode(tree, "", i == len(m.tasks)-1)
 	}
 	return
 }
@@ -155,4 +147,51 @@ func (m *TreeProgressView) setupInterruptHandler() {
 		m.wasCanceled = true
 		m.mu.Unlock()
 	}()
+}
+
+func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) (s string) {
+	connector := "┬"
+	info := ""
+	if node.IsLeaf() {
+		connector = "─"
+		// is leaf node -> show status immediately
+		info = fmt.Sprintf("[%d]", m.status[node.NodeID()])
+	}
+
+	if isLast {
+		s += fmt.Sprintf("%s└%s%s %s\n", prefix, connector, node.Name, info)
+	} else {
+		s += fmt.Sprintf("%s├%s%s %s\n", prefix, connector, node.Name, info)
+	}
+
+	if node.IsLeaf() {
+		return
+	}
+
+	descendantPrefix := "│"
+	if isLast {
+		descendantPrefix = " "
+	}
+
+	if len(node.Pre) > 0 {
+		s += fmt.Sprintf("%s%s├┬%s\n", prefix, descendantPrefix, model.KeyPre)
+		for i, child := range node.Pre {
+			s += m.printNode(child, prefix+descendantPrefix+"│", i == len(node.Pre)-1)
+		}
+	}
+
+	if len(node.Post) > 0 {
+		s += fmt.Sprintf("%s%s├─%s [%d]\n", prefix, descendantPrefix, node.Main.Name(), m.status[node.NodeID()])
+	} else {
+		s += fmt.Sprintf("%s%s└─%s [%d]\n", prefix, descendantPrefix, node.Main.Name(), m.status[node.NodeID()])
+	}
+
+	if len(node.Post) > 0 {
+		s += fmt.Sprintf("%s%s└┬%s\n", prefix, descendantPrefix, model.KeyPost)
+		for i, child := range node.Post {
+			s += m.printNode(child, prefix+descendantPrefix+" ", i == len(node.Post)-1)
+		}
+	}
+
+	return
 }

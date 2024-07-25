@@ -30,6 +30,10 @@ func NewTaskTree(name string, mainTask Task, isLongRunning bool) *TaskTreeNode {
 	}
 }
 
+func (t TaskTreeNode) IsLeaf() bool {
+	return len(t.Pre) == 0 && len(t.Post) == 0
+}
+
 // AddPreChild adds a child node to the pre collection.
 // The child nodes parent is set to the current node.
 func (t *TaskTreeNode) AddPreChild(child ...*TaskTreeNode) {

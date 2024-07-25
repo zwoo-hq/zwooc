@@ -32,3 +32,4 @@ Global Options:
 
 
 TODO: TaskTreeRunner: if cancel errors this error should also be returned from Start()
+TODO: tree progress view show aggregated status
