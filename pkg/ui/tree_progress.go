@@ -6,21 +6,24 @@ import (
 	"os/signal"
 	"sync"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
 type TreeProgressView struct {
-	tasks       tasks.Collection
-	opts        ViewOptions
-	outputs     map[string]*tasks.CommandCapturer
-	status      map[string]TaskStatus
-	provider    SimpleStatusProvider
-	mu          sync.RWMutex
-	wasCanceled bool
-	err         error
-	clear       bool
+	tasks            tasks.Collection
+	opts             ViewOptions
+	outputs          map[string]*tasks.CommandCapturer
+	status           map[string]TaskStatus
+	provider         SimpleStatusProvider
+	mu               sync.RWMutex
+	wasCanceled      bool
+	err              error
+	clear            bool
+	scheduledSpinner spinner.Model
+	runningSpinner   spinner.Model
 }
 
 type TreeProgressUpdateMsg StatusUpdate
@@ -28,11 +31,13 @@ type TreeProgressDoneMsg struct{ error }
 
 func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, opts ViewOptions) error {
 	model := TreeProgressView{
-		opts:     opts,
-		tasks:    forest,
-		provider: status,
-		status:   map[string]TaskStatus{},
-		outputs:  map[string]*tasks.CommandCapturer{},
+		opts:             opts,
+		tasks:            forest,
+		provider:         status,
+		status:           map[string]TaskStatus{},
+		outputs:          map[string]*tasks.CommandCapturer{},
+		scheduledSpinner: spinner.New(spinner.WithSpinner(pendingTabSpinner)),
+		runningSpinner:   spinner.New(spinner.WithSpinner(runningTabSpinner)),
 	}
 
 	model.setupDefaultStatus()
@@ -50,7 +55,7 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 }
 
 func (m *TreeProgressView) Init() tea.Cmd {
-	return tea.Batch(m.listenToUpdates, m.start)
+	return tea.Batch(m.listenToUpdates, m.start, m.scheduledSpinner.Tick, m.runningSpinner.Tick)
 }
 
 func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
@@ -64,15 +69,14 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			m.mu.Unlock()
 			return m, nil
 		}
-	// case spinner.TickMsg:
-	// 	var cmd tea.Cmd
-	// 	for i := 0; i < len(m.tasksState); i++ {
-	// 		task := &m.tasksState[i]
-	// 		if task.spinner.ID() == msg.ID {
-	// 			task.spinner, cmd = task.spinner.Update(msg)
-	// 		}
-	// 	}
-	// 	return m, cmd
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		if msg.ID == m.scheduledSpinner.ID() {
+			m.scheduledSpinner, cmd = m.scheduledSpinner.Update(msg)
+		} else if msg.ID == m.runningSpinner.ID() {
+			m.runningSpinner, cmd = m.runningSpinner.Update(msg)
+		}
+		return m, cmd
 	case TreeProgressUpdateMsg:
 		m.mu.Lock()
 		m.status[msg.NodeID] = msg.Status
@@ -155,7 +159,20 @@ func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, is
 	if node.IsLeaf() {
 		connector = "─"
 		// is leaf node -> show status immediately
-		info = fmt.Sprintf("[%d]", m.status[node.NodeID()])
+	}
+	status := m.status[node.NodeID()]
+	if status == StatusRunning {
+		info = m.runningSpinner.View()
+	} else if status == StatusDone {
+		info = "✓"
+	} else if status == StatusError {
+		info = "✗"
+	} else if status == StatusCanceled {
+		info = "-"
+	} else if status == StatusScheduled {
+		info = m.scheduledSpinner.View()
+	} else if status == StatusPending {
+		info = m.scheduledSpinner.View() + "_"
 	}
 
 	if isLast {
@@ -181,9 +198,9 @@ func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, is
 	}
 
 	if len(node.Post) > 0 {
-		s += fmt.Sprintf("%s%s├─%s [%d]\n", prefix, descendantPrefix, node.Main.Name(), m.status[node.NodeID()])
+		s += fmt.Sprintf("%s%s├─%s %s\n", prefix, descendantPrefix, node.Main.Name(), info)
 	} else {
-		s += fmt.Sprintf("%s%s└─%s [%d]\n", prefix, descendantPrefix, node.Main.Name(), m.status[node.NodeID()])
+		s += fmt.Sprintf("%s%s└─%s %s\n", prefix, descendantPrefix, node.Main.Name(), info)
 	}
 
 	if len(node.Post) > 0 {
