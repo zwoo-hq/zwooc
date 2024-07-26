@@ -56,11 +56,18 @@ func createSimpleForestRunner(forest tasks.Collection, maxConcurrency int) ui.Si
 }
 
 func runnerToStatusProvider(updatedNode *runner.TreeStatusNode) ui.StatusUpdate {
-	return ui.StatusUpdate{
-		NodeID: updatedNode.ID,
-		Status: runnerStatusToUi(updatedNode.Status),
-		Error:  updatedNode.Error,
+	node := ui.StatusUpdate{
+		NodeID:           updatedNode.ID,
+		Status:           runnerStatusToUi(updatedNode.Status),
+		AggregatedStatus: runnerStatusToUi(updatedNode.AggregatedStatus),
+		Error:            updatedNode.Error,
 	}
+
+	if updatedNode.Parent != nil {
+		parentUpdate := runnerToStatusProvider(updatedNode.Parent)
+		node.Parent = &parentUpdate
+	}
+	return node
 }
 
 func runnerStatusToUi(status runner.TaskStatus) ui.TaskStatus {

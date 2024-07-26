@@ -17,6 +17,7 @@ type TreeProgressView struct {
 	opts             ViewOptions
 	outputs          map[string]*tasks.CommandCapturer
 	status           map[string]TaskStatus
+	aggregatedStatus map[string]TaskStatus
 	provider         SimpleStatusProvider
 	mu               sync.RWMutex
 	wasCanceled      bool
@@ -35,6 +36,7 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 		tasks:            forest,
 		provider:         status,
 		status:           map[string]TaskStatus{},
+		aggregatedStatus: map[string]TaskStatus{},
 		outputs:          map[string]*tasks.CommandCapturer{},
 		scheduledSpinner: spinner.New(spinner.WithSpinner(pendingTabSpinner)),
 		runningSpinner:   spinner.New(spinner.WithSpinner(runningTabSpinner)),
@@ -79,7 +81,7 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case TreeProgressUpdateMsg:
 		m.mu.Lock()
-		m.status[msg.NodeID] = msg.Status
+		m.updateProgress(msg)
 		m.mu.Unlock()
 		return m, m.listenToUpdates
 	case TreeProgressDoneMsg:
@@ -91,6 +93,14 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func (m *TreeProgressView) updateProgress(update TreeProgressUpdateMsg) {
+	m.status[update.NodeID] = update.Status
+	m.aggregatedStatus[update.NodeID] = update.AggregatedStatus
+	if update.Parent != nil {
+		m.updateProgress(TreeProgressUpdateMsg(*update.Parent))
+	}
 }
 
 func (m *TreeProgressView) listenToUpdates() tea.Msg {
@@ -125,6 +135,7 @@ func (m *TreeProgressView) setupDefaultStatus() {
 		tree.Iterate(func(node *tasks.TaskTreeNode) {
 			// set default status
 			m.status[node.NodeID()] = StatusPending
+			m.aggregatedStatus[node.NodeID()] = StatusPending
 			// capture the output of each task
 			cap := tasks.NewCapturer()
 			m.outputs[node.NodeID()] = cap
@@ -156,11 +167,12 @@ func (m *TreeProgressView) setupInterruptHandler() {
 func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) (s string) {
 	connector := "┬"
 	info := ""
+	status := m.aggregatedStatus[node.NodeID()]
 	if node.IsLeaf() {
 		connector = "─"
-		// is leaf node -> show status immediately
+		status = m.status[node.NodeID()]
 	}
-	status := m.status[node.NodeID()]
+
 	if status == StatusRunning {
 		info = m.runningSpinner.View()
 	} else if status == StatusDone {
@@ -175,10 +187,12 @@ func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, is
 		info = m.scheduledSpinner.View() + "_"
 	}
 
+	info += fmt.Sprintf(" (%d)", status)
+
 	if isLast {
-		s += fmt.Sprintf("%s└%s%s %s\n", prefix, connector, node.Name, info)
+		s += fmt.Sprintf("%s└%s%s %s\n", prefix, connector, node.NodeID(), info)
 	} else {
-		s += fmt.Sprintf("%s├%s%s %s\n", prefix, connector, node.Name, info)
+		s += fmt.Sprintf("%s├%s%s %s\n", prefix, connector, node.NodeID(), info)
 	}
 
 	if node.IsLeaf() {

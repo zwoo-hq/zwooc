@@ -38,9 +38,11 @@ const (
 )
 
 type StatusUpdate struct {
-	NodeID string
-	Status TaskStatus
-	Error  error
+	NodeID           string
+	Status           TaskStatus
+	AggregatedStatus TaskStatus
+	Error            error
+	Parent           *StatusUpdate
 }
 
 type SimpleStatusProvider struct {
