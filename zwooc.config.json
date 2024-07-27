@@ -9,7 +9,7 @@
         "dev": "echo 'BAR'"
       },
       "test:a": {
-        "$default": "echo 'default'",
+        "$default": "echo 'default' && sleep 3",
         "dev": "echo 'test:a'",
         "build:dev": "echo 'correct'"
       },

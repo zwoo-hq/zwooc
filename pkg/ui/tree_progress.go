@@ -23,8 +23,7 @@ type TreeProgressView struct {
 	wasCanceled      bool
 	err              error
 	clear            bool
-	scheduledSpinner spinner.Model
-	runningSpinner   spinner.Model
+	spinner          map[TaskStatus]spinner.Model
 }
 
 type TreeProgressUpdateMsg StatusUpdate
@@ -38,8 +37,7 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 		status:           map[string]TaskStatus{},
 		aggregatedStatus: map[string]TaskStatus{},
 		outputs:          map[string]*tasks.CommandCapturer{},
-		scheduledSpinner: spinner.New(spinner.WithSpinner(pendingTabSpinner)),
-		runningSpinner:   spinner.New(spinner.WithSpinner(runningTabSpinner)),
+		spinner:          map[TaskStatus]spinner.Model{},
 	}
 
 	model.setupDefaultStatus()
@@ -57,7 +55,7 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 }
 
 func (m *TreeProgressView) Init() tea.Cmd {
-	return tea.Batch(m.listenToUpdates, m.start, m.scheduledSpinner.Tick, m.runningSpinner.Tick)
+	return tea.Batch(m.listenToUpdates, m.start, m.setupSpinners())
 }
 
 func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
@@ -72,13 +70,13 @@ func (m *TreeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case spinner.TickMsg:
-		var cmd tea.Cmd
-		if msg.ID == m.scheduledSpinner.ID() {
-			m.scheduledSpinner, cmd = m.scheduledSpinner.Update(msg)
-		} else if msg.ID == m.runningSpinner.ID() {
-			m.runningSpinner, cmd = m.runningSpinner.Update(msg)
+		var cmds []tea.Cmd
+		for i, s := range m.spinner {
+			newModel, cmd := s.Update(msg)
+			m.spinner[i] = newModel
+			cmds = append(cmds, cmd)
 		}
-		return m, cmd
+		return m, tea.Batch(cmds...)
 	case TreeProgressUpdateMsg:
 		m.mu.Lock()
 		m.updateProgress(msg)
@@ -164,35 +162,43 @@ func (m *TreeProgressView) setupInterruptHandler() {
 	}()
 }
 
+func (m *TreeProgressView) setupSpinners() tea.Cmd {
+	pendingSpinner := spinner.New(spinner.WithSpinner(pendingTabSpinner), spinner.WithStyle(treePendingStyle))
+	scheduledSpinner := spinner.New(spinner.WithSpinner(pendingTabSpinner), spinner.WithStyle(treeScheduledStyle))
+	runningSpinner := spinner.New(spinner.WithSpinner(runningTabSpinner), spinner.WithStyle(treeRunningStyle))
+
+	m.spinner[StatusPending] = pendingSpinner
+	m.spinner[StatusScheduled] = scheduledSpinner
+	m.spinner[StatusRunning] = runningSpinner
+	m.spinner[StatusDone] = spinner.New(spinner.WithSpinner(spinner.Spinner{
+		Frames: []string{"✓ "},
+		FPS:    1,
+	}), spinner.WithStyle(treeSuccessStyle))
+	m.spinner[StatusError] = spinner.New(spinner.WithSpinner(spinner.Spinner{
+		Frames: []string{"✗ "},
+		FPS:    1,
+	}), spinner.WithStyle(treeErrorStyle))
+	m.spinner[StatusCanceled] = spinner.New(spinner.WithSpinner(spinner.Spinner{
+		Frames: []string{"- "},
+		FPS:    1,
+	}), spinner.WithStyle(treeCanceledStyle))
+
+	return tea.Batch(scheduledSpinner.Tick, runningSpinner.Tick, pendingSpinner.Tick)
+}
+
 func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) (s string) {
 	connector := "┬"
-	info := ""
 	status := m.aggregatedStatus[node.NodeID()]
 	if node.IsLeaf() {
 		connector = "─"
 		status = m.status[node.NodeID()]
 	}
 
-	if status == StatusRunning {
-		info = m.runningSpinner.View()
-	} else if status == StatusDone {
-		info = "✓"
-	} else if status == StatusError {
-		info = "✗"
-	} else if status == StatusCanceled {
-		info = "-"
-	} else if status == StatusScheduled {
-		info = m.scheduledSpinner.View()
-	} else if status == StatusPending {
-		info = m.scheduledSpinner.View() + "_"
-	}
-
-	info += fmt.Sprintf(" (%d)", status)
-
+	nodeStatus := m.spinner[status].View()
 	if isLast {
-		s += fmt.Sprintf("%s└%s%s %s\n", prefix, connector, node.NodeID(), info)
+		s += fmt.Sprintf("%s└%s%s %s\n", prefix, connector, node.Name, nodeStatus)
 	} else {
-		s += fmt.Sprintf("%s├%s%s %s\n", prefix, connector, node.NodeID(), info)
+		s += fmt.Sprintf("%s├%s%s %s\n", prefix, connector, node.Name, nodeStatus)
 	}
 
 	if node.IsLeaf() {
@@ -211,10 +217,11 @@ func (m *TreeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, is
 		}
 	}
 
+	mainStatus := m.spinner[m.status[node.NodeID()]].View()
 	if len(node.Post) > 0 {
-		s += fmt.Sprintf("%s%s├─%s %s\n", prefix, descendantPrefix, node.Main.Name(), info)
+		s += fmt.Sprintf("%s%s├─%s %s\n", prefix, descendantPrefix, node.Main.Name(), mainStatus)
 	} else {
-		s += fmt.Sprintf("%s%s└─%s %s\n", prefix, descendantPrefix, node.Main.Name(), info)
+		s += fmt.Sprintf("%s%s└─%s %s\n", prefix, descendantPrefix, node.Main.Name(), mainStatus)
 	}
 
 	if len(node.Post) > 0 {

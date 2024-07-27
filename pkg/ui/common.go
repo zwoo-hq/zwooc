@@ -103,6 +103,7 @@ var (
 		ANSI:      "0",
 	}).Bold(true).Padding(0, 2).Render("⚡ zwooc")
 	pendingStyle                  = lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
+	scheduledStyle                = lipgloss.NewStyle().Foreground(lipgloss.Color("250"))
 	runningStyle                  = lipgloss.NewStyle().Foreground(lipgloss.Color("75"))
 	successStyle                  = lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
 	errorStyle                    = lipgloss.NewStyle().Foreground(lipgloss.Color("124"))
@@ -119,6 +120,12 @@ var (
 	interactiveFullScreenTabStyle = runningStyle.Copy().Background(lipgloss.Color("237"))
 	interactiveHelpStyle          = graphInfoStyle.Copy()
 	interactiveTaskStyle          = stepStyle.Copy()
+	treePendingStyle              = pendingStyle.Copy()
+	treeScheduledStyle            = scheduledStyle.Copy()
+	treeRunningStyle              = runningStyle.Copy()
+	treeSuccessStyle              = successStyle.Copy()
+	treeErrorStyle                = errorStyle.Copy()
+	treeCanceledStyle             = canceledStyle.Copy()
 
 	successIcon = successStyle.Render("✓")
 	cancelIcon  = canceledStyle.Render("-")
