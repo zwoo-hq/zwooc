@@ -93,6 +93,12 @@ func (t *TreeStatusNode) IsDone() bool {
 }
 
 func (t *TreeStatusNode) Update() {
+	defer func() {
+		if t.Parent != nil {
+			t.Parent.Update()
+		}
+	}()
+
 	children := t.GetDirectChildren()
 	if len(children) == 0 {
 		t.AggregatedStatus = t.Status
@@ -110,10 +116,6 @@ func (t *TreeStatusNode) Update() {
 		t.AggregatedStatus = StatusRunning
 	} else if someChildWithStatus(children, StatusScheduled) {
 		t.AggregatedStatus = StatusScheduled
-	}
-
-	if t.Parent != nil {
-		t.Parent.Update()
 	}
 }
 
