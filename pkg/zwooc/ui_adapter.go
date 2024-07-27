@@ -1,13 +1,19 @@
 package zwooc
 
 import (
+	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
 	"golang.org/x/sync/errgroup"
 )
 
-func createSimpleForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleStatusProvider {
+func createRunner(forest tasks.Collection, options config.RunnerOptions) ui.SimpleStatusProvider {
+	// TODO: implement legacy runner
+	return createForestRunner(forest, options.MaxConcurrency)
+}
+
+func createForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleStatusProvider {
 	concurrencyProvider := runner.NewSharedProvider(maxConcurrency)
 	runners := []*runner.TaskTreeRunner{}
 	// create a new error group

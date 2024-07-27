@@ -33,6 +33,7 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	}
 
 	viewOptions := getViewOptions(c)
+	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	profileKey := c.Args().First()
 	allTasks, err := conf.LoadProfile(profileKey, runMode, ctx)
@@ -47,7 +48,8 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	if runMode == model.ModeWatch || runMode == model.ModeRun || len(allTasks) > 1 {
 		ui.NewInteractiveRunner(allTasks, viewOptions, conf)
 	} else {
-		ui.NewRunner(allTasks, viewOptions)
+		provider := createRunner(allTasks, runnerOptions)
+		ui.NewRunner(allTasks, provider, viewOptions)
 	}
 	return nil
 }

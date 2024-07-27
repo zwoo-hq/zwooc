@@ -11,6 +11,11 @@ type (
 		ExtraArgs []string
 	}
 
+	RunnerOptions struct {
+		MaxConcurrency  int
+		UseLegacyRunner bool
+	}
+
 	loadingContext struct {
 		skipHooks    bool
 		excludedKeys []string

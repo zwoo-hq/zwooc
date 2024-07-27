@@ -3,6 +3,7 @@ package zwooc
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
@@ -76,6 +77,24 @@ func getLoadOptions(c *cli.Context, extraArgs []string) config.LoadOptions {
 		Exclude:   c.StringSlice("exclude"),
 		ExtraArgs: extraArgs,
 	}
+}
+
+func getRunnerOptions(c *cli.Context) config.RunnerOptions {
+	runnerOptions := config.RunnerOptions{
+		MaxConcurrency:  c.Int("max-concurrency"),
+		UseLegacyRunner: c.Bool("legacy-runner"),
+	}
+
+	if c.Bool("serial") {
+		runnerOptions.MaxConcurrency = 1
+	}
+
+	if runnerOptions.MaxConcurrency == 0 {
+		// set number of CPUs as default
+		runnerOptions.MaxConcurrency = runtime.NumCPU()
+	}
+
+	return runnerOptions
 }
 
 func getViewOptions(c *cli.Context) ui.ViewOptions {

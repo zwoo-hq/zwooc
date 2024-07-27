@@ -207,16 +207,18 @@ func (r *TaskTreeRunner) scheduleNext(node *tasks.TaskTreeNode) {
 	}
 
 	statusNode := findStatus(r.statusTree, node)
-	if statusNode.IsPre() && allChildrenWithStatus(statusNode.Parent.PreNodes, StatusDone) {
-		r.scheduledNodes <- node.Parent
-	} else if allDone(r.statusTree) {
+	if allDone(r.statusTree) {
 		close(r.scheduledNodes)
-	} else if !statusNode.IsPre() && !statusNode.IsPost() {
+	} else if len(statusNode.PostNodes) > 0 {
 		for _, post := range node.Post {
 			for _, scheduled := range getStartingNodes(post) {
 				r.scheduledNodes <- scheduled
 			}
 		}
+	} else if statusNode.IsPre() && allChildrenWithStatus(statusNode.Parent.PreNodes, StatusDone) {
+		r.scheduledNodes <- node.Parent
+	} else if statusNode.IsPost() && allChildrenWithStatus(statusNode.Parent.PostNodes, StatusDone) {
+		r.scheduledNodes <- node.Parent.Parent
 	}
 }
 
