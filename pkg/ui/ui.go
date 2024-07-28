@@ -49,10 +49,11 @@ type StatusUpdate struct {
 }
 
 type SimpleStatusProvider struct {
-	status chan StatusUpdate
-	cancel chan struct{}
-	start  chan struct{}
-	done   chan error
+	status      chan StatusUpdate
+	cancel      chan struct{}
+	wasCanceled bool
+	start       chan struct{}
+	done        chan error
 }
 
 func (g SimpleStatusProvider) Start() {
@@ -61,8 +62,11 @@ func (g SimpleStatusProvider) Start() {
 }
 
 func (g SimpleStatusProvider) Cancel() {
-	g.cancel <- struct{}{}
-	close(g.cancel)
+	if !g.wasCanceled {
+		g.cancel <- struct{}{}
+		close(g.cancel)
+		g.wasCanceled = true
+	}
 }
 
 func (g SimpleStatusProvider) UpdateStatus(update StatusUpdate) {
