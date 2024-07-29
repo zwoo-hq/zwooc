@@ -26,7 +26,7 @@ type TreeProgressView struct {
 	spinner          map[TaskStatus]spinner.Model
 }
 
-type TreeProgressUpdateMsg StatusNode
+type TreeProgressUpdateMsg StatusUpdate
 type TreeProgressDoneMsg struct{ error }
 
 func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, opts ViewOptions) error {

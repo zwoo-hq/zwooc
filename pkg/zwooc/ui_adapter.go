@@ -61,8 +61,8 @@ func createForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleSt
 	return statusProvider
 }
 
-func runnerToStatusProvider(updatedNode *runner.TreeStatusNode) ui.StatusNode {
-	node := ui.StatusNode{
+func runnerToStatusProvider(updatedNode *runner.TreeStatusNode) ui.StatusUpdate {
+	node := ui.StatusUpdate{
 		NodeID:           updatedNode.ID,
 		Status:           runnerStatusToUi(updatedNode.Status),
 		AggregatedStatus: runnerStatusToUi(updatedNode.AggregatedStatus),
