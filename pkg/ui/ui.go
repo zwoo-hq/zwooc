@@ -10,16 +10,14 @@ func NewRunner(forest tasks.Collection, provider SimpleStatusProvider, options V
 	}
 
 	if options.DisableTUI {
-		// TODO: use provided runner
-		newStaticTreeRunner(forest, options)
+		newStaticTreeRunner(forest, provider, options)
 		return
 	}
 
 	// try interactive view
 	if err := NewTreeProgressView(forest, provider, options); err != nil {
 		// fall back to static view
-		// TODO: use provided runner
-		newStaticTreeRunner(forest, options)
+		newStaticTreeRunner(forest, provider, options)
 	}
 }
 
@@ -61,16 +59,20 @@ func (g SimpleStatusProvider) Start() {
 	close(g.start)
 }
 
-func (g SimpleStatusProvider) Cancel() {
+func (g *SimpleStatusProvider) Cancel() {
 	if !g.wasCanceled {
+		g.wasCanceled = true
 		g.cancel <- struct{}{}
 		close(g.cancel)
-		g.wasCanceled = true
 	}
 }
 
 func (g SimpleStatusProvider) UpdateStatus(update StatusUpdate) {
 	g.status <- update
+}
+
+func (g SimpleStatusProvider) CloseUpdates() {
+	close(g.status)
 }
 
 func (g SimpleStatusProvider) Done(err error) {

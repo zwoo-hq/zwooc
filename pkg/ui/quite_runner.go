@@ -62,10 +62,7 @@ func (m *quiteView) setupInterruptHandler() {
 	go func() {
 		for range c {
 			for _, runner := range m.runners {
-				err := runner.Cancel()
-				m.mu.Lock()
-				m.errs = append(m.errs, err)
-				m.mu.Unlock()
+				runner.Cancel()
 			}
 			break
 		}

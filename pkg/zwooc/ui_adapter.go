@@ -1,6 +1,8 @@
 package zwooc
 
 import (
+	"sync"
+
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/runner"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
@@ -49,14 +51,22 @@ func createForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleSt
 	})
 
 	// forward updates
+	updatesWg := sync.WaitGroup{}
 	for _, r := range runners {
 		currentRunner := r
+		updatesWg.Add(1)
 		go func() {
 			for update := range currentRunner.Updates() {
 				statusProvider.UpdateStatus(runnerToStatusProvider(update))
 			}
+			updatesWg.Done()
 		}()
 	}
+
+	go func() {
+		updatesWg.Wait()
+		statusProvider.CloseUpdates()
+	}()
 
 	return statusProvider
 }

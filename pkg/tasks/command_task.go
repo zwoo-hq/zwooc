@@ -87,7 +87,7 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 		} else {
 			err = exec.Command("pkill", "-P", strconv.Itoa(ct.cmd.Process.Pid)).Run()
 		}
-		fmt.Println("killed", ct.cmd.Process.Pid, err)
+		// err = syscall.Kill(ct.cmd.Process.Pid, syscall.SIGKILL)
 		if err != nil {
 			// fall back to builtin kill
 			if err := ct.cmd.Process.Kill(); err != nil {

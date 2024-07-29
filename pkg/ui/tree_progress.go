@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -49,6 +50,9 @@ func NewTreeProgressView(forest tasks.Collection, status SimpleStatusProvider, o
 	}
 
 	// TODO: done -display cancel or error or success
+	if errors.Is(model.err, tasks.ErrCancelled) {
+		fmt.Println("cancelled")
+	}
 
 	fmt.Println("done!!")
 	return nil

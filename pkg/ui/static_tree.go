@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"sync"
-	"time"
 
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
@@ -27,10 +26,10 @@ func newStaticTreeRunner(forest tasks.Collection, provider SimpleStatusProvider,
 
 	fmt.Printf("%s - %s\n", zwoocBranding, forest.GetName())
 	model.setupInterruptHandler()
-	execStart := time.Now()
-	hasError := false
+	// execStart := time.Now()
+	// hasError := false
 
-	start := time.Now()
+	// start := time.Now()
 	outputs := map[string]*tasks.CommandCapturer{}
 
 	// setup task pipes
@@ -58,7 +57,7 @@ func newStaticTreeRunner(forest tasks.Collection, provider SimpleStatusProvider,
 
 	// wait until everything is completed
 	model.wg.Wait()
-	execEnd := time.Now()
+	// execEnd := time.Now()
 
 	// TODO: add option in provider to find all errors
 	// if model.err != nil {
@@ -110,6 +109,7 @@ func (m *staticTreeView) ReceiveUpdates(c <-chan StatusUpdate, prefix string) {
 			fmt.Printf("%s %s %s\n", prefix, node.NodeID, canceledStyle.Render("was canceled"))
 		}
 	}
+	fmt.Println("updates done")
 	m.wg.Done()
 }
 
@@ -120,6 +120,7 @@ func (m *staticTreeView) WaitForDone() {
 		m.err = err
 		m.mu.Unlock()
 	}
+	m.wg.Done()
 }
 
 func (m *staticTreeView) printFinalStatus() {
