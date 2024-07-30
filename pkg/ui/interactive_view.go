@@ -19,7 +19,7 @@ type InteractiveTreeView struct {
 	outputs          map[string]*tasks.CommandCapturer
 	status           map[string]TaskStatus
 	aggregatedStatus map[string]TaskStatus
-	provider         SimpleStatusProvider
+	provider         *SimpleStatusProvider
 	mu               sync.RWMutex
 	wasCanceled      bool
 	err              error
@@ -30,7 +30,7 @@ type InteractiveTreeView struct {
 type TreeProgressUpdateMsg StatusUpdate
 type TreeProgressDoneMsg struct{ error }
 
-func NewInteractiveTreeView(forest tasks.Collection, status SimpleStatusProvider, opts ViewOptions) error {
+func NewInteractiveTreeView(forest tasks.Collection, status *SimpleStatusProvider, opts ViewOptions) error {
 	model := InteractiveTreeView{
 		opts:             opts,
 		tasks:            forest,
@@ -125,7 +125,7 @@ func (m *InteractiveTreeView) View() (s string) {
 	}
 
 	s += zwoocBranding
-	s += "- executing " + m.tasks.GetName() + "\n"
+	s += " executing " + m.tasks.GetName() + "\n"
 	for i, tree := range m.tasks {
 		s += m.printNode(tree, "", i == len(m.tasks)-1)
 	}

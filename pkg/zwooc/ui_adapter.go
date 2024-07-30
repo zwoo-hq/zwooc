@@ -10,11 +10,11 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func createRunner(forest tasks.Collection, options config.RunnerOptions) ui.SimpleStatusProvider {
+func createRunner(forest tasks.Collection, options config.RunnerOptions) *ui.SimpleStatusProvider {
 	return createForestRunner(forest, options.MaxConcurrency)
 }
 
-func createForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleStatusProvider {
+func createForestRunner(forest tasks.Collection, maxConcurrency int) *ui.SimpleStatusProvider {
 	concurrencyProvider := runner.NewSharedProvider(maxConcurrency)
 	runners := []*runner.TaskTreeRunner{}
 	// create a new error group
@@ -67,7 +67,7 @@ func createForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleSt
 		statusProvider.CloseUpdates()
 	}()
 
-	return statusProvider
+	return &statusProvider
 }
 
 func runnerToStatusProvider(updatedNode *runner.TreeStatusNode) ui.StatusUpdate {

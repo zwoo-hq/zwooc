@@ -14,14 +14,14 @@ import (
 
 type staticTreeView struct {
 	forest      tasks.Collection
-	provider    SimpleStatusProvider
+	provider    *SimpleStatusProvider
 	wasCanceled bool
 	err         error
 	wg          sync.WaitGroup
 	mu          sync.RWMutex
 }
 
-func newStaticTreeRunner(forest tasks.Collection, provider SimpleStatusProvider, opts ViewOptions) {
+func newStaticTreeView(forest tasks.Collection, provider *SimpleStatusProvider, opts ViewOptions) {
 	model := &staticTreeView{
 		forest:   forest,
 		provider: provider,
