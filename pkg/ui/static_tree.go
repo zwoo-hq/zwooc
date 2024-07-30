@@ -77,15 +77,6 @@ func newStaticTreeRunner(forest tasks.Collection, provider SimpleStatusProvider,
 	} else {
 		fmt.Printf("%s %s %s completed after  %s\n", zwoocBranding, successIcon, forest.GetName(), execEnd.Sub(execStart))
 	}
-
-	// if hasError {
-	// 	fmt.Printf("%s %s %s errored after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
-	// 	os.Exit(1)
-	// } else if model.wasCanceled {
-	// 	fmt.Printf("%s %s %s was canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
-	// } else {
-	// 	fmt.Printf("%s %s %s completed in %s\n", zwoocBranding, successIcon, forest.GetName(), execEnd.Sub(execStart))
-	// }
 }
 
 func (m *staticTreeView) ReceiveUpdates(c <-chan StatusUpdate, prefix string) {

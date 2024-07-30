@@ -10,37 +10,6 @@ import (
 )
 
 var (
-	pendingSpinner = spinner.Spinner{
-		Frames: []string{
-			"▰▱▱▱▱",
-			"▱▰▱▱▱",
-			"▱▱▰▱▱",
-			"▱▱▱▰▱",
-			"▱▱▱▱▰",
-			"▱▱▱▰▱",
-			"▱▱▰▱▱",
-			"▱▰▱▱▱",
-			"▰▱▱▱▱",
-		},
-		FPS: time.Second / 6,
-	}
-
-	runningSpinner = spinner.Spinner{
-		Frames: []string{
-			"▱▱▱▱▱",
-			"▰▱▱▱▱",
-			"▰▰▱▱▱",
-			"▰▰▰▱▱",
-			"▰▰▰▰▰",
-			"▱▰▰▰▰",
-			"▱▱▰▰▰",
-			"▱▱▱▰▰",
-			"▱▱▱▱▰",
-			"▱▱▱▱▱",
-		},
-		FPS: time.Second / 8,
-	}
-
 	shutdownTabSpinner = spinner.Spinner{
 		Frames: []string{
 			"⣿⣿",
