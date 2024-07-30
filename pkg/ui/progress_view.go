@@ -13,7 +13,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-type InteractiveTreeView struct {
+type treeProgressView struct {
 	tasks            tasks.Collection
 	opts             ViewOptions
 	outputs          map[string]*tasks.CommandCapturer
@@ -27,11 +27,11 @@ type InteractiveTreeView struct {
 	spinner          map[TaskStatus]spinner.Model
 }
 
-type TreeProgressUpdateMsg StatusUpdate
-type TreeProgressDoneMsg struct{ error }
+type treeProgressUpdateMsg StatusUpdate
+type treeProgressDoneMsg struct{ error }
 
-func NewInteractiveTreeView(forest tasks.Collection, status *SimpleStatusProvider, opts ViewOptions) error {
-	model := InteractiveTreeView{
+func newTreeProgressView(forest tasks.Collection, status *SimpleStatusProvider, opts ViewOptions) error {
+	model := treeProgressView{
 		opts:             opts,
 		tasks:            forest,
 		provider:         status,
@@ -58,11 +58,11 @@ func NewInteractiveTreeView(forest tasks.Collection, status *SimpleStatusProvide
 	return nil
 }
 
-func (m *InteractiveTreeView) Init() tea.Cmd {
+func (m *treeProgressView) Init() tea.Cmd {
 	return tea.Batch(m.listenToUpdates, m.start, m.setupSpinners())
 }
 
-func (m *InteractiveTreeView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
+func (m *treeProgressView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := message.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -81,12 +81,12 @@ func (m *InteractiveTreeView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 		return m, tea.Batch(cmds...)
-	case TreeProgressUpdateMsg:
+	case treeProgressUpdateMsg:
 		m.mu.Lock()
 		m.updateProgress(msg)
 		m.mu.Unlock()
 		return m, m.listenToUpdates
-	case TreeProgressDoneMsg:
+	case treeProgressDoneMsg:
 		m.mu.Lock()
 		m.err = msg.error
 		m.clear = true
@@ -97,21 +97,21 @@ func (m *InteractiveTreeView) Update(message tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *InteractiveTreeView) updateProgress(update TreeProgressUpdateMsg) {
+func (m *treeProgressView) updateProgress(update treeProgressUpdateMsg) {
 	m.status[update.NodeID] = update.Status
 	m.aggregatedStatus[update.NodeID] = update.AggregatedStatus
 	if update.Parent != nil {
-		m.updateProgress(TreeProgressUpdateMsg(*update.Parent))
+		m.updateProgress(treeProgressUpdateMsg(*update.Parent))
 	}
 }
 
-func (m *InteractiveTreeView) listenToUpdates() tea.Msg {
-	return TreeProgressUpdateMsg(<-m.provider.status)
+func (m *treeProgressView) listenToUpdates() tea.Msg {
+	return treeProgressUpdateMsg(<-m.provider.status)
 }
 
-func (m *InteractiveTreeView) start() tea.Msg {
+func (m *treeProgressView) start() tea.Msg {
 	m.provider.Start()
-	return TreeProgressDoneMsg{<-m.provider.done}
+	return treeProgressDoneMsg{<-m.provider.done}
 }
 
 type X struct {
@@ -119,7 +119,7 @@ type X struct {
 	S TaskStatus
 }
 
-func (m *InteractiveTreeView) View() (s string) {
+func (m *treeProgressView) View() (s string) {
 	if m.clear {
 		return
 	}
@@ -132,7 +132,7 @@ func (m *InteractiveTreeView) View() (s string) {
 	return
 }
 
-func (m *InteractiveTreeView) setupDefaultStatus() {
+func (m *treeProgressView) setupDefaultStatus() {
 	for _, tree := range m.tasks {
 		tree.Iterate(func(node *tasks.TaskTreeNode) {
 			// set default status
@@ -154,7 +154,7 @@ func (m *InteractiveTreeView) setupDefaultStatus() {
 	}
 }
 
-func (m *InteractiveTreeView) setupInterruptHandler() {
+func (m *treeProgressView) setupInterruptHandler() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -166,7 +166,7 @@ func (m *InteractiveTreeView) setupInterruptHandler() {
 	}()
 }
 
-func (m *InteractiveTreeView) setupSpinners() tea.Cmd {
+func (m *treeProgressView) setupSpinners() tea.Cmd {
 	pendingSpinner := spinner.New(spinner.WithSpinner(pendingTabSpinner), spinner.WithStyle(treePendingStyle))
 	scheduledSpinner := spinner.New(spinner.WithSpinner(pendingTabSpinner), spinner.WithStyle(treeScheduledStyle))
 	runningSpinner := spinner.New(spinner.WithSpinner(runningTabSpinner), spinner.WithStyle(treeRunningStyle))
@@ -190,7 +190,7 @@ func (m *InteractiveTreeView) setupSpinners() tea.Cmd {
 	return tea.Batch(scheduledSpinner.Tick, runningSpinner.Tick, pendingSpinner.Tick)
 }
 
-func (m *InteractiveTreeView) printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) (s string) {
+func (m *treeProgressView) printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) (s string) {
 	connector := "┬"
 	status := m.aggregatedStatus[node.NodeID()]
 	if node.IsLeaf() {

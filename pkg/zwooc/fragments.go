@@ -48,7 +48,7 @@ func execFragment(conf config.Config, c *cli.Context) error {
 	} else {
 		viewOptions := getViewOptions(c)
 		provider := createRunner(tasks.NewCollection(task), runnerOptions)
-		ui.NewRunner(tasks.NewCollection(task), provider, viewOptions)
+		ui.NewView(tasks.NewCollection(task), provider, viewOptions)
 	}
 	return nil
 }

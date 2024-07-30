@@ -2,7 +2,7 @@ package ui
 
 import "github.com/zwoo-hq/zwooc/pkg/tasks"
 
-func NewRunner(forest tasks.Collection, provider *SimpleStatusProvider, options ViewOptions) {
+func NewView(forest tasks.Collection, provider *SimpleStatusProvider, options ViewOptions) {
 	if options.QuiteMode {
 		// TODO: use provided runner
 		newQuiteTreeView(forest, provider, options)
@@ -15,7 +15,7 @@ func NewRunner(forest tasks.Collection, provider *SimpleStatusProvider, options 
 	}
 
 	// try interactive view
-	if err := NewInteractiveTreeView(forest, provider, options); err != nil {
+	if err := newTreeProgressView(forest, provider, options); err != nil {
 		// fall back to static view
 		newStaticTreeView(forest, provider, options)
 	}

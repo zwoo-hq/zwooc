@@ -49,7 +49,7 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		ui.NewInteractiveRunner(allTasks, viewOptions, conf)
 	} else {
 		provider := createRunner(allTasks, runnerOptions)
-		ui.NewRunner(allTasks, provider, viewOptions)
+		ui.NewView(allTasks, provider, viewOptions)
 	}
 	return nil
 }
