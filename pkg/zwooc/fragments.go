@@ -5,6 +5,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 func CreateFragmentCommand() *cli.Command {
@@ -28,11 +29,10 @@ func CreateFragmentCommand() *cli.Command {
 }
 
 func execFragment(conf config.Config, c *cli.Context) error {
-	if c.Bool("dry-run") {
-		return graphTaskList(conf, c, "exec")
+	if isDryRun(c) {
+		return graphTaskTree(conf, c, "exec")
 	}
 
-	viewOptions := getViewOptions(c)
 	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	fragmentKey := c.Args().First()
@@ -40,10 +40,15 @@ func execFragment(conf config.Config, c *cli.Context) error {
 	if err != nil {
 		ui.HandleError(err)
 	}
-
 	task.RemoveEmptyNodes()
-	provider := createRunner(tasks.NewCollection(task), runnerOptions)
 
-	ui.NewRunner(tasks.NewCollection(task), provider, viewOptions)
+	if runnerOptions.UseLegacyRunner {
+		viewOptions := getLegacyViewOptions(c)
+		legacyui.NewRunner(task.Flatten(), viewOptions)
+	} else {
+		viewOptions := getViewOptions(c)
+		provider := createRunner(tasks.NewCollection(task), runnerOptions)
+		ui.NewRunner(tasks.NewCollection(task), provider, viewOptions)
+	}
 	return nil
 }

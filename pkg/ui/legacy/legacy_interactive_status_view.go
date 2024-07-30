@@ -36,7 +36,7 @@ type StatusUpdateMsg runner.TaskRunnerStatus
 type StatusStageFinishedMsg int
 type StatusErrorMsg struct{ error }
 
-func NewStatusView(list tasks.TaskList, opts ViewOptions) error {
+func newInteractiveRunner(list tasks.TaskList, opts ViewOptions) error {
 	model := StatusModel{
 		tasks:        list,
 		currentIndex: 0,
@@ -141,7 +141,7 @@ func (m *StatusModel) initStage(stage int) {
 
 	m.currentIndex = stage
 	m.tasksState = t
-	m.currentRunner = runner.NewRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.opts.MaxConcurrency)
+	m.currentRunner = runner.NewListRunner(m.tasks.Steps[stage].Name, m.tasks.Steps[stage].Tasks, m.opts.MaxConcurrency)
 }
 
 func (m *StatusModel) startStage() tea.Msg {

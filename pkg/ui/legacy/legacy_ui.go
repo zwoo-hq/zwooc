@@ -14,7 +14,7 @@ func NewRunner(tasks tasks.TaskList, options ViewOptions) {
 	}
 
 	// try interactive view
-	if err := NewStatusView(tasks, options); err != nil {
+	if err := newInteractiveRunner(tasks, options); err != nil {
 		// fall back to static view
 		newStaticRunner(tasks, options)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 var (
@@ -38,6 +39,10 @@ func loadConfig() config.Config {
 
 func isCI() bool {
 	return os.Getenv("CI") == "true"
+}
+
+func isDryRun(c *cli.Context) bool {
+	return c.Bool("dry-run")
 }
 
 func completeProfiles(c config.Config) {
@@ -99,6 +104,22 @@ func getRunnerOptions(c *cli.Context) config.RunnerOptions {
 
 func getViewOptions(c *cli.Context) ui.ViewOptions {
 	viewOptions := ui.ViewOptions{
+		DisableTUI:    c.Bool("no-tty"),
+		QuiteMode:     c.Bool("quite"),
+		InlineOutput:  c.Bool("inline-output"),
+		CombineOutput: c.Bool("combine-output"),
+		DisablePrefix: c.Bool("no-prefix"),
+	}
+
+	if isCI() && !c.Bool("no-ci") {
+		viewOptions.DisableTUI = true
+		viewOptions.InlineOutput = true
+	}
+	return viewOptions
+}
+
+func getLegacyViewOptions(c *cli.Context) legacyui.ViewOptions {
+	viewOptions := legacyui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
 		InlineOutput:   c.Bool("inline-output"),

@@ -29,7 +29,7 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 
 func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(conf, c, runMode)
+		return graphTaskTree(conf, c, runMode)
 	}
 
 	viewOptions := getViewOptions(c)

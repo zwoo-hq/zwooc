@@ -26,7 +26,7 @@ func newQuiteRunner(taskList tasks.TaskList, opts ViewOptions) {
 	execStart := time.Now()
 
 	for _, step := range taskList.Steps {
-		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
+		model.currentRunner = runner.NewListRunner(step.Name, step.Tasks, opts.MaxConcurrency)
 		model.currentState = runner.TaskRunnerStatus{}
 		if err := model.currentRunner.Run(); err != nil {
 			HandleError(err)

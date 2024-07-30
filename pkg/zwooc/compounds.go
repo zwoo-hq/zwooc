@@ -28,7 +28,7 @@ func CreateCompoundCommand() *cli.Command {
 
 func execCompound(conf config.Config, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(conf, c, "launch")
+		return graphTaskTree(conf, c, "launch")
 	}
 
 	viewOptions := getViewOptions(c)

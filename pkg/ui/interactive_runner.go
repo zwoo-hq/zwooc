@@ -207,7 +207,7 @@ func (m *Model) initScheduledStage(stage int) {
 
 	m.preCurrentStage = stage
 	m.preTasks = t
-	m.preCurrentRunner = runner.NewRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
+	m.preCurrentRunner = runner.NewListRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, 1) // TODO: use provided runner
 }
 
 func (m *Model) initPostStage(stage int) {
@@ -224,7 +224,7 @@ func (m *Model) initPostStage(stage int) {
 
 	m.postCurrentStage = stage
 	m.postTasks = t
-	m.postCurrentRunner = runner.NewRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, m.opts.MaxConcurrency)
+	m.postCurrentRunner = runner.NewListRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, 1) // TODO: use provided runner
 }
 
 func (m *Model) listenToPreRunner() tea.Msg {

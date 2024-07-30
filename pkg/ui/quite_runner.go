@@ -29,11 +29,11 @@ func newQuiteRunner(forest tasks.Collection, opts ViewOptions) {
 	model.setupInterruptHandler()
 	execStart := time.Now()
 
-	concurrencyProvider := runner.NewSharedProvider(opts.MaxConcurrency)
+	concurrencyProvider := runner.NewSharedProvider(1) // TODO: use shared provider
 	wg := sync.WaitGroup{}
 
 	for _, tree := range forest {
-		runner := runner.NewTaskTreeRunner(tree, concurrencyProvider)
+		runner := runner.NewTreeRunner(tree, concurrencyProvider)
 		model.runners = append(model.runners, runner)
 		wg.Add(1)
 		go func() {

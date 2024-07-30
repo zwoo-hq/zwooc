@@ -11,7 +11,6 @@ import (
 )
 
 func createRunner(forest tasks.Collection, options config.RunnerOptions) ui.SimpleStatusProvider {
-	// TODO: implement legacy runner
 	return createForestRunner(forest, options.MaxConcurrency)
 }
 
@@ -22,7 +21,7 @@ func createForestRunner(forest tasks.Collection, maxConcurrency int) ui.SimpleSt
 	errs := errgroup.Group{}
 
 	for _, tree := range forest {
-		runners = append(runners, runner.NewTaskTreeRunner(tree, concurrencyProvider))
+		runners = append(runners, runner.NewTreeRunner(tree, concurrencyProvider))
 	}
 
 	statusProvider := ui.NewSimpleStatusProvider()

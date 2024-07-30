@@ -48,7 +48,7 @@ func newStaticRunner(taskList tasks.TaskList, opts ViewOptions) {
 		}
 
 		// setup new runner
-		model.currentRunner = runner.NewRunner(step.Name, step.Tasks, opts.MaxConcurrency)
+		model.currentRunner = runner.NewListRunner(step.Name, step.Tasks, opts.MaxConcurrency)
 		model.currentState = runner.TaskRunnerStatus{}
 		model.wg = sync.WaitGroup{}
 		model.wg.Add(1)

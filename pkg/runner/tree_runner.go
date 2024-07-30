@@ -38,7 +38,7 @@ type TaskTreeRunner struct {
 	mutex sync.RWMutex
 }
 
-func NewTaskTreeRunner(root *tasks.TaskTreeNode, p ConcurrencyProvider) *TaskTreeRunner {
+func NewTreeRunner(root *tasks.TaskTreeNode, p ConcurrencyProvider) *TaskTreeRunner {
 	status := buildStatus(root)
 
 	return &TaskTreeRunner{

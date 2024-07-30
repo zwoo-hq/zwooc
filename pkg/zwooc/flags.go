@@ -32,7 +32,7 @@ func CreateGlobalFlags() []cli.Flag {
 			Usage:    "limit the max amount of parallel tasks",
 			Category: CategoryGeneral,
 		},
-		&cli.IntFlag{
+		&cli.BoolFlag{
 			Name:     "legacy-runner",
 			Usage:    "use the legacy task list runner",
 			Category: CategoryGeneral,

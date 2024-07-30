@@ -22,7 +22,7 @@ type TaskRunner struct {
 	maxConcurrency int
 }
 
-func NewRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
+func NewListRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
 	status := make(TaskRunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
@@ -45,11 +45,11 @@ func NewRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner 
 }
 
 func NewParallelRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
-	return NewRunner(name, tasks, maxConcurrency)
+	return NewListRunner(name, tasks, maxConcurrency)
 }
 
 func NewSequentialRunner(name string, tasks []tasks.Task) *TaskRunner {
-	return NewRunner(name, tasks, 1)
+	return NewListRunner(name, tasks, 1)
 }
 
 func (tr *TaskRunner) Name() string {
