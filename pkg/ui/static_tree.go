@@ -1,10 +1,13 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
@@ -24,12 +27,9 @@ func newStaticTreeRunner(forest tasks.Collection, provider SimpleStatusProvider,
 		provider: provider,
 	}
 
-	fmt.Printf("%s - %s\n", zwoocBranding, forest.GetName())
 	model.setupInterruptHandler()
-	// execStart := time.Now()
-	// hasError := false
 
-	// start := time.Now()
+	execStart := time.Now()
 	outputs := map[string]*tasks.CommandCapturer{}
 
 	// setup task pipes
@@ -40,49 +40,43 @@ func newStaticTreeRunner(forest tasks.Collection, provider SimpleStatusProvider,
 			t.Main.Pipe(cap)
 			if opts.InlineOutput {
 				if opts.DisablePrefix {
-					t.Main.Pipe(tasks.NewPrefixer("│  ", os.Stdout))
+					t.Main.Pipe(tasks.NewPrefixer("  ", os.Stdout))
 				} else {
-					t.Main.Pipe(tasks.NewPrefixer("│  "+t.Name+" ", os.Stdout))
+					t.Main.Pipe(tasks.NewPrefixer("  "+t.Name+" ", os.Stdout))
 				}
 			}
 		})
 	}
 
 	// start the runner
+	fmt.Printf("%s running %s\n", zwoocBranding, forest.GetName())
 	model.wg.Add(2)
-	go model.ReceiveUpdates(provider.status, "│ ")
+	go model.ReceiveUpdates(provider.status, "")
 	go model.WaitForDone()
-	// fmt.Printf("╭─── running %s\n", stepStyle.Render(tree.Name))
 	provider.Start()
 
 	// wait until everything is completed
 	model.wg.Wait()
-	// execEnd := time.Now()
+	execEnd := time.Now()
 
-	// TODO: add option in provider to find all errors
-	// if model.err != nil {
-	// 	// handle runner error
-	// 	fmt.Printf("╰─── %s failed\n", errorIcon)
-	// 	model.currentRunner.Status().Iterate(func(node *runner.TreeStatusNode) {
-	// 		if node.AggregatedStatus == runner.StatusError {
-	// 			fmt.Printf(" %s %s failed\n", errorIcon, node.Name)
-	// 			fmt.Printf(" %s error: %s\n", errorIcon, err)
-	// 			fmt.Printf(" %s stdout:\n", errorIcon)
-	// 			// ligloss does some messy things to the string and cant handle \r\n on windows...
-	// 			wrapper := canceledStyle.Render("===")
-	// 			parts := strings.Split(wrapper, "===")
-	// 			fmt.Printf(parts[0])
-	// 			fmt.Println(strings.TrimSpace(outputs[node.ID].String()))
-	// 			fmt.Printf(parts[1])
-	// 		}
-	// 	})
-	// 	fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, tree.Name, end.Sub(execStart))
-	// } else if model.wasCanceled {
-	// 	fmt.Printf("╰─── %s was canceled - stopping execution\n", cancelIcon)
-	// 	fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, tree.Name, end.Sub(execStart))
-	// } else {
-	// 	fmt.Printf("╰─── %s successfully ran %s\n", successIcon, end.Sub(start))
-	// }
+	var failedError *tasks.MultiTaskError
+	if errors.As(model.err, &failedError) {
+		// handle runner error
+		for nodeId, err := range failedError.Errors {
+			fmt.Printf(" %s %s failed: %s\n", errorIcon, nodeId, err)
+			fmt.Printf(" %s stdout:\n", errorIcon)
+			wrapper := canceledStyle.Render("===")
+			parts := strings.Split(wrapper, "===")
+			fmt.Printf(parts[0])
+			fmt.Println(strings.TrimSpace(outputs[nodeId].String()))
+			fmt.Printf(parts[1])
+		}
+		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+	} else if model.wasCanceled || errors.Is(model.err, tasks.ErrCancelled) {
+		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
+	} else {
+		fmt.Printf("%s %s %s completed after  %s\n", zwoocBranding, successIcon, forest.GetName(), execEnd.Sub(execStart))
+	}
 
 	// if hasError {
 	// 	fmt.Printf("%s %s %s errored after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
@@ -109,7 +103,6 @@ func (m *staticTreeView) ReceiveUpdates(c <-chan StatusUpdate, prefix string) {
 			fmt.Printf("%s %s %s\n", prefix, node.NodeID, canceledStyle.Render("was canceled"))
 		}
 	}
-	fmt.Println("updates done")
 	m.wg.Done()
 }
 

@@ -14,7 +14,7 @@ type MultiTaskError struct {
 	Errors map[string]error
 }
 
-func (mte MultiTaskError) Error() string {
+func (mte *MultiTaskError) Error() string {
 	nodeIds := make([]string, 0, len(mte.Errors))
 	for id := range mte.Errors {
 		nodeIds = append(nodeIds, id)
@@ -22,8 +22,8 @@ func (mte MultiTaskError) Error() string {
 	return fmt.Sprintf("tasks %s failed", strings.Join(nodeIds, ", "))
 }
 
-func NewMultiTaskError(errors map[string]error) MultiTaskError {
-	return MultiTaskError{
+func NewMultiTaskError(errors map[string]error) *MultiTaskError {
+	return &MultiTaskError{
 		Errors: errors,
 	}
 }

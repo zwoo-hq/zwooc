@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -128,7 +127,6 @@ func (r *TaskTreeRunner) Start() error {
 				if err := task.Main.Run(cancel); err != nil {
 					errMu.Lock()
 					errs[task.NodeID()] = err
-					fmt.Println(err)
 					if !r.hasError.Load() && !r.wasCanceled.Load() {
 						// first node erroring -> close the channel
 						close(r.scheduledNodes)
