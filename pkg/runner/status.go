@@ -111,7 +111,7 @@ func (t *TreeStatusNode) Update() {
 	} else if someChildWithStatus(children, StatusCanceled) {
 		t.AggregatedStatus = StatusCanceled
 	} else if allChildrenWithStatus(children, StatusDone) {
-		t.AggregatedStatus = StatusRunning
+		t.AggregatedStatus = StatusDone
 	} else if someChildWithStatus(children, StatusRunning) {
 		t.AggregatedStatus = StatusRunning
 	} else if someChildWithStatus(children, StatusScheduled) {
