@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -44,17 +46,31 @@ func newTreeProgressView(forest tasks.Collection, status *SimpleStatusProvider, 
 	model.setupDefaultStatus()
 	model.setupInterruptHandler()
 
+	execStart := time.Now()
 	p := tea.NewProgram(&model)
 	if _, err := p.Run(); err != nil {
 		return err
 	}
+	execEnd := time.Now()
 
-	// TODO: done -display cancel or error or success
-	if errors.Is(model.err, tasks.ErrCancelled) {
-		fmt.Println("cancelled")
+	var failedError *tasks.MultiTaskError
+	if errors.As(model.err, &failedError) {
+		// handle runner error
+		for nodeId, err := range failedError.Errors {
+			fmt.Printf("%s %s failed: %s\n", errorIcon, nodeId, err)
+			fmt.Printf("%s stdout:\n", errorIcon)
+			wrapper := canceledStyle.Render("===")
+			parts := strings.Split(wrapper, "===")
+			fmt.Printf(parts[0])
+			fmt.Println(strings.TrimSpace(model.outputs[nodeId].String()))
+			fmt.Printf(parts[1])
+		}
+		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+	} else if model.wasCanceled || errors.Is(model.err, tasks.ErrCancelled) {
+		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
+	} else {
+		fmt.Printf("%s %s %s completed after  %s\n", zwoocBranding, successIcon, forest.GetName(), execEnd.Sub(execStart))
 	}
-
-	fmt.Println("done!!")
 	return nil
 }
 
