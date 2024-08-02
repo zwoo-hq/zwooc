@@ -8,24 +8,41 @@ type StatusUpdate struct {
 	Parent           *StatusUpdate
 }
 
+type StatusProvider interface {
+	Start()
+	OnStart(handler func())
+	Cancel()
+	OnCancel(handler func())
+	UpdateStatus(update StatusUpdate)
+	CloseUpdates()
+	Done(err error)
+}
+
 type SimpleStatusProvider struct {
+	start       func()
+	cancel      func()
 	status      chan StatusUpdate
-	cancel      chan struct{}
 	wasCanceled bool
-	start       chan struct{}
 	done        chan error
 }
 
+func NewSimpleStatusProvider() SimpleStatusProvider {
+	status := make(chan StatusUpdate)
+	done := make(chan error)
+	return SimpleStatusProvider{
+		status: status,
+		done:   done,
+	}
+}
+
 func (g SimpleStatusProvider) Start() {
-	g.start <- struct{}{}
-	close(g.start)
+	g.start()
 }
 
 func (g *SimpleStatusProvider) Cancel() {
 	if !g.wasCanceled {
 		g.wasCanceled = true
-		g.cancel <- struct{}{}
-		close(g.cancel)
+		g.cancel()
 	}
 }
 
@@ -42,29 +59,10 @@ func (g SimpleStatusProvider) Done(err error) {
 	close(g.done)
 }
 
-func (g SimpleStatusProvider) OnStart(handler func()) {
-	go func() {
-		<-g.start
-		handler()
-	}()
+func (g *SimpleStatusProvider) OnStart(handler func()) {
+	g.start = handler
 }
 
-func (g SimpleStatusProvider) OnCancel(handler func()) {
-	go func() {
-		<-g.cancel
-		handler()
-	}()
-}
-
-func NewSimpleStatusProvider() SimpleStatusProvider {
-	status := make(chan StatusUpdate)
-	cancel := make(chan struct{})
-	done := make(chan error)
-	start := make(chan struct{})
-	return SimpleStatusProvider{
-		status: status,
-		cancel: cancel,
-		done:   done,
-		start:  start,
-	}
+func (g *SimpleStatusProvider) OnCancel(handler func()) {
+	g.cancel = handler
 }

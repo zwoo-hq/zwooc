@@ -73,6 +73,15 @@ func (r *TaskTreeRunner) Cancel() {
 	<-r.cancelComplete
 }
 
+// ShutdownGracefully cancels only long running tasks transitioning those trees into the $post subtree
+func (r *TaskTreeRunner) ShutdownGracefully() {
+	r.root.Iterate(func(node *tasks.TaskTreeNode) {
+		if node.IsLongRunning {
+			r.forwardCancel[node.NodeID()] <- true
+		}
+	})
+}
+
 func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskStatus) {
 	r.mutex.Lock()
 	statusNode := findStatus(r.statusTree, node)
@@ -140,6 +149,7 @@ func (r *TaskTreeRunner) Start() error {
 					r.updateTaskStatus(task, StatusDone)
 					// continue execution
 					if len(errs) == 0 {
+						// TODO: add a mutex to avoid duplicate scheduling
 						r.scheduleNext(task)
 					}
 				}
@@ -162,9 +172,11 @@ func (r *TaskTreeRunner) Start() error {
 			// run was canceled - forward cancel to all tasks
 			r.wasCanceled.Store(true)
 			close(r.scheduledNodes)
+			r.mutex.Lock()
 			for _, cancel := range r.forwardCancel {
 				cancel <- true
 			}
+			r.mutex.Unlock()
 			return
 		case <-done:
 			// stop the goroutine
