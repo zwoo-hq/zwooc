@@ -5,17 +5,21 @@ type Scheduler interface {
 	OnSchedule(handler func(command string, id string))
 	Shutdown()
 	OnShutdown(handler func())
+	// TODO: implement stop/restart etc of individual tasks
 }
 
 type SchedulerStatusProvider struct {
-	SimpleStatusProvider
+	*SimpleStatusProvider
 	schedule func(command string, id string)
 	shutdown func()
 }
 
-func NewSchedulerStatusProvider() SchedulerStatusProvider {
+var _ StatusProvider = &SchedulerStatusProvider{}
+var _ Scheduler = &SchedulerStatusProvider{}
+
+func NewSchedulerStatusProvider() *SchedulerStatusProvider {
 	statusProvider := NewSimpleStatusProvider()
-	return SchedulerStatusProvider{
+	return &SchedulerStatusProvider{
 		SimpleStatusProvider: statusProvider,
 	}
 }

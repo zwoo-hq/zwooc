@@ -10,64 +10,108 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func createRunner(forest tasks.Collection, options config.RunnerOptions) *ui.SimpleStatusProvider {
-	return createForestRunner(forest, options.MaxConcurrency)
+type statusAdapter struct {
+	options config.RunnerOptions
+
+	scheduler *ui.SchedulerStatusProvider
+
+	tasks               tasks.Collection
+	runners             []*runner.TaskTreeRunner
+	concurrencyProvider runner.ConcurrencyProvider
+
+	isStarted bool
+	updates   sync.WaitGroup
+	errs      errgroup.Group
 }
 
-func createForestRunner(forest tasks.Collection, maxConcurrency int) *ui.SimpleStatusProvider {
-	concurrencyProvider := runner.NewSharedProvider(maxConcurrency)
-	runners := []*runner.TaskTreeRunner{}
-	// create a new error group
-	errs := errgroup.Group{}
-
-	for _, tree := range forest {
-		runners = append(runners, runner.NewTreeRunner(tree, concurrencyProvider))
+func newStatusAdapter(forest tasks.Collection, options config.RunnerOptions) *statusAdapter {
+	concurrencyProvider := runner.NewSharedProvider(options.MaxConcurrency)
+	scheduler := ui.NewSchedulerStatusProvider()
+	adapter := &statusAdapter{
+		options:             options,
+		scheduler:           scheduler,
+		concurrencyProvider: concurrencyProvider,
+		tasks:               tasks.NewCollection(),
+		runners:             []*runner.TaskTreeRunner{},
 	}
 
-	statusProvider := ui.NewSimpleStatusProvider()
+	// map scheduler events to adapter
+	scheduler.OnStart(adapter.start)
+	scheduler.OnCancel(adapter.cancel)
+	scheduler.OnShutdown(adapter.shutdownGracefully)
+	scheduler.OnSchedule(adapter.schedule)
 
-	// forward start
-	statusProvider.OnStart(func() {
-		for _, r := range runners {
-			currentRunner := r
-			errs.Go(func() error {
-				return currentRunner.Start()
-			})
-		}
-
-		// collect done
-		go func() {
-			err := errs.Wait()
-			statusProvider.Done(err)
-		}()
-	})
-
-	// forward cancel
-	statusProvider.OnCancel(func() {
-		for _, r := range runners {
-			r.Cancel()
-		}
-	})
-
-	// forward updates
-	updatesWg := sync.WaitGroup{}
-	for _, r := range runners {
-		currentRunner := r
-		updatesWg.Add(1)
-		go func() {
-			for update := range currentRunner.Updates() {
-				statusProvider.UpdateStatus(runnerToStatusProvider(update))
-			}
-			updatesWg.Done()
-		}()
+	// schedule initial tasks
+	for _, node := range forest {
+		adapter.addTask(node)
 	}
 
 	go func() {
-		updatesWg.Wait()
-		statusProvider.CloseUpdates()
+		// collect ends of updates
+		adapter.updates.Wait()
+		scheduler.CloseUpdates()
 	}()
 
-	return &statusProvider
+	return adapter
+}
+
+func (a *statusAdapter) addTask(node *tasks.TaskTreeNode) {
+	// create a new runner
+	runner := runner.NewTreeRunner(node, a.concurrencyProvider)
+	a.runners = append(a.runners, runner)
+	a.tasks = append(a.tasks, node)
+
+	if a.isStarted {
+		// manually start the runner if the scheduler already started
+		a.errs.Go(func() error {
+			return runner.Start()
+			// TODO: remove from runners
+		})
+	}
+
+	// collect runner updates
+	a.updates.Add(1)
+	go func() {
+		for update := range runner.Updates() {
+			a.scheduler.UpdateStatus(runnerToStatusProvider(update))
+		}
+		a.updates.Done()
+	}()
+
+}
+
+func (a *statusAdapter) start() {
+	a.isStarted = true
+	// start all known runners
+	for _, r := range a.runners {
+		currentRunner := r
+		a.errs.Go(func() error {
+			return currentRunner.Start()
+		})
+	}
+
+	// collect done
+	go func() {
+		err := a.errs.Wait()
+		a.scheduler.Done(err)
+	}()
+}
+
+func (a *statusAdapter) cancel() {
+	for _, r := range a.runners {
+		r.Cancel()
+	}
+}
+
+func (a *statusAdapter) shutdownGracefully() {
+	for _, r := range a.runners {
+		r.ShutdownGracefully()
+	}
+}
+
+func (a *statusAdapter) schedule(command string, id string) {
+	//TODO: implement scheduling
+	// - check whether task is already scheduled (dont schedule twice)
 }
 
 func runnerToStatusProvider(updatedNode *runner.TreeStatusNode) ui.StatusUpdate {

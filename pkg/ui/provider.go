@@ -26,10 +26,12 @@ type SimpleStatusProvider struct {
 	done        chan error
 }
 
-func NewSimpleStatusProvider() SimpleStatusProvider {
+var _ StatusProvider = &SimpleStatusProvider{}
+
+func NewSimpleStatusProvider() *SimpleStatusProvider {
 	status := make(chan StatusUpdate)
 	done := make(chan error)
-	return SimpleStatusProvider{
+	return &SimpleStatusProvider{
 		status: status,
 		done:   done,
 	}

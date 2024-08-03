@@ -47,8 +47,8 @@ func execFragment(conf config.Config, c *cli.Context) error {
 		legacyui.NewRunner(task.Flatten(), viewOptions)
 	} else {
 		viewOptions := getViewOptions(c)
-		provider := createRunner(tasks.NewCollection(task), runnerOptions)
-		ui.NewView(tasks.NewCollection(task), provider, viewOptions)
+		adapter := newStatusAdapter(tasks.NewCollection(task), runnerOptions)
+		ui.NewView(tasks.NewCollection(task), adapter.scheduler.SimpleStatusProvider, viewOptions)
 	}
 	return nil
 }
