@@ -35,7 +35,8 @@ type TaskTreeRunner struct {
 	hasError atomic.Bool
 
 	// mutex is used to synchronize access to the status tree.
-	mutex sync.RWMutex
+	mutex  sync.RWMutex
+	isDone bool
 }
 
 func NewTreeRunner(root *tasks.TaskTreeNode, p ConcurrencyProvider) *TaskTreeRunner {
@@ -68,6 +69,10 @@ func (r *TaskTreeRunner) Status() *TreeStatusNode {
 }
 
 func (r *TaskTreeRunner) Cancel() {
+	if r.isDone {
+		return
+	}
+
 	r.cancel <- true
 	close(r.cancel)
 	<-r.cancelComplete
@@ -75,11 +80,23 @@ func (r *TaskTreeRunner) Cancel() {
 
 // ShutdownGracefully cancels only long running tasks transitioning those trees into the $post subtree
 func (r *TaskTreeRunner) ShutdownGracefully() {
+	if r.isDone {
+		return
+	}
+
+	hasLonRunningNodes := false
+	r.mutex.Lock()
 	r.root.Iterate(func(node *tasks.TaskTreeNode) {
-		if node.IsLongRunning {
-			r.forwardCancel[node.NodeID()] <- true
+		if cancel, ok := r.forwardCancel[node.NodeID()]; ok && node.IsLongRunning {
+			cancel <- true
+			hasLonRunningNodes = true
 		}
 	})
+	r.mutex.Unlock()
+
+	if !hasLonRunningNodes {
+		r.Cancel()
+	}
 }
 
 func (r *TaskTreeRunner) updateTaskStatus(node *tasks.TaskTreeNode, status TaskStatus) {
@@ -195,6 +212,7 @@ func (r *TaskTreeRunner) Start() error {
 	wg.Wait()
 	done <- true
 	close(done)
+	r.isDone = true
 
 	if r.wasCanceled.Load() {
 		return tasks.ErrCancelled

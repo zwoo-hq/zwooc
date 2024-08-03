@@ -207,7 +207,7 @@ func (m *interactiveView) handleCancel() {
 		for i := range m.tabs {
 			m.tabs[i].showLogs = false
 		}
-		m.provider.Cancel()
+		m.provider.Shutdown()
 	}
 }
 
@@ -222,6 +222,7 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			m.handleCancel()
+			return m, m.updateCurrentLogsView
 		case "h":
 			if m.activeView == viewHelp {
 				m.activeView = viewDefault
@@ -263,7 +264,7 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case spinner.TickMsg:
 		_, cmd = m.treeView.Update(msg)
-		return m, cmd
+		return m, tea.Batch(cmd, m.updateCurrentLogsView)
 
 	case taskUpdateMsg:
 		m.updateProgress(msg)
@@ -274,7 +275,7 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 			m.tabs[i].showLogs = helper.All(preNodes, func(status TaskStatus) bool {
 				return status == StatusDone
-			})
+			}) && !m.wasCanceled
 		}
 
 		return m, tea.Batch(m.listenToUpdates, m.updateCurrentLogsView)
@@ -294,7 +295,7 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.MouseMsg:
-		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 4 && msg.Y < 8 && m.activeView == viewDefault {
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 0 && msg.Y < 4 && m.activeView == viewDefault {
 			clickedIdx := m.determineTabClicked(msg.X)
 			if clickedIdx >= 0 {
 				m.activeIndex = clickedIdx
@@ -341,7 +342,7 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *interactiveView) setLogsViewDefaultPosition() {
 	m.logsView.Width = m.windowWidth
-	m.logsView.Height = m.windowHeight - 9
+	m.logsView.Height = m.windowHeight - 5
 }
 
 func (m *interactiveView) setLogsViewFullScreenPosition() {
@@ -366,18 +367,16 @@ func (m *interactiveView) View() (s string) {
 		return m.ViewAddTask()
 	}
 
-	header := "zwooc running in interactive mode\n"
+	header := zwoocBranding + " interactive runner "
+	if m.wasCanceled {
+		header += cancelIcon + " shutting down..."
+	} else if m.wasCancelCanceled {
+		header += cancelIcon + " canceling..."
+	} else {
+		header += successIcon + " running..."
+	}
 
-	var currentTasks string
-	var postTasks string
-
-	s += header
-	s += "\n"
-	s += currentTasks
-	s += "\n\n"
-	s += postTasks
-	s += "\n"
-
+	s += header + "\n"
 	s += m.RenderTabs()
 
 	if !m.viewportReady {

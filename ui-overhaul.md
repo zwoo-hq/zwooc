@@ -9,5 +9,5 @@ full screen:
 
 
 TODO:
-- show final status in interactive tree progress view
 - better ui structure in static tree view
+- interactive view has race conditions
