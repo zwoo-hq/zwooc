@@ -20,3 +20,10 @@ func NewView(forest tasks.Collection, provider *SimpleStatusProvider, options Vi
 		newStaticTreeView(forest, provider, options)
 	}
 }
+
+func NewInteractiveView(forest tasks.Collection, provider *SchedulerStatusProvider, options ViewOptions) {
+	if err := newInteractiveView(forest, provider, options); err != nil {
+		// fall back to static view
+		newStaticTreeView(forest, provider.SimpleStatusProvider, options)
+	}
+}

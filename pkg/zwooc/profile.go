@@ -46,7 +46,8 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	}
 
 	if runMode == model.ModeWatch || runMode == model.ModeRun || len(allTasks) > 1 {
-		ui.NewInteractiveRunner(allTasks, viewOptions, conf)
+		adapter := newStatusAdapter(allTasks, runnerOptions)
+		ui.NewInteractiveView(allTasks, adapter.scheduler, viewOptions)
 	} else {
 		adapter := newStatusAdapter(allTasks, runnerOptions)
 		ui.NewView(allTasks, adapter.scheduler.SimpleStatusProvider, viewOptions)

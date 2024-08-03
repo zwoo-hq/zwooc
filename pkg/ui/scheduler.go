@@ -6,6 +6,8 @@ type Scheduler interface {
 	Shutdown()
 	OnShutdown(handler func())
 	// TODO: implement stop/restart etc of individual tasks
+	// TODO: needs notifier for:
+	// - new task started (when scheduled)
 }
 
 type SchedulerStatusProvider struct {

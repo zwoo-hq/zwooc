@@ -1,4 +1,4 @@
-package ui
+package legacyui
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ type PreTaskStatus struct {
 
 type ActiveTask struct {
 	name   string
-	writer *notifyWriter
+	writer *tasks.NotifyWriter
 }
 
 type ScheduledTask struct {
@@ -207,7 +207,7 @@ func (m *Model) initScheduledStage(stage int) {
 
 	m.preCurrentStage = stage
 	m.preTasks = t
-	m.preCurrentRunner = runner.NewListRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, 1) // TODO: use provided runner
+	m.preCurrentRunner = runner.NewListRunner(m.preCurrentList.Steps[stage].Name, m.preCurrentList.Steps[stage].Tasks, 1)
 }
 
 func (m *Model) initPostStage(stage int) {
@@ -224,7 +224,7 @@ func (m *Model) initPostStage(stage int) {
 
 	m.postCurrentStage = stage
 	m.postTasks = t
-	m.postCurrentRunner = runner.NewListRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, 1) // TODO: use provided runner
+	m.postCurrentRunner = runner.NewListRunner(m.postCurrentList.Steps[stage].Name, m.postCurrentList.Steps[stage].Tasks, 1)
 }
 
 func (m *Model) listenToPreRunner() tea.Msg {
@@ -265,7 +265,7 @@ func (m *Model) transitionCurrentScheduledIntoActive() {
 	}
 
 	for _, task := range current.mainTasks.Tasks {
-		notify := NewNotifyWriter()
+		notify := tasks.NewNotifyWriter()
 		task.Pipe(notify)
 		m.activeTasks = append(m.activeTasks, ActiveTask{name: task.Name(), writer: notify})
 		m.scheduler.Schedule(task)
@@ -285,7 +285,7 @@ func (m *Model) listenToWriterUpdates() tea.Msg {
 	}
 	return ContentUpdateMsg{
 		tabId:   currentId,
-		content: <-m.activeTasks[currentId].writer.updates,
+		content: <-m.activeTasks[currentId].writer.Updates,
 	}
 }
 

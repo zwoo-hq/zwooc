@@ -32,6 +32,7 @@ func execCompound(conf config.Config, c *cli.Context) error {
 	}
 
 	viewOptions := getViewOptions(c)
+	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, []string{}))
 	compoundKey := c.Args().First()
 	compoundTasks, err := conf.LoadCompound(compoundKey, ctx)
@@ -39,6 +40,7 @@ func execCompound(conf config.Config, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	ui.NewInteractiveRunner(compoundTasks, viewOptions, conf)
+	adapter := newStatusAdapter(compoundTasks, runnerOptions)
+	ui.NewInteractiveView(compoundTasks, adapter.scheduler, viewOptions)
 	return nil
 }
