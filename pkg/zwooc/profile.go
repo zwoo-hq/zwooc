@@ -5,6 +5,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 func CreateProfileCommand(mode, usage string) *cli.Command {
@@ -32,7 +33,6 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		return graphTaskTree(conf, c, runMode)
 	}
 
-	viewOptions := getViewOptions(c)
 	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	profileKey := c.Args().First()
@@ -45,6 +45,17 @@ func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 		task.RemoveEmptyNodes()
 	}
 
+	if runnerOptions.UseLegacyRunner {
+		viewOptions := getLegacyViewOptions(c)
+		if runMode == model.ModeWatch || runMode == model.ModeRun || len(allTasks) > 1 {
+			legacyui.NewInteractiveRunner(allTasks, viewOptions, conf)
+		} else {
+			legacyui.NewRunner(allTasks[0].Flatten(), viewOptions)
+		}
+		return nil
+	}
+
+	viewOptions := getViewOptions(c)
 	if runMode == model.ModeWatch || runMode == model.ModeRun || len(allTasks) > 1 {
 		adapter := newStatusAdapter(allTasks, runnerOptions)
 		ui.NewInteractiveView(allTasks, adapter.scheduler, viewOptions)
