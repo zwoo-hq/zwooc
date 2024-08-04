@@ -7,24 +7,35 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/tasks"
 )
 
-func GraphDependencies(collection tasks.Collection) {
-	for _, tasks := range collection {
-		fmt.Printf("task %s ", graphHeaderStyle.Render(tasks.Name))
-		fmt.Println(graphInfoStyle.Render(fmt.Sprintf("(%d total stages)", tasks.CountStages())))
-		tasks.RemoveEmptyNodes()
-		printNode(tasks, "", true)
-	}
+type graphView struct {
+	forest tasks.Collection
 }
 
-func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
+func GraphDependencies(collection tasks.Collection, name string) {
+	fmt.Printf("%s - graphing dependency tree for %s\n", zwoocBranding, name)
+	view := graphView{forest: collection}
+	fmt.Println(view.View())
+}
+
+func (g *graphView) View() (s string) {
+	for _, tasks := range g.forest {
+		s += fmt.Sprintf("task %s ", graphHeaderStyle.Render(tasks.Name))
+		s += graphInfoStyle.Render(fmt.Sprintf("(%d total linear equivalent stages)", tasks.CountStages())) + "\n"
+		tasks.RemoveEmptyNodes()
+		s += g.printGraphNode(tasks, "", true)
+	}
+	return
+}
+
+func (g *graphView) printGraphNode(node *tasks.TaskTreeNode, prefix string, isLast bool) (s string) {
 	connector := "┬"
 	if len(node.Pre) == 0 && len(node.Post) == 0 {
 		connector = "─"
 	}
 	if isLast {
-		fmt.Printf("%s└─%s%s %s\n", prefix, connector, graphMainStyle.Render(node.Name), graphInfoStyle.Render(node.Main.Name()))
+		s += fmt.Sprintf("%s└─%s%s %s\n", prefix, connector, graphMainStyle.Render(node.Name), graphInfoStyle.Render(node.Main.Name()))
 	} else {
-		fmt.Printf("%s├─%s%s %s\n", prefix, connector, graphMainStyle.Render(node.Name), graphInfoStyle.Render(node.Main.Name()))
+		s += fmt.Sprintf("%s├─%s%s %s\n", prefix, connector, graphMainStyle.Render(node.Name), graphInfoStyle.Render(node.Main.Name()))
 	}
 
 	if len(node.Pre) > 0 {
@@ -34,16 +45,16 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 			prePrefix = "  "
 		}
 		name := graphPreStyle.Render(model.KeyPre)
-		info := graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Pre)))
+		info := graphInfoStyle.Render(fmt.Sprintf("(%d nodes)", len(node.Pre)))
 		if len(node.Post) == 0 {
 			newPrefix = "  "
-			fmt.Printf("%s%s└─┬%s %s\n", prefix, prePrefix, name, info)
+			s += fmt.Sprintf("%s%s└─┬%s %s\n", prefix, prePrefix, name, info)
 		} else {
-			fmt.Printf("%s%s├─┬%s %s\n", prefix, prePrefix, name, info)
+			s += fmt.Sprintf("%s%s├─┬%s %s\n", prefix, prePrefix, name, info)
 		}
 
 		for i, child := range node.Pre {
-			printNode(child, prefix+prePrefix+newPrefix, i == len(node.Pre)-1)
+			s += g.printGraphNode(child, prefix+prePrefix+newPrefix, i == len(node.Pre)-1)
 		}
 	}
 
@@ -52,9 +63,10 @@ func printNode(node *tasks.TaskTreeNode, prefix string, isLast bool) {
 		if isLast {
 			postPrefix = "  "
 		}
-		fmt.Printf("%s%s└─┬%s %s\n", prefix, postPrefix, graphPostStyle.Render(model.KeyPost), graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Post))))
+		s += fmt.Sprintf("%s%s└─┬%s %s\n", prefix, postPrefix, graphPostStyle.Render(model.KeyPost), graphInfoStyle.Render(fmt.Sprintf("(%d tasks)", len(node.Post))))
 		for i, child := range node.Post {
-			printNode(child, prefix+postPrefix+"  ", i == len(node.Post)-1)
+			s += g.printGraphNode(child, prefix+postPrefix+"  ", i == len(node.Post)-1)
 		}
 	}
+	return
 }

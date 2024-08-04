@@ -3,12 +3,14 @@ package zwooc
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/helper"
 	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 var (
@@ -37,6 +39,10 @@ func loadConfig() config.Config {
 
 func isCI() bool {
 	return os.Getenv("CI") == "true"
+}
+
+func isDryRun(c *cli.Context) bool {
+	return c.Bool("dry-run")
 }
 
 func completeProfiles(c config.Config) {
@@ -78,8 +84,42 @@ func getLoadOptions(c *cli.Context, extraArgs []string) config.LoadOptions {
 	}
 }
 
+func getRunnerOptions(c *cli.Context) config.RunnerOptions {
+	runnerOptions := config.RunnerOptions{
+		MaxConcurrency:  c.Int("max-concurrency"),
+		UseLegacyRunner: c.Bool("legacy-runner"),
+	}
+
+	if c.Bool("serial") {
+		runnerOptions.MaxConcurrency = 1
+	}
+
+	if runnerOptions.MaxConcurrency == 0 {
+		// set number of CPUs as default
+		runnerOptions.MaxConcurrency = runtime.NumCPU()
+	}
+
+	return runnerOptions
+}
+
 func getViewOptions(c *cli.Context) ui.ViewOptions {
 	viewOptions := ui.ViewOptions{
+		DisableTUI:    c.Bool("no-tty"),
+		QuiteMode:     c.Bool("quite"),
+		InlineOutput:  c.Bool("inline-output"),
+		CombineOutput: c.Bool("combine-output"),
+		DisablePrefix: c.Bool("no-prefix"),
+	}
+
+	if isCI() && !c.Bool("no-ci") {
+		viewOptions.DisableTUI = true
+		viewOptions.InlineOutput = true
+	}
+	return viewOptions
+}
+
+func getLegacyViewOptions(c *cli.Context) legacyui.ViewOptions {
+	viewOptions := legacyui.ViewOptions{
 		DisableTUI:     c.Bool("no-tty"),
 		QuiteMode:      c.Bool("quite"),
 		InlineOutput:   c.Bool("inline-output"),

@@ -1,9 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://zwooc.igd20.de/zwooc.schema.json",
-  "name": "run.json",
-  "description": "run scripts definition file",
-  "fileMatch": ["run.json"],
+  "name": "zwooc.json",
+  "description": "zwooc configuration file",
+  "fileMatch": ["zwooc.json"],
   "url": "https://raw.githubusercontent.com/zwoo-hq/zwooc/main/zwooc.schema.json",
   "type": "object",
   "additionalProperties": {

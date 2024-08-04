@@ -55,4 +55,10 @@ type (
 	Adapter interface {
 		CreateTask(c ProfileWrapper, extraArgs []string) tasks.Task
 	}
+
+	ControlledTask interface {
+		Restart()
+		Stop()
+		SwitchMode(mode string)
+	}
 )

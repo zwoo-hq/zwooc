@@ -18,7 +18,7 @@ func CreateGraphCommand() *cli.Command {
 		Flags:     CreateGlobalFlags(),
 		Action: func(c *cli.Context) error {
 			conf := loadConfig()
-			return graphTaskList(conf, c, "")
+			return graphTaskTree(conf, c, "")
 		},
 		BashComplete: func(c *cli.Context) {
 			if c.NArg() > 1 {
@@ -42,9 +42,10 @@ func CreateGraphCommand() *cli.Command {
 	}
 }
 
-func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error {
+func graphTaskTree(conf config.Config, c *cli.Context, defaultMode string) error {
 	mode := c.Args().First()
 	target := c.Args().Get(1)
+	name := "unknown"
 	if defaultMode != "" {
 		mode = defaultMode
 		target = c.Args().First()
@@ -58,10 +59,13 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 		var task *tasks.TaskTreeNode
 		task, err = conf.LoadFragment(target, ctx)
 		forest = tasks.NewCollection(task)
+		name = "fragment " + target
 	} else if mode == "launch" {
 		forest, err = conf.LoadCompound(target, ctx)
+		name = "compound " + target
 	} else if mode == "run" || mode == "watch" || mode == "build" {
 		forest, err = conf.LoadProfile(target, mode, ctx)
+		name = "profile " + target + " in " + mode + " mode"
 	} else {
 		err = fmt.Errorf("invalid mode: %s", mode)
 	}
@@ -72,6 +76,6 @@ func graphTaskList(conf config.Config, c *cli.Context, defaultMode string) error
 	for _, tree := range forest {
 		tree.RemoveEmptyNodes()
 	}
-	ui.GraphDependencies(forest)
+	ui.GraphDependencies(forest, name)
 	return nil
 }

@@ -33,6 +33,11 @@ func CreateGlobalFlags() []cli.Flag {
 			Category: CategoryGeneral,
 		},
 		&cli.BoolFlag{
+			Name:     "legacy-runner",
+			Usage:    "use the legacy task list runner",
+			Category: CategoryGeneral,
+		},
+		&cli.BoolFlag{
 			// TODO: implement
 			Name:     "loose",
 			Aliases:  []string{"l"},
@@ -58,7 +63,7 @@ func CreateGlobalFlags() []cli.Flag {
 		&cli.BoolFlag{
 			Name:     "no-tty",
 			Aliases:  []string{"t"},
-			Usage:    "force disable tty features",
+			Usage:    "force disable tty features (enables static mode, enabled by default for CI) (default: false)",
 			Value:    false,
 			Category: CategoryStatic,
 		},
@@ -84,14 +89,6 @@ func CreateGlobalFlags() []cli.Flag {
 			Name: "combine-output",
 			// Aliases:  []string{"c"},
 			Usage:    "combine output of tasks in interactive mode",
-			Value:    false,
-			Category: CategoryInteractive,
-		},
-		&cli.BoolFlag{
-			// TODO: implement
-			Name:     "no-fullscreen",
-			Aliases:  []string{"i"},
-			Usage:    "inlines the interactive view ",
 			Value:    false,
 			Category: CategoryInteractive,
 		},

@@ -1,10 +1,11 @@
-package tasks
+package runner
 
 import (
 	"errors"
 	"sync"
 	"sync/atomic"
 
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"golang.org/x/exp/maps"
 )
 
@@ -18,7 +19,7 @@ type Scheduler struct {
 	mu             sync.RWMutex
 }
 
-type SchedulerStatus = map[string]int
+type SchedulerStatus = map[string]TaskStatus
 
 func NewScheduler() *Scheduler {
 	return &Scheduler{
@@ -42,7 +43,7 @@ func (s *Scheduler) Updates() <-chan SchedulerStatus {
 	return s.updates
 }
 
-func (s *Scheduler) updateTaskStatus(task Task, status int) {
+func (s *Scheduler) updateTaskStatus(task tasks.Task, status TaskStatus) {
 	s.mu.Lock()
 	s.status[task.Name()] = status
 	// s.updates <- maps.Clone(s.status)
@@ -57,7 +58,7 @@ func (s *Scheduler) CancelTask(name string) {
 	s.mu.Unlock()
 }
 
-func (s *Scheduler) Schedule(task Task) {
+func (s *Scheduler) Schedule(task tasks.Task) {
 	cancel := make(chan bool, 1)
 	s.mu.Lock()
 	s.wg.Add(1)

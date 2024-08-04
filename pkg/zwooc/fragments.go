@@ -3,7 +3,9 @@ package zwooc
 import (
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 func CreateFragmentCommand() *cli.Command {
@@ -27,20 +29,26 @@ func CreateFragmentCommand() *cli.Command {
 }
 
 func execFragment(conf config.Config, c *cli.Context) error {
-	if c.Bool("dry-run") {
-		return graphTaskList(conf, c, "exec")
+	if isDryRun(c) {
+		return graphTaskTree(conf, c, "exec")
 	}
 
-	viewOptions := getViewOptions(c)
+	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	fragmentKey := c.Args().First()
 	task, err := conf.LoadFragment(fragmentKey, ctx)
 	if err != nil {
 		ui.HandleError(err)
 	}
+	task.RemoveEmptyNodes()
 
-	list := task.Flatten()
-	list.RemoveEmptyStagesAndTasks()
-	ui.NewRunner(list, viewOptions)
+	if runnerOptions.UseLegacyRunner {
+		viewOptions := getLegacyViewOptions(c)
+		legacyui.NewRunner(task.Flatten(), viewOptions)
+	} else {
+		viewOptions := getViewOptions(c)
+		adapter := newStatusAdapter(tasks.NewCollection(task), runnerOptions)
+		ui.NewView(tasks.NewCollection(task), adapter.scheduler.SimpleStatusProvider, viewOptions)
+	}
 	return nil
 }

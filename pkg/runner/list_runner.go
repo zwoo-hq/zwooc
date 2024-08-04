@@ -1,36 +1,29 @@
-package tasks
+package runner
 
 import (
 	"errors"
 	"sync"
 	"sync/atomic"
 
+	"github.com/zwoo-hq/zwooc/pkg/tasks"
 	"golang.org/x/exp/maps"
 )
 
-const (
-	StatusPending  = 1
-	StatusRunning  = 2
-	StatusDone     = 3
-	StatusError    = 4
-	StatusCanceled = 5
-)
-
-type RunnerStatus = map[string]int
+type TaskRunnerStatus = map[string]TaskStatus
 
 type TaskRunner struct {
 	name           string
-	tasks          []Task
-	status         RunnerStatus
-	updates        chan RunnerStatus
+	tasks          []tasks.Task
+	status         TaskRunnerStatus
+	updates        chan TaskRunnerStatus
 	cancel         chan bool
 	cancelComplete chan error
 	mutex          sync.RWMutex
 	maxConcurrency int
 }
 
-func NewRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
-	status := make(RunnerStatus)
+func NewListRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
+	status := make(TaskRunnerStatus)
 	for _, task := range tasks {
 		status[task.Name()] = StatusPending
 	}
@@ -44,19 +37,19 @@ func NewRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
 		name:           name,
 		tasks:          tasks,
 		status:         status,
-		updates:        make(chan RunnerStatus, len(tasks)*5),
+		updates:        make(chan TaskRunnerStatus, len(tasks)*5),
 		cancel:         make(chan bool),
 		cancelComplete: make(chan error),
 		maxConcurrency: ticketAmount,
 	}
 }
 
-func NewParallelRunner(name string, tasks []Task, maxConcurrency int) *TaskRunner {
-	return NewRunner(name, tasks, maxConcurrency)
+func NewParallelRunner(name string, tasks []tasks.Task, maxConcurrency int) *TaskRunner {
+	return NewListRunner(name, tasks, maxConcurrency)
 }
 
-func NewSequentialRunner(name string, tasks []Task) *TaskRunner {
-	return NewRunner(name, tasks, 1)
+func NewSequentialRunner(name string, tasks []tasks.Task) *TaskRunner {
+	return NewListRunner(name, tasks, 1)
 }
 
 func (tr *TaskRunner) Name() string {
@@ -76,17 +69,17 @@ func (tr *TaskRunner) Run() error {
 	return tr.runParallel()
 }
 
-func (tr *TaskRunner) Status() RunnerStatus {
+func (tr *TaskRunner) Status() TaskRunnerStatus {
 	tr.mutex.RLock()
 	defer tr.mutex.RUnlock()
 	return maps.Clone(tr.status)
 }
 
-func (tr *TaskRunner) Updates() <-chan RunnerStatus {
+func (tr *TaskRunner) Updates() <-chan TaskRunnerStatus {
 	return tr.updates
 }
 
-func (tr *TaskRunner) updateTaskStatus(task Task, status int) {
+func (tr *TaskRunner) updateTaskStatus(task tasks.Task, status TaskStatus) {
 	tr.mutex.Lock()
 	tr.status[task.Name()] = status
 	tr.updates <- maps.Clone(tr.status)
@@ -194,7 +187,7 @@ func (tr *TaskRunner) runParallel() error {
 		taskCancel := make(chan bool, 1)
 		forwardCancel = append(forwardCancel, taskCancel)
 
-		go func(task Task, cancel <-chan bool) {
+		go func(task tasks.Task, cancel <-chan bool) {
 			// acquire a ticket to run the task
 			ticket := <-tickets
 			tr.updateTaskStatus(task, StatusRunning)

@@ -4,6 +4,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 func CreateCompoundCommand() *cli.Command {
@@ -28,10 +29,10 @@ func CreateCompoundCommand() *cli.Command {
 
 func execCompound(conf config.Config, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(conf, c, "launch")
+		return graphTaskTree(conf, c, "launch")
 	}
 
-	viewOptions := getViewOptions(c)
+	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, []string{}))
 	compoundKey := c.Args().First()
 	compoundTasks, err := conf.LoadCompound(compoundKey, ctx)
@@ -39,6 +40,13 @@ func execCompound(conf config.Config, c *cli.Context) error {
 		ui.HandleError(err)
 	}
 
-	ui.NewInteractiveRunner(compoundTasks, viewOptions, conf)
+	if runnerOptions.UseLegacyRunner {
+		viewOptions := getLegacyViewOptions(c)
+		legacyui.NewInteractiveRunner(compoundTasks, viewOptions, conf)
+	}
+
+	viewOptions := getViewOptions(c)
+	adapter := newStatusAdapter(compoundTasks, runnerOptions)
+	ui.NewInteractiveView(compoundTasks, adapter.scheduler, viewOptions)
 	return nil
 }

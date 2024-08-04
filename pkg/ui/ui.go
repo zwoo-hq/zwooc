@@ -2,20 +2,28 @@ package ui
 
 import "github.com/zwoo-hq/zwooc/pkg/tasks"
 
-func NewRunner(tasks tasks.TaskList, options ViewOptions) {
+func NewView(forest tasks.Collection, provider *SimpleStatusProvider, options ViewOptions) {
 	if options.QuiteMode {
-		newQuiteRunner(tasks, options)
+		// TODO: use provided runner
+		newQuiteTreeView(forest, provider, options)
 		return
 	}
 
 	if options.DisableTUI {
-		newStaticRunner(tasks, options)
+		newStaticTreeView(forest, provider, options)
 		return
 	}
 
 	// try interactive view
-	if err := NewStatusView(tasks, options); err != nil {
+	if err := newTreeProgressView(forest, provider, options); err != nil {
 		// fall back to static view
-		newStaticRunner(tasks, options)
+		newStaticTreeView(forest, provider, options)
+	}
+}
+
+func NewInteractiveView(forest tasks.Collection, provider *SchedulerStatusProvider, options ViewOptions) {
+	if err := newInteractiveView(forest, provider, options); err != nil {
+		// fall back to static view
+		newStaticTreeView(forest, provider.SimpleStatusProvider, options)
 	}
 }

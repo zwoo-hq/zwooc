@@ -82,13 +82,12 @@ func (ct commandTask) Run(cancel <-chan bool) error {
 	case <-cancel:
 		// task go cancelled
 		var err error
-
 		if runtime.GOOS == "windows" {
 			err = exec.Command("taskkill", "/F", "/T", "/PID", strconv.Itoa(ct.cmd.Process.Pid)).Run()
 		} else {
 			err = exec.Command("pkill", "-P", strconv.Itoa(ct.cmd.Process.Pid)).Run()
 		}
-
+		// err = syscall.Kill(ct.cmd.Process.Pid, syscall.SIGKILL)
 		if err != nil {
 			// fall back to builtin kill
 			if err := ct.cmd.Process.Kill(); err != nil {

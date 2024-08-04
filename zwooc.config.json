@@ -9,7 +9,7 @@
         "dev": "echo 'BAR'"
       },
       "test:a": {
-        "$default": "echo 'default'",
+        "$default": "echo 'default' && sleep 3",
         "dev": "echo 'test:a'",
         "build:dev": "echo 'correct'"
       },
@@ -18,6 +18,9 @@
         "$pre": {
           "fragments": ["print2"],
           "command": "echo 'pre'"
+        },
+        "$post": {
+          "fragments": ["test:a"]
         }
       }
     },

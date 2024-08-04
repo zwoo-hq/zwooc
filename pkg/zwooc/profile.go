@@ -5,6 +5,7 @@ import (
 	"github.com/zwoo-hq/zwooc/pkg/config"
 	"github.com/zwoo-hq/zwooc/pkg/model"
 	"github.com/zwoo-hq/zwooc/pkg/ui"
+	legacyui "github.com/zwoo-hq/zwooc/pkg/ui/legacy"
 )
 
 func CreateProfileCommand(mode, usage string) *cli.Command {
@@ -29,23 +30,38 @@ func CreateProfileCommand(mode, usage string) *cli.Command {
 
 func execProfile(conf config.Config, runMode string, c *cli.Context) error {
 	if c.Bool("dry-run") {
-		return graphTaskList(conf, c, runMode)
+		return graphTaskTree(conf, c, runMode)
 	}
 
-	viewOptions := getViewOptions(c)
+	runnerOptions := getRunnerOptions(c)
 	ctx := config.NewContext(getLoadOptions(c, c.Args().Tail()))
 	profileKey := c.Args().First()
-	taskList, err := conf.LoadProfile(profileKey, runMode, ctx)
+	allTasks, err := conf.LoadProfile(profileKey, runMode, ctx)
 	if err != nil {
 		ui.HandleError(err)
 	}
 
-	if runMode == model.ModeWatch || runMode == model.ModeRun || len(taskList) > 1 {
-		ui.NewInteractiveRunner(taskList, viewOptions, conf)
+	for _, task := range allTasks {
+		task.RemoveEmptyNodes()
+	}
+
+	if runnerOptions.UseLegacyRunner {
+		viewOptions := getLegacyViewOptions(c)
+		if runMode == model.ModeWatch || runMode == model.ModeRun || len(allTasks) > 1 {
+			legacyui.NewInteractiveRunner(allTasks, viewOptions, conf)
+		} else {
+			legacyui.NewRunner(allTasks[0].Flatten(), viewOptions)
+		}
+		return nil
+	}
+
+	viewOptions := getViewOptions(c)
+	if runMode == model.ModeWatch || runMode == model.ModeRun || len(allTasks) > 1 {
+		adapter := newStatusAdapter(allTasks, runnerOptions)
+		ui.NewInteractiveView(allTasks, adapter.scheduler, viewOptions)
 	} else {
-		list := taskList[0].Flatten()
-		list.RemoveEmptyStagesAndTasks()
-		ui.NewRunner(list, viewOptions)
+		adapter := newStatusAdapter(allTasks, runnerOptions)
+		ui.NewView(allTasks, adapter.scheduler.SimpleStatusProvider, viewOptions)
 	}
 	return nil
 }
