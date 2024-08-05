@@ -253,11 +253,13 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab":
 			if len(m.tabs) > 0 {
 				m.activeIndex = (m.activeIndex + 1) % len(m.tabs)
+				m.logsView.GotoBottom()
 				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
 			}
 		case "shift+tab":
 			if len(m.tabs) > 0 {
 				m.activeIndex = (m.activeIndex - 1 + len(m.tabs)) % len(m.tabs)
+				m.logsView.GotoBottom()
 				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
 			}
 		}
@@ -288,7 +290,6 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// this is to ignore old (pending) updates from other tabs after the tab changed
 		if msg.tabId == m.activeIndex {
 			m.logsView.SetContent(string(msg.content))
-			m.logsView.GotoBottom()
 			if m.activeIndex >= 0 {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
@@ -299,6 +300,7 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			clickedIdx := m.determineTabClicked(msg.X)
 			if clickedIdx >= 0 {
 				m.activeIndex = clickedIdx
+				m.logsView.GotoBottom()
 				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
 			}
 		}

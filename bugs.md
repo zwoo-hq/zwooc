@@ -1,2 +1,1 @@
 - interactive view has race conditions
-- interactive view cant scroll
