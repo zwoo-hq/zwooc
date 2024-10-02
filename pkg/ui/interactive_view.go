@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -108,6 +109,7 @@ func newInteractiveView(forest tasks.Collection, provider *SchedulerStatusProvid
 			fmt.Printf("%s %s failed: %s\n", errorIcon, nodeId, err)
 		}
 		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+		os.Exit(1)
 	} else if m.wasCancelCanceled || errors.Is(m.err, tasks.ErrCancelled) {
 		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
 	} else {

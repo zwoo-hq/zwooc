@@ -4,8 +4,7 @@ import "github.com/zwoo-hq/zwooc/pkg/tasks"
 
 func NewView(forest tasks.Collection, provider *SimpleStatusProvider, options ViewOptions) {
 	if options.QuiteMode {
-		// TODO: use provided runner
-		newQuiteTreeView(forest, provider, options)
+		newQuiteTreeView(forest, provider)
 		return
 	}
 
