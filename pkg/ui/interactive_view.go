@@ -3,6 +3,7 @@ package ui
 import (
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -108,12 +109,21 @@ func newInteractiveView(forest tasks.Collection, provider *SchedulerStatusProvid
 			fmt.Printf("%s %s failed: %s\n", errorIcon, nodeId, err)
 		}
 		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+		os.Exit(1)
 	} else if m.wasCancelCanceled || errors.Is(m.err, tasks.ErrCancelled) {
 		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
 	} else {
 		fmt.Printf("%s %s %s completed after  %s\n", zwoocBranding, successIcon, forest.GetName(), execEnd.Sub(execStart))
 	}
 	return nil
+}
+
+func (m *interactiveView) Init() tea.Cmd {
+	tea.SetWindowTitle("zwooc")
+
+	m.setupDefaultStatus()
+
+	return tea.Batch(m.listenToUpdates, m.start, m.treeView.setupSpinners())
 }
 
 func (m *interactiveView) setupDefaultStatus() {
@@ -143,59 +153,9 @@ func (m *interactiveView) setupDefaultStatus() {
 	}
 }
 
-func (m *interactiveView) Init() tea.Cmd {
-	tea.SetWindowTitle("zwooc")
-
-	m.setupDefaultStatus()
-
-	return tea.Batch(m.listenToUpdates, m.start, m.treeView.setupSpinners())
-}
-
-func (m *interactiveView) updateProgress(update taskUpdateMsg) {
-	m.status[update.NodeID] = update.Status
-	m.aggregatedStatus[update.NodeID] = update.AggregatedStatus
-	if update.Parent != nil {
-		m.updateProgress(taskUpdateMsg(*update.Parent))
-	}
-}
-
-func (m *interactiveView) listenToUpdates() tea.Msg {
-	return taskUpdateMsg(<-m.provider.status)
-}
-
 func (m *interactiveView) start() tea.Msg {
 	m.provider.Start()
 	return runnerDoneMsg{<-m.provider.done}
-}
-
-func (m *interactiveView) listenToWriterUpdates() tea.Msg {
-	currentIdx := m.activeIndex
-	if currentIdx < 0 || currentIdx >= len(m.tabs) || !m.tabs[currentIdx].showLogs {
-		return nil
-	}
-
-	return contentUpdateMsg{
-		tabId:   currentIdx,
-		content: <-m.tabs[currentIdx].writer.Updates,
-	}
-}
-
-func (m *interactiveView) updateCurrentLogsView() tea.Msg {
-	if m.activeIndex < 0 || m.activeIndex >= len(m.tabs) {
-		return nil
-	}
-
-	if m.tabs[m.activeIndex].showLogs {
-		return contentUpdateMsg{
-			tabId:   m.activeIndex,
-			content: m.tabs[m.activeIndex].writer.String(),
-		}
-	}
-
-	return contentUpdateMsg{
-		tabId:   m.activeIndex,
-		content: m.treeView.printNode(m.tabs[m.activeIndex].task, "", true),
-	}
 }
 
 func (m *interactiveView) handleCancel() {
@@ -209,6 +169,19 @@ func (m *interactiveView) handleCancel() {
 		}
 		m.provider.Shutdown()
 	}
+}
+
+func (m *interactiveView) determineClickedTab(x int) int {
+	var current = 0
+	for i, task := range m.tabs {
+		tabWidth := len(task.name) + 2
+		if x > current && x < current+tabWidth+1 {
+			return i
+		}
+		current += tabWidth + 1
+	}
+
+	return -1
 }
 
 func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -253,11 +226,13 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "tab":
 			if len(m.tabs) > 0 {
 				m.activeIndex = (m.activeIndex + 1) % len(m.tabs)
+				m.logsView.GotoBottom()
 				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
 			}
 		case "shift+tab":
 			if len(m.tabs) > 0 {
 				m.activeIndex = (m.activeIndex - 1 + len(m.tabs)) % len(m.tabs)
+				m.logsView.GotoBottom()
 				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
 			}
 		}
@@ -288,7 +263,6 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// this is to ignore old (pending) updates from other tabs after the tab changed
 		if msg.tabId == m.activeIndex {
 			m.logsView.SetContent(string(msg.content))
-			m.logsView.GotoBottom()
 			if m.activeIndex >= 0 {
 				cmds = append(cmds, m.listenToWriterUpdates)
 			}
@@ -296,9 +270,10 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.MouseMsg:
 		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft && msg.Y > 0 && msg.Y < 4 && m.activeView == viewDefault {
-			clickedIdx := m.determineTabClicked(msg.X)
+			clickedIdx := m.determineClickedTab(msg.X)
 			if clickedIdx >= 0 {
 				m.activeIndex = clickedIdx
+				m.logsView.GotoBottom()
 				cmds = append(cmds, m.listenToWriterUpdates, m.updateCurrentLogsView)
 			}
 		}
@@ -338,6 +313,48 @@ func (m *interactiveView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m *interactiveView) listenToUpdates() tea.Msg {
+	return taskUpdateMsg(<-m.provider.status)
+}
+
+func (m *interactiveView) updateProgress(update taskUpdateMsg) {
+	m.status[update.NodeID] = update.Status
+	m.aggregatedStatus[update.NodeID] = update.AggregatedStatus
+	if update.Parent != nil {
+		m.updateProgress(taskUpdateMsg(*update.Parent))
+	}
+}
+
+func (m *interactiveView) listenToWriterUpdates() tea.Msg {
+	currentIdx := m.activeIndex
+	if currentIdx < 0 || currentIdx >= len(m.tabs) || !m.tabs[currentIdx].showLogs {
+		return nil
+	}
+
+	return contentUpdateMsg{
+		tabId:   currentIdx,
+		content: <-m.tabs[currentIdx].writer.Updates,
+	}
+}
+
+func (m *interactiveView) updateCurrentLogsView() tea.Msg {
+	if m.activeIndex < 0 || m.activeIndex >= len(m.tabs) {
+		return nil
+	}
+
+	if m.tabs[m.activeIndex].showLogs {
+		return contentUpdateMsg{
+			tabId:   m.activeIndex,
+			content: m.tabs[m.activeIndex].writer.String(),
+		}
+	}
+
+	return contentUpdateMsg{
+		tabId:   m.activeIndex,
+		content: m.treeView.printNode(m.tabs[m.activeIndex].task, "", true),
+	}
 }
 
 func (m *interactiveView) setLogsViewDefaultPosition() {
@@ -472,17 +489,4 @@ func (m *interactiveView) RenderTabs() string {
 	tabsBorder += "┤ " + help
 
 	return tabsTop + "\n" + tabs + "\n" + tabsBorder + "\n"
-}
-
-func (m *interactiveView) determineTabClicked(x int) int {
-	var current = 0
-	for i, task := range m.tabs {
-		tabWidth := len(task.name) + 2
-		if x > current && x < current+tabWidth+1 {
-			return i
-		}
-		current += tabWidth + 1
-	}
-
-	return -1
 }

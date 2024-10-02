@@ -72,6 +72,7 @@ func newStaticTreeView(forest tasks.Collection, provider *SimpleStatusProvider, 
 			fmt.Printf(parts[1])
 		}
 		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+		os.Exit(1)
 	} else if model.wasCanceled || errors.Is(model.err, tasks.ErrCancelled) {
 		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
 	} else {
@@ -105,10 +106,6 @@ func (m *staticTreeView) WaitForDone() {
 		m.mu.Unlock()
 	}
 	m.wg.Done()
-}
-
-func (m *staticTreeView) printFinalStatus() {
-
 }
 
 func (m *staticTreeView) setupInterruptHandler() {

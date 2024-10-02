@@ -66,6 +66,7 @@ func newTreeProgressView(forest tasks.Collection, status *SimpleStatusProvider, 
 			fmt.Printf(parts[1])
 		}
 		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+		os.Exit(1)
 	} else if model.wasCanceled || errors.Is(model.err, tasks.ErrCancelled) {
 		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
 	} else {

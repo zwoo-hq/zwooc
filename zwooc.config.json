@@ -22,7 +22,8 @@
         "$post": {
           "fragments": ["test:a"]
         }
-      }
+      },
+      "fail": "exit 1"
     },
     "dev": {
       "mode": "test",

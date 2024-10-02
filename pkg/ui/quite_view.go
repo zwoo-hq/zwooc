@@ -15,7 +15,7 @@ type quiteTreeView struct {
 	provider *SimpleStatusProvider
 }
 
-func newQuiteTreeView(forest tasks.Collection, provider *SimpleStatusProvider, opts ViewOptions) {
+func newQuiteTreeView(forest tasks.Collection, provider *SimpleStatusProvider) {
 	model := &quiteTreeView{
 		tasks:    forest,
 		provider: provider,
@@ -35,6 +35,7 @@ func newQuiteTreeView(forest tasks.Collection, provider *SimpleStatusProvider, o
 			fmt.Printf(" %s %s failed: %s\n", errorIcon, nodeId, err)
 		}
 		fmt.Printf("%s %s %s failed after %s\n", zwoocBranding, errorIcon, forest.GetName(), execEnd.Sub(execStart))
+		os.Exit(1)
 	} else if errors.Is(err, tasks.ErrCancelled) {
 		fmt.Printf("%s %s %s canceled after %s\n", zwoocBranding, cancelIcon, forest.GetName(), execEnd.Sub(execStart))
 	} else {
